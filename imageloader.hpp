@@ -1,7 +1,6 @@
-#ifndef IMAGELOADER_H
-#define IMAGELOADER_H
+#ifndef IMAGELOADER_HPP
+#define IMAGELOADER_HPP
 
-#include "global_includes.hpp"
 #include <opencv2/opencv.hpp>
 
 
