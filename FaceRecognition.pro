@@ -4,8 +4,14 @@ CONFIG -= app_bundle
 CONFIG -= qt
 
 SOURCES += main.cpp \
-    imageloader.cpp
+    imageloader.cpp \
+    singletonsettings.cpp \
+    yamlloader.cpp
 
 HEADERS += \
-    imageloader.hpp
+    imageloader.hpp \
+    singletonsettings.h \
+    yamlloader.h
 
+
+unix: LIBS += -lopencv_core -lopencv_videoio -lopencv_imgproc
