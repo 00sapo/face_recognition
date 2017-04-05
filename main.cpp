@@ -7,7 +7,8 @@ void testYaml()
 {
     YamlLoader loader = YamlLoader();
 
-    loader.setPath("../RGBD_Face_dataset_testing/camera_info.yaml");
+    //    loader.setPath("../example.yaml");
+    loader.setPath("camera_info.yaml");
 
     loader.read();
 
