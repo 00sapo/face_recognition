@@ -1,12 +1,9 @@
 #ifndef YAMLLOADER_H
 #define YAMLLOADER_H
-#include "iostream"
-#include "opencv2/core.hpp"
-#include "singletonsettings.h"
-#include "string"
+
+#include <string>
 
 using namespace std;
-using namespace cv;
 
 class YamlLoader {
 public:

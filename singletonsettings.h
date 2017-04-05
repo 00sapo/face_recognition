@@ -1,6 +1,7 @@
 #ifndef SINGLETONSETTINGS_H
 #define SINGLETONSETTINGS_H
-#include "opencv2/core.hpp"
+
+#include <opencv2/core.hpp>
 
 using namespace cv;
 

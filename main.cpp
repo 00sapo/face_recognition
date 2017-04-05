@@ -1,5 +1,7 @@
-#include "yamlloader.h"
 #include <iostream>
+
+#include "yamlloader.h"
+#include "singletonsettings.h"
 
 using namespace std;
 

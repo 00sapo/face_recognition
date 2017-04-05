@@ -3,7 +3,6 @@
 
 #include <opencv2/opencv.hpp>
 
-
 /**
  * @brief The ImageLoader class extends VideoCapture class adding
  *        the possibility to load an image sequence from multiple

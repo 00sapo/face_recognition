@@ -14,4 +14,7 @@ HEADERS += \
     yamlloader.h
 
 
-unix: LIBS += -lopencv_core -lopencv_videoio -lopencv_imgproc
+INCLUDEPATH += $$(OPENCV_INCLUDE)
+
+unix: LIBS += -L$$(OPENCV_LIBS) -lopencv_core -lopencv_videoio -lopencv_imgproc -lboost_filesystem -lboost_system
+

@@ -1,5 +1,12 @@
 #include "yamlloader.h"
 
+#include <opencv2/core.hpp>
+#include <iostream>
+
+#include "singletonsettings.h"
+
+using namespace cv;
+
 YamlLoader::YamlLoader()
 {
 }
