@@ -6,22 +6,22 @@ SingletonSettings* SingletonSettings::getInstance()
     return instance;
 }
 
-Mat* SingletonSettings::getK()
+Mat SingletonSettings::getK()
 {
     return K;
 }
 
-Mat* SingletonSettings::getD()
+Mat SingletonSettings::getD()
 {
     return D;
 }
 
-Mat* SingletonSettings::getP()
+Mat SingletonSettings::getP()
 {
     return P;
 }
 
-Mat* SingletonSettings::getR()
+Mat SingletonSettings::getR()
 {
     return R;
 }
@@ -36,22 +36,22 @@ int SingletonSettings::getWidth()
     return width;
 }
 
-void SingletonSettings::setK(Mat* K)
+void SingletonSettings::setK(Mat K)
 {
     this->K = K;
 }
 
-void SingletonSettings::setD(Mat* D)
+void SingletonSettings::setD(Mat D)
 {
     this->D = D;
 }
 
-void SingletonSettings::setP(Mat* P)
+void SingletonSettings::setP(Mat P)
 {
     this->P = P;
 }
 
-void SingletonSettings::setR(Mat* R)
+void SingletonSettings::setR(Mat R)
 {
     this->R = R;
 }

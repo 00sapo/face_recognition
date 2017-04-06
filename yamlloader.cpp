@@ -1,7 +1,7 @@
 #include "yamlloader.h"
 
-#include <opencv2/core.hpp>
 #include <iostream>
+#include <opencv2/core.hpp>
 
 #include "singletonsettings.h"
 
@@ -36,16 +36,16 @@ bool YamlLoader::read()
     fs["K"] >> K; // Read cv::Mat
     fs["D"] >> D;
     fs["R"] >> R;
-    fs["P"] >> P;
     fs["height"] >> height;
     fs["width"] >> width;
+    fs["P"] >> P;
 
     /* saving parameters to SingletonSettings */
     SingletonSettings* settings = SingletonSettings::getInstance();
-    settings->setD(&D);
-    settings->setK(&K);
-    settings->setP(&P);
-    settings->setR(&R);
+    settings->setD(D);
+    settings->setK(K);
+    settings->setP(P);
+    settings->setR(R);
     settings->setHeight(height);
     settings->setWidth(width);
 

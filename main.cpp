@@ -1,7 +1,7 @@
 #include <iostream>
 
-#include "yamlloader.h"
 #include "singletonsettings.h"
+#include "yamlloader.h"
 
 using namespace std;
 
