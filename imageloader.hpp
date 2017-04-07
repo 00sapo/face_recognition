@@ -1,10 +1,10 @@
 #ifndef IMAGELOADER_HPP
 #define IMAGELOADER_HPP
 
-#include <regex>
-#include <opencv2/opencv.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/path.hpp>
+#include <opencv2/opencv.hpp>
+#include <regex>
 
 #define MATCH_ALL ".*"
 
@@ -14,10 +14,8 @@
  *        the filename to load using regular expressions and a
  *        downscaling ratio to reduce image size.
  */
-class ImageLoader
-{
+class ImageLoader {
 public:
-
     float downscalingRatio = 1;
 
     /**
@@ -32,29 +30,29 @@ public:
      * @param dirPath: absolute path to the directory from which load the files
      * @param fileNameTempl: regular expression for the file names to load
      */
-    ImageLoader(const std::string& dirPath, const std::string &fileNameRegEx = MATCH_ALL);
+    ImageLoader(const std::string& dirPath, const std::string& fileNameRegEx = MATCH_ALL);
 
     /**
      * @brief hasNext
-     * @return true if has more images to load from current directory
+     * @return true if there are images to load from current directory
      */
     bool hasNext() const;
 
     /**
      * @brief get
-     * @param image: loaded image
-     * @return false if there are no more images to load
+     * @param image: Mat in which store the loaded image
+     * @return false if there are no images to load
      */
     bool get(cv::Mat& image);
 
     /**
      * @brief get
-     * @param imageSequence: loaded images
+     * @param imageSequence: vector in which store the loaded images
      * @return always true
      *
      * Loads from current directory all files matching the regular expression
      */
-    bool get(std::vector<cv::Mat> &imageSequence);
+    bool get(std::vector<cv::Mat>& imageSequence);
 
     //bool get(const std::string &path, cv::Mat &image);
     //bool get(const std::string &dirPath, std::vector<cv::Mat> &imageSequence);
@@ -80,7 +78,7 @@ private:
     std::regex fileTemplate;
     std::vector<std::string> fileNames;
 
-    bool loadFileName (const std::string& path);
+    bool loadFileName(const std::string& path);
     bool loadFileNames(const std::string& dirPath);
 
     bool matchTemplate(const std::string& fileName);
