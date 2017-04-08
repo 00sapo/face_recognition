@@ -1,6 +1,8 @@
 #ifndef BACKGROUNDSEGMENTATION_H
 #define BACKGROUNDSEGMENTATION_H
+#include <opencv2/core/cvstd.hpp>
 #include <opencv2/opencv.hpp>
+#include <pcl/common/common.h>
 
 /**
  * @brief The BackgroundSegmentation class performs the removing of background from a RGB-D image.
@@ -10,16 +12,10 @@ public:
     BackgroundSegmentation();
 
     /**
-     * @brief setImageCollection: set the collection of images to be filter
-     * @param imageSequence: A vector containing the collection (i.e. the one given by ImageLoader)
+     * @brief findTreshold: Automatically finds the threshold to be used for filtering
+     * @return A double containing the threshold value
      */
-    void setImageCollection(std::vector<cv::Mat>& imageSequence);
-
-    /**
-     * @brief findTreshold: Automatically find the threshold to be used for filtering
-     * @return A double containg the threshold value
-     */
-    double findTreshold();
+    float findTreshold();
 
     /**
      * @brief filter: Remove the background in each image of the collection using the threshold
@@ -34,12 +30,27 @@ public:
      */
     bool filter(double threshold);
 
-    double getTreshold() const;
-    void setTreshold(double value);
+    float getTreshold() const;
+    void setTreshold(float value);
+
+    std::vector<cv::Mat> getCollectionRGB() const;
+    void setCollectionRGB(const std::vector<cv::Mat>& value);
+
+    std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> getCollectionDepth() const;
+    void setCollectionDepth(const std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr>& value);
 
 private:
-    std::vector<cv::Mat> imageCollection;
-    double treshold;
+    /**
+     * @brief collectionRGB is a vector containing all the images with RGB values
+     */
+    std::vector<cv::Mat> collectionRGB;
+
+    /**
+     * @brief collectionDepth is a vector containing all the images with Depth values
+     */
+    std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> collectionDepth;
+
+    float treshold;
 };
 
 #endif // BACKGROUNDSEGMENTATION_H

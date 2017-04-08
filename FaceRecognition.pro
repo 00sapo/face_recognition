@@ -6,12 +6,16 @@ CONFIG -= qt
 SOURCES += main.cpp \
     imageloader.cpp \
     singletonsettings.cpp \
-    yamlloader.cpp
+    yamlloader.cpp \
+    backgroundsegmentation.cpp \
+    pointprojector.cpp
 
 HEADERS += \
     imageloader.hpp \
     singletonsettings.h \
-    yamlloader.h
+    yamlloader.h \
+    backgroundsegmentation.h \
+    pointprojector.h
 
 DISTFILES += \
     camera_info.yaml
