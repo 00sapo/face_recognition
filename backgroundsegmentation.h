@@ -12,8 +12,8 @@ public:
     BackgroundSegmentation();
 
     /**
-     * @brief findTreshold: Automatically finds the threshold to be used for filtering
-     * @return A double containing the threshold value
+     * @brief findTreshold: Automatically finds and sets the threshold to be used for filtering
+     * @return A float containing the threshold value
      */
     float findTreshold();
 
@@ -33,24 +33,24 @@ public:
     float getTreshold() const;
     void setTreshold(float value);
 
-    std::vector<cv::Mat> getCollectionRGB() const;
-    void setCollectionRGB(const std::vector<cv::Mat>& value);
+    cv::Mat getImageRGB() const;
+    void setImageRGB(cv::Mat& value);
 
-    std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> getCollectionDepth() const;
-    void setCollectionDepth(const std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr>& value);
+    pcl::PointCloud::Ptr getImageDepth() const;
+    void setImageDepth(const pcl::PointCloud::Ptr& value);
 
 private:
     /**
      * @brief collectionRGB is a vector containing all the images with RGB values
      */
-    std::vector<cv::Mat> collectionRGB;
+    cv::Mat imageRGB;
 
     /**
      * @brief collectionDepth is a vector containing all the images with Depth values
      */
-    std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> collectionDepth;
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr imageDepth;
 
-    float treshold;
+    float threshold;
 };
 
 #endif // BACKGROUNDSEGMENTATION_H
