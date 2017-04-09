@@ -2,7 +2,6 @@
 
 #include <opencv2/imgproc.hpp>
 #include <pcl/io/pcd_io.h>
-#include <pcl/point_types.h>
 
 using namespace std;
 using namespace cv;
@@ -34,7 +33,7 @@ bool ImageLoader::get(Mat &image) {
 
     fs::path file = fileNames.back();
     cout << "Loading " << file.filename() << " file" << endl;
-    image = cv::imread(file.filename());
+    image = cv::imread(file.filename().string());
     fileNames.pop_back();
 
     if(downscalingRatio != 1) {
@@ -66,7 +65,7 @@ bool ImageLoader::get(PointCloud<PointXYZ>::Ptr& cloud) {
 
     fs::path file = fileNames.back();
     cout << "Loading" << file.filename() << " file" << endl;
-    int result = pcl::io::loadPCDFile<pcl::PointXYZ> (file.filename(), *cloud);
+    int result = pcl::io::loadPCDFile<pcl::PointXYZ> (file.filename().string(), *cloud);
     fileNames.pop_back();
 
     return result != -1;

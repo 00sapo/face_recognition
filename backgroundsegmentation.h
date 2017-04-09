@@ -3,6 +3,7 @@
 #include <opencv2/core/cvstd.hpp>
 #include <opencv2/opencv.hpp>
 #include <pcl/common/common.h>
+#include <pcl/point_types.h>
 
 /**
  * @brief The BackgroundSegmentation class performs the removing of background from a RGB-D image.
@@ -36,8 +37,8 @@ public:
     cv::Mat getImageRGB() const;
     void setImageRGB(cv::Mat& value);
 
-    pcl::PointCloud::Ptr getImageDepth() const;
-    void setImageDepth(const pcl::PointCloud::Ptr& value);
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr getImageDepth() const;
+    void setImageDepth(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr& value);
 
 private:
     /**

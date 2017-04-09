@@ -4,6 +4,7 @@
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/path.hpp>
 #include <opencv2/opencv.hpp>
+#include <pcl/common/common.h>
 #include <pcl/point_types.h>
 #include <regex>
 
