@@ -1,20 +1,23 @@
 #include "imageloader.hpp"
 
 #include <opencv2/imgproc.hpp>
+#include <pcl/io/pcd_io.h>
+#include <pcl/point_types.h>
 
 using namespace std;
 using namespace cv;
+using namespace pcl;
 
 namespace fs = boost::filesystem;
 
 ImageLoader::ImageLoader() {
     currentPath = fs::current_path().string();
     fileTemplate = regex(".*(png|jpg|bmp)");
-    fileNames = vector<string>();
+    fileNames = vector<fs::path>();
 }
 
 ImageLoader::ImageLoader(const string& dirPath, const string &fileNameRegEx) {
-    fileNames = vector<string>();
+    fileNames = vector<fs::path>();
     currentPath = dirPath;
     fileTemplate = regex(fileNameRegEx);
     loadFileNames(currentPath);
@@ -29,9 +32,9 @@ bool ImageLoader::get(Mat &image) {
     if(!hasNext())
         return false;
 
-    string file = fileNames.back();
-    cout << "Loading " << file << " file" << endl;
-    image = cv::imread(fileNames.back());
+    fs::path file = fileNames.back();
+    cout << "Loading " << file.filename() << " file" << endl;
+    image = cv::imread(file.filename());
     fileNames.pop_back();
 
     if(downscalingRatio != 1) {
@@ -42,31 +45,47 @@ bool ImageLoader::get(Mat &image) {
     return true;
 }
 
-bool ImageLoader::get(vector<Mat> &imageSequence) {
+bool ImageLoader::get(vector<Mat>& imageSequence) {
 
     imageSequence.clear();
 
     while(hasNext()) {
         Mat img;
-        get(img);
+        if(!get(img))
+            return false;
         imageSequence.push_back(img);
     }
 
     return true;
 }
 
-/*
-bool ImageLoader::get(const std::string &path, cv::Mat &image) {
-    loadFileName(path);
-    return get(image);
+bool ImageLoader::get(PointCloud<PointXYZ>::Ptr& cloud) {
+
+    if(!hasNext())
+        return false;
+
+    fs::path file = fileNames.back();
+    cout << "Loading" << file.filename() << " file" << endl;
+    int result = pcl::io::loadPCDFile<pcl::PointXYZ> (file.filename(), *cloud);
+    fileNames.pop_back();
+
+    return result != -1;
+
 }
 
-bool ImageLoader::get(const std::string &dirPath, std::vector<cv::Mat> &imageSequence) {
-    loadFileNames(dirPath);
-    return get(imageSequence);
-}
-*/
+bool ImageLoader::get(vector<PointCloud<PointXYZ>::Ptr>& cloudSequence) {
 
+    cloudSequence.clear();
+
+    while(hasNext()) {
+        PointCloud<PointXYZ>::Ptr cloud (new PointCloud<PointXYZ>);
+        if(!get(cloud))
+            return false;
+        cloudSequence.push_back(cloud);
+    }
+
+    return true;
+}
 
 void ImageLoader::setFileNameRegEx(const std::string& fileNameRegEx) {
     fileTemplate = regex(fileNameRegEx);
@@ -90,7 +109,7 @@ bool ImageLoader::loadFileName(const string &path) {
     }
 
     // adds to the LIFO list of files to load
-    fileNames.push_back(path);
+    fileNames.push_back(full_path);
 
     return true;
 }
@@ -118,7 +137,7 @@ bool ImageLoader::loadFileNames(const string &dirPath)
             if (fs::is_regular_file(iter->status()))  {
                 cout << "Trying to match: " << iter->path() << endl;
                 if (matchTemplate(iter->path().filename().string())) {
-                    fileNames.push_back(iter->path().string());
+                    fileNames.push_back(iter->path());
                 }
                 //cout << iter->path().filename() << "\n";
             }

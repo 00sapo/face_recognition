@@ -4,6 +4,7 @@
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/path.hpp>
 #include <opencv2/opencv.hpp>
+#include <pcl/point_types.h>
 #include <regex>
 
 #define MATCH_ALL ".*"
@@ -54,8 +55,9 @@ public:
      */
     bool get(std::vector<cv::Mat>& imageSequence);
 
-    //bool get(const std::string &path, cv::Mat &image);
-    //bool get(const std::string &dirPath, std::vector<cv::Mat> &imageSequence);
+    bool get(pcl::PointCloud<pcl::PointXYZ>::Ptr &cloud);
+
+    bool get(std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr>& cloudSequence);
 
     /**
      * @brief setFileNameRegEx
@@ -76,7 +78,7 @@ public:
 private:
     std::string currentPath;
     std::regex fileTemplate;
-    std::vector<std::string> fileNames;
+    std::vector<boost::filesystem::path> fileNames;
 
     bool loadFileName(const std::string& path);
     bool loadFileNames(const std::string& dirPath);
