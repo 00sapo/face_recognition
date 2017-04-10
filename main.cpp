@@ -16,13 +16,13 @@ void testYaml()
 
     loader.read();
 
-    SingletonSettings* settings = SingletonSettings::getInstance();
-    cout << settings->getD() << endl
-         << settings->getK() << endl
-         << settings->getP() << endl
-         << settings->getR() << endl
-         << settings->getHeight() << endl
-         << settings->getWidth() << endl;
+    SingletonSettings& settings = SingletonSettings::getInstance();
+    cout << settings.getD() << endl
+         << settings.getK() << endl
+         << settings.getP() << endl
+         << settings.getR() << endl
+         << settings.getHeight() << endl
+         << settings.getWidth() << endl;
 }
 
 void testImageLoader()

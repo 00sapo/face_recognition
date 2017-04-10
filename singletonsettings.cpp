@@ -1,12 +1,9 @@
 #include "singletonsettings.h"
 
-std::unique_ptr<SingletonSettings> SingletonSettings::instance;
-
-SingletonSettings* SingletonSettings::getInstance()
+SingletonSettings& SingletonSettings::getInstance()
 {
-    if(instance == NULL)
-        instance = std::unique_ptr<SingletonSettings>(new SingletonSettings());
-    return instance.get();
+    static SingletonSettings instance;
+    return instance;
 }
 
 Mat SingletonSettings::getK()

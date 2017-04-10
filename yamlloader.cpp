@@ -41,13 +41,13 @@ bool YamlLoader::read()
     fs["P"] >> P;
 
     /* saving parameters to SingletonSettings */
-    SingletonSettings* settings = SingletonSettings::getInstance();
-    settings->setD(D);
-    settings->setK(K);
-    settings->setP(P);
-    settings->setR(R);
-    settings->setHeight(height);
-    settings->setWidth(width);
+    SingletonSettings& settings = SingletonSettings::getInstance();
+    settings.setD(D);
+    settings.setK(K);
+    settings.setP(P);
+    settings.setR(R);
+    settings.setHeight(height);
+    settings.setWidth(width);
 
     return true;
 }

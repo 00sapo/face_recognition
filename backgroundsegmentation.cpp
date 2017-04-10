@@ -55,7 +55,7 @@ void BackgroundSegmentation::setImageDepth(const pcl::PointCloud<pcl::PointXYZRG
     imageDepth = value;
 }
 
-pcl::PointCloud::Ptr BackgroundSegmentation::getImageDepth() const
+pcl::PointCloud<pcl::PointXYZRGB>::Ptr BackgroundSegmentation::getImageDepth() const
 {
     return imageDepth;
 }

@@ -2,13 +2,12 @@
 #define SINGLETONSETTINGS_H
 
 #include <opencv2/core.hpp>
-#include <memory>
 
 using namespace cv;
 
 class SingletonSettings {
 public:
-    static SingletonSettings* getInstance();
+    static SingletonSettings& getInstance();
     //    ~SingletonSettings();
 
     Mat getK();
@@ -25,9 +24,11 @@ public:
     void setP(Mat P);
     void setR(Mat R);
 
+    SingletonSettings(SingletonSettings const&) = delete;
+    void operator=(SingletonSettings const&)    = delete;
+
 protected:
-    explicit SingletonSettings();
-    static std::unique_ptr<SingletonSettings> instance;
+    SingletonSettings();
 
     /*
      * Camera parameters
