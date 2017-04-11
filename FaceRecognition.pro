@@ -20,6 +20,10 @@ HEADERS += \
 DISTFILES += \
     camera_info.yaml
 
-INCLUDEPATH += $$(OPENCV_INCLUDE)
+INCLUDEPATH += $$(OPENCV_INCLUDE) $$(VTK_INCLUDES)
 
-unix: LIBS += -L$$(OPENCV_LIBS) -lopencv_core -lopencv_videoio -lopencv_imgproc -lopencv_highgui -lopencv_imgcodecs -lboost_filesystem -lboost_system
+unix: LIBS += -L$$(OPENCV_LIBS) -lopencv_core -lopencv_videoio -lopencv_imgproc -lopencv_highgui -lopencv_imgcodecs
+
+unix: LIBS += -lboost_filesystem -lboost_system -lboost_iostreams
+
+unix: LIBS += -lpcl_io -lpcl_ml -lpcl_common -lpcl_visualization

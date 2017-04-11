@@ -2,27 +2,27 @@
 #include "pcl/ml/kmeans.h"
 
 BackgroundSegmentation::BackgroundSegmentation()
+    : Kmeans(0, 1)
 {
 }
 
 float BackgroundSegmentation::findTreshold()
 {
-    pcl::Kmeans classifier(imageDepth->size(), 1);
 
-    for (int i = 0; i < imageDepth->size(); ++i) {
+    for (unsigned int i = 0; i < imageDepth->size(); ++i) {
         pcl::Kmeans::Point p = { imageDepth->at(i).z };
-        classifier.addDataPoint(p);
+        this->addDataPoint(p);
     }
 
-    classifier.kMeans();
+    this->kMeans();
 
     /* TODO verificare se bisogna prendere l'indice 0 o 1*/
-    pcl::Kmeans::SetPoints background = classifier.clusters_to_points_[0];
+    pcl::Kmeans::SetPoints background = this->clusters_to_points_[0];
 
     float minimum = 0xffff;
     for (auto& t : background) {
         if (imageDepth->at(t).z < minimum)
-            thresold = imageDepth->at(t).z;
+            minimum = imageDepth->at(t).z;
     }
 
     this->threshold = minimum;
@@ -50,12 +50,13 @@ void BackgroundSegmentation::setImageRGB(cv::Mat& value)
     imageRGB = value;
 }
 
-void BackgroundSegmentation::setImageDepth(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr& value)
+void BackgroundSegmentation::setImageDepth(const pcl::PointCloud<pcl::PointXYZ>::Ptr& value)
 {
     imageDepth = value;
+    num_points_ = imageDepth->size();
 }
 
-pcl::PointCloud<pcl::PointXYZRGB>::Ptr BackgroundSegmentation::getImageDepth() const
+pcl::PointCloud<pcl::PointXYZ>::Ptr BackgroundSegmentation::getImageDepth() const
 {
     return imageDepth;
 }

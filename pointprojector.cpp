@@ -5,7 +5,7 @@ PointProjector::PointProjector()
 {
 }
 
-static std::vector<float> PointProjector::get2DCoordinates(pcl::PointXYZRGB point)
+/*static std::vector<float> PointProjector::get2DCoordinates(pcl::PointXYZRGB point)
 {
     // Define projection matrix from 3D to 2D:
     //P matrix is in camera_info.yaml
@@ -22,3 +22,4 @@ static std::vector<float> PointProjector::get2DCoordinates(pcl::PointXYZRGB poin
     std::vector<float> point2D = { output[0], output[1] };
     return point2D;
 }
+*/

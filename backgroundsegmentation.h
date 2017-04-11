@@ -3,12 +3,13 @@
 #include <opencv2/core/cvstd.hpp>
 #include <opencv2/opencv.hpp>
 #include <pcl/common/common.h>
+#include <pcl/ml/kmeans.h>
 #include <pcl/point_types.h>
 
 /**
  * @brief The BackgroundSegmentation class performs the removing of background from a RGB-D image.
  */
-class BackgroundSegmentation {
+class BackgroundSegmentation : public pcl::Kmeans {
 public:
     BackgroundSegmentation();
 
@@ -37,8 +38,8 @@ public:
     cv::Mat getImageRGB() const;
     void setImageRGB(cv::Mat& value);
 
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr getImageDepth() const;
-    void setImageDepth(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr& value);
+    pcl::PointCloud<pcl::PointXYZ>::Ptr getImageDepth() const;
+    void setImageDepth(const pcl::PointCloud<pcl::PointXYZ>::Ptr& value);
 
 private:
     /**
@@ -49,7 +50,7 @@ private:
     /**
      * @brief collectionDepth is a vector containing all the images with Depth values
      */
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr imageDepth;
+    pcl::PointCloud<pcl::PointXYZ>::Ptr imageDepth;
 
     float threshold;
 };
