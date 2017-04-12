@@ -60,6 +60,10 @@ public:
 
     bool get(std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr>& cloudSequence);
 
+    bool get(Face& face);
+
+    bool get(std::vector<Face>& face);
+
     /**
      * @brief setFileNameRegEx
      * @param fileNameRegEx: regular expression for the file names to load
@@ -79,9 +83,10 @@ public:
 private:
     std::string currentPath;
     std::regex fileTemplate;
-    std::vector<boost::filesystem::path> fileNames;
+    std::vector<boost::filesystem::path> imageFileNames;
+    std::vector<boost::filesystem::path> cloudFileNames;
 
-    bool loadFileName(const std::string& path);
+    //bool loadFileName(const std::string& path);
     bool loadFileNames(const std::string& dirPath);
 
     bool matchTemplate(const std::string& fileName);
