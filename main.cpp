@@ -1,10 +1,14 @@
-#include "backgroundsegmentation.h"
-#include "imageloader.hpp"
-#include "singletonsettings.h"
-#include "yamlloader.h"
 #include <iostream>
+
 #include <opencv2/highgui.hpp>
 //#include <pcl/visualization/cloud_viewer.h>
+
+#include "backgroundsegmentation.h"
+#include "faceloader.h"
+#include "singletonsettings.h"
+#include "yamlloader.h"
+#include "face.h"
+
 
 using namespace std;
 using namespace cv;
@@ -26,37 +30,48 @@ void testYaml()
          << settings.getWidth() << endl;
 }
 
+void testFaceLoader()
+{
+    string dirPath = "../RGBD_Face_dataset_training/";
+    FaceLoader loader(dirPath, "014.*");
+    vector<Face> faceSequence(0);
+    if(!loader.get(faceSequence)) {
+        cout << "Error loading face!" << endl;
+        return;
+    }
+    cout << "\n\nFaces loaded!" << endl;
+
+    namedWindow( "image", WINDOW_NORMAL );
+    for (const auto& face : faceSequence) {
+        imshow("image", face.image);
+        waitKey(1000);
+        //pcl::visualization::CloudViewer viewer ("Simple Cloud Viewer");
+        //viewer.showCloud (face.cloud);
+        //while (!viewer.wasStopped ()) { }
+    }
+    destroyWindow("image");
+}
+
 void findThreshold()
 {
     BackgroundSegmentation segmenter;
 
     string dirPath = "../RGBD_Face_dataset_training/";
-    ImageLoader loader(dirPath, "014.*pcd"); // example: loads only .png files starting with 014
+    FaceLoader loader(dirPath, "014.*"); // example: loads only .png files starting with 014
 
-    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud;
-    loader.get(cloud);
+    Face face;
 
-    segmenter.setImageDepth(cloud);
+    if(!loader.get(face)) {
+        cout << "Failed loading face" << endl;
+        return;
+    }
+
+    segmenter.setImageDepth(face.cloud);
 
     cout << "Treshold found: " << segmenter.findTreshold() << endl;
 }
 
-void testImageLoader()
-{
-    string home = getenv("HOME");
-    //    string dirPath = home + "/Pictures/RGBD_Face_dataset_testing/Test1";
 
-    string dirPath = "../RGBD_Face_dataset_training/";
-    ImageLoader loader(dirPath, "0_14.*png"); // example: loads only .png files
-
-    while (loader.hasNext()) {
-        Mat image;
-        loader.get(image);
-        imshow("image", image);
-
-        waitKey(0);
-    }
-}
 
 //void testCloudLoader()
 //{
@@ -81,8 +96,14 @@ void testImageLoader()
 int main()
 {
     cout << "Hello World!" << endl;
+
+    cout << "Yaml test..." << endl;
     testYaml();
-    testImageLoader();
+
+    cout << "\n\nFace loader test..."  << endl;
+    testFaceLoader();
+
+    cout << "\n\nFind threshold test..." << endl;
     findThreshold();
     //    testCloudLoader();
     return 0;
