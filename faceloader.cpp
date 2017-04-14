@@ -24,7 +24,10 @@ FaceLoader::FaceLoader(const string& dirPath, const string &fileNameRegEx) {
     cloudFileNames = vector<string>();
     currentPath = dirPath;
     fileTemplate = regex(fileNameRegEx);
-    loadFileNames(currentPath);
+
+    cout << "FaceLoader constructor: loading file names..." << endl;
+    if(!loadFileNames(currentPath))
+        cout << "Failed!" << endl;
 }
 
 bool FaceLoader::hasNext() const {
@@ -39,12 +42,11 @@ bool FaceLoader::get(Face& face) {
     string& imageFile = imageFileNames.back();
     string& cloudFile = cloudFileNames.back();
 
-    if (imageFile.compare(cloudFile) != 0) {
-        cerr << "Error! Different filenames" << endl;
-       return false;
-    }
+    //if (imageFile.compare(cloudFile) != 0) {
+    //    cerr << "Error! Different filenames" << endl;
+    //   return false;
+    //}
 
-    cout << "Loading image " << imageFile << endl;
     face.image = cv::imread(imageFile);
     if(face.image.empty()) {
         cout << "Unable to load file " << imageFile << endl;
@@ -58,8 +60,7 @@ bool FaceLoader::get(Face& face) {
     //    resize(face.imageRGB, face.imageRGB, Size(width*downscalingRatio,height*downscalingRatio), INTER_AREA);
     //}
 
-    cout << "Loading cloud " << cloudFile << endl;
-    int result = pcl::io::loadPCDFile<pcl::PointXYZ> (cloudFile, *face.cloud);
+    int result = pcl::io::loadPCDFile<pcl::PointXYZ> (cloudFile, *(face.cloud));
     if(result == -1) {
         cout << "Unable to load file " << cloudFile << endl;
         return false;
@@ -93,6 +94,7 @@ void FaceLoader::setFileNameRegEx(const string& fileNameRegEx) {
 void FaceLoader::setCurrentPath(const string& dirPath)
 {
     imageFileNames.clear();
+    cloudFileNames.clear();
     currentPath = dirPath;
     loadFileNames(currentPath);
 }
@@ -134,24 +136,29 @@ bool FaceLoader::loadFileNames(const string &dirPath)
         try {
             if (fs::is_regular_file(dir_entry.status()))  {
                 const fs::path& path = dir_entry.path();
-                cout << "Trying to match: " << path << endl;
                 if (matchTemplate(path.stem().string())) {
-                    if(path.extension().string().compare(".png"))
+                    if(path.extension().string().compare(".png") == 0)
                         imageFileNames.push_back(path.string());
-                    else if(path.extension().string().compare(".pcd"))
+                    else if(path.extension().string().compare(".pcd") == 0)
                         cloudFileNames.push_back(path.string());
                 }
-                //cout << iter->path().filename() << "\n";
             }
         }
         catch ( const std::exception &ex ) {
-            cout << dir_entry.path().filename() << " " << ex.what() << endl;
+            cerr << dir_entry.path().filename() << " " << ex.what() << endl;
             return false;
         }
     }
 
     std::sort(imageFileNames.begin(), imageFileNames.end());
     std::sort(cloudFileNames.begin(), cloudFileNames.end());
+
+    for (const auto& s : imageFileNames) {
+        cout << s << endl;
+    }
+    for (const auto& s : cloudFileNames) {
+        cout << s << endl;
+    }
 
     return true;
 }

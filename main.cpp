@@ -30,6 +30,28 @@ void testYaml()
          << settings.getWidth() << endl;
 }
 
+void testFaceLoader()
+{
+    string dirPath = "../RGBD_Face_dataset_training/";
+    FaceLoader loader(dirPath, "014.*");
+    vector<Face> faceSequence(0);
+    if(!loader.get(faceSequence)) {
+        cout << "Error loading face!" << endl;
+        return;
+    }
+    cout << "\n\nFaces loaded!" << endl;
+
+    namedWindow( "image", WINDOW_NORMAL );
+    for (const auto& face : faceSequence) {
+        imshow("image", face.image);
+        waitKey(1000);
+        //pcl::visualization::CloudViewer viewer ("Simple Cloud Viewer");
+        //viewer.showCloud (face.cloud);
+        //while (!viewer.wasStopped ()) { }
+    }
+    destroyWindow("image");
+}
+
 void findThreshold()
 {
     BackgroundSegmentation segmenter;
@@ -49,21 +71,7 @@ void findThreshold()
     cout << "Treshold found: " << segmenter.findTreshold() << endl;
 }
 
-void testImageLoader()
-{
-    string home = getenv("HOME");
-    //    string dirPath = home + "/Pictures/RGBD_Face_dataset_testing/Test1";
 
-    string dirPath = "../RGBD_Face_dataset_training/";
-    FaceLoader loader(dirPath, "0_14.*");
-    while (loader.hasNext()) {
-        Face face;
-        loader.get(face);
-        imshow("image", face.image);
-
-        waitKey(0);
-    }
-}
 
 //void testCloudLoader()
 //{
@@ -88,8 +96,14 @@ void testImageLoader()
 int main()
 {
     cout << "Hello World!" << endl;
+
+    cout << "Yaml test..." << endl;
     testYaml();
-    testImageLoader();
+
+    cout << "\n\nFace loader test..."  << endl;
+    testFaceLoader();
+
+    cout << "\n\nFind threshold test..." << endl;
     findThreshold();
     //    testCloudLoader();
     return 0;
