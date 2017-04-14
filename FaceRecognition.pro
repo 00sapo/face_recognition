@@ -4,20 +4,20 @@ CONFIG -= app_bundle
 CONFIG -= qt
 
 SOURCES += main.cpp \
-    imageloader.cpp \
     singletonsettings.cpp \
     yamlloader.cpp \
     backgroundsegmentation.cpp \
     pointprojector.cpp \
-    face.cpp
+    face.cpp \
+    faceloader.cpp
 
 HEADERS += \
-    imageloader.hpp \
     singletonsettings.h \
     yamlloader.h \
     backgroundsegmentation.h \
     pointprojector.h \
-    face.h
+    face.h \
+    faceloader.h
 
 DISTFILES += \
     camera_info.yaml

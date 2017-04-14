@@ -1,15 +1,17 @@
 #ifndef FACE_H
 #define FACE_H
 
+#include <opencv2/opencv.hpp>
 #include <pcl/common/common.h>
 #include <pcl/point_types.h>
+
 
 class Face
 {
 public:
 
-    Mat imageRGB;
-    pcl::PointCloud<pcl::PointXYZ> imageD;
+    cv::Mat image;
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud;
 
     Face();
 };

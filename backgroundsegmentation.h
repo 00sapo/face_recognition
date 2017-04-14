@@ -1,6 +1,7 @@
 #ifndef BACKGROUNDSEGMENTATION_H
 #define BACKGROUNDSEGMENTATION_H
-#include <opencv2/core/cvstd.hpp>
+
+//#include <opencv2/core/cvstd.hpp>
 #include <opencv2/opencv.hpp>
 #include <pcl/common/common.h>
 #include <pcl/ml/kmeans.h>
