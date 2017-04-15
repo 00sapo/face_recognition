@@ -7,6 +7,9 @@
 #include <pcl/ml/kmeans.h>
 #include <pcl/point_types.h>
 
+
+class Face;
+
 /**
  * @brief The BackgroundSegmentation class performs the removing of background from a RGB-D image.
  */
@@ -18,42 +21,49 @@ public:
      * @brief findTreshold: Automatically finds and sets the threshold to be used for filtering
      * @return A float containing the threshold value
      */
-    float findTreshold();
+    //float findThreshold();
+
+    float findThreshold(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud);
 
     /**
      * @brief filter: Remove the background in each image of the collection using the threshold
      * @return return True if everything worked, false otherwise.
      */
-    bool filter();
+    //bool filter();
 
     /**
      * @brief filter: set the threshold and calls filter()
      * @param threshold: the value to use as threshold
      * @return same as filter
      */
-    bool filter(double threshold);
+    bool filter(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, float threshold);
 
-    float getTreshold() const;
-    void setTreshold(float value);
+    void filterBackground(Face& face);
 
-    cv::Mat getImageRGB() const;
-    void setImageRGB(cv::Mat& value);
+    void filterBackground(std::vector<Face>& faces);
 
-    pcl::PointCloud<pcl::PointXYZ>::Ptr getImageDepth() const;
-    void setImageDepth(const pcl::PointCloud<pcl::PointXYZ>::Ptr& value);
+
+    //float getTreshold() const;
+    //void setTreshold(float value);
+    //
+    //cv::Mat getImageRGB() const;
+    //void setImageRGB(cv::Mat& value);
+
+    //pcl::PointCloud<pcl::PointXYZ>::Ptr getImageDepth() const;
+    //void setImageDepth(const pcl::PointCloud<pcl::PointXYZ>::Ptr& value);
 
 private:
     /**
      * @brief collectionRGB is a vector containing all the images with RGB values
      */
-    cv::Mat imageRGB;
+    //cv::Mat imageRGB;
 
     /**
      * @brief collectionDepth is a vector containing all the images with Depth values
      */
-    pcl::PointCloud<pcl::PointXYZ>::Ptr imageDepth;
+    //pcl::PointCloud<pcl::PointXYZ>::Ptr imageDepth;
 
-    float threshold;
+    //float threshold;
 };
 
 #endif // BACKGROUNDSEGMENTATION_H

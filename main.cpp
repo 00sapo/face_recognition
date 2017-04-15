@@ -3,6 +3,9 @@
 #include <opencv2/highgui.hpp>
 //#include <pcl/visualization/cloud_viewer.h>
 
+//#include <pcl/visualization/pcl_visualizer.h>
+//#include <pcl/visualization/cloud_viewer.h>
+
 #include "backgroundsegmentation.h"
 #include "faceloader.h"
 #include "singletonsettings.h"
@@ -45,14 +48,24 @@ void testFaceLoader()
     for (const auto& face : faceSequence) {
         imshow("image", face.image);
         waitKey(1000);
-        //pcl::visualization::CloudViewer viewer ("Simple Cloud Viewer");
-        //viewer.showCloud (face.cloud);
-        //while (!viewer.wasStopped ()) { }
+
+
+        //visualization::PCLVisualizer viewer("PCL Viewer");
+        //viewer.setBackgroundColor  (0.0, 0.0, 0.5);
+        //viewer.addCoordinateSystem (0.1);
+        //viewer.initCameraParameters();
+        ////visualization::PointCloudColorHandlerRGBField<PointXYZRGB> rgb(cloud);
+        //viewer.addPointCloud<PointXYZRGB> (cloud, "input_cloud");
+        //
+        //while (!viewer.wasStopped()) {
+        //    viewer.spin();
+        //}
+
     }
     destroyWindow("image");
 }
 
-void findThreshold()
+void testFindThreshold()
 {
     BackgroundSegmentation segmenter;
 
@@ -66,9 +79,14 @@ void findThreshold()
         return;
     }
 
-    segmenter.setImageDepth(face.cloud);
 
-    cout << "Treshold found: " << segmenter.findTreshold() << endl;
+    cout << "Face loaded!" << endl;
+
+    cout << "\nFiltering background..." << endl;
+
+    segmenter.filterBackground(face);
+
+    //cout << "Treshold found: " << segmenter.findTreshold() << endl;
 }
 
 
@@ -104,7 +122,10 @@ int main()
     testFaceLoader();
 
     cout << "\n\nFind threshold test..." << endl;
-    findThreshold();
+    testFindThreshold();
+
+    cout << "\n\nTests finished!" << endl;
+
     //    testCloudLoader();
     return 0;
 }
