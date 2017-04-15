@@ -1,20 +1,19 @@
 #include <iostream>
 
 #include <opencv2/highgui.hpp>
-//#include <pcl/visualization/cloud_viewer.h>
 
-//#include <pcl/visualization/pcl_visualizer.h>
-//#include <pcl/visualization/cloud_viewer.h>
+#include <pcl/visualization/area_picking_event.h>
+#include <pcl/visualization/pcl_visualizer.h>
 
 #include "backgroundsegmentation.h"
+#include "face.h"
 #include "faceloader.h"
 #include "singletonsettings.h"
 #include "yamlloader.h"
-#include "face.h"
-
 
 using namespace std;
 using namespace cv;
+using namespace pcl;
 
 void testYaml()
 {
@@ -33,36 +32,45 @@ void testYaml()
          << settings.getWidth() << endl;
 }
 
+void keyboardEventHandler(const visualization::KeyboardEvent& event, void* viewer_void)
+{
+
+    //    boost::shared_ptr<visualization::PCLVisualizer> viewer = *static_cast<boost::shared_ptr<visualization::PCLVisualizer>*>(viewer_void);
+    visualization::PCLVisualizer* viewer = (visualization::PCLVisualizer*)viewer_void;
+
+    if (event.getKeySym() == "n" && event.keyDown())
+        viewer->close();
+}
+
 void testFaceLoader()
 {
     string dirPath = "../RGBD_Face_dataset_training/";
     FaceLoader loader(dirPath, "014.*");
     vector<Face> faceSequence(0);
-    if(!loader.get(faceSequence)) {
+    if (!loader.get(faceSequence)) {
         cout << "Error loading face!" << endl;
         return;
     }
     cout << "\n\nFaces loaded!" << endl;
 
-    namedWindow( "image", WINDOW_NORMAL );
+    namedWindow("image", WINDOW_NORMAL);
     for (const auto& face : faceSequence) {
         imshow("image", face.image);
-        waitKey(1000);
+        while (waitKey(0) != 'm') {
+        }
 
+        visualization::PCLVisualizer* viewer = new visualization::PCLVisualizer("PCL Viewer");
+        viewer->setBackgroundColor(0.0, 0.0, 0.5);
+        viewer->addCoordinateSystem(0.1);
+        viewer->initCameraParameters();
+        //visualization::PointCloudColorHandlerRGBField<PointXYZRGB> rgb(cloud);
+        viewer->addPointCloud<PointXYZ>(face.cloud, "input_cloud");
 
-        //visualization::PCLVisualizer viewer("PCL Viewer");
-        //viewer.setBackgroundColor  (0.0, 0.0, 0.5);
-        //viewer.addCoordinateSystem (0.1);
-        //viewer.initCameraParameters();
-        ////visualization::PointCloudColorHandlerRGBField<PointXYZRGB> rgb(cloud);
-        //viewer.addPointCloud<PointXYZRGB> (cloud, "input_cloud");
-        //
-        //while (!viewer.wasStopped()) {
-        //    viewer.spin();
-        //}
-
+        viewer->registerKeyboardCallback(keyboardEventHandler, (void*)viewer);
+        while (!viewer->wasStopped()) {
+            viewer->spin();
+        }
     }
-    destroyWindow("image");
 }
 
 void testFindThreshold()
@@ -74,11 +82,10 @@ void testFindThreshold()
 
     Face face;
 
-    if(!loader.get(face)) {
+    if (!loader.get(face)) {
         cout << "Failed loading face" << endl;
         return;
     }
-
 
     cout << "Face loaded!" << endl;
 
@@ -89,28 +96,6 @@ void testFindThreshold()
     //cout << "Treshold found: " << segmenter.findTreshold() << endl;
 }
 
-
-
-//void testCloudLoader()
-//{
-//    string home = getenv("HOME");
-//    //    string dirPath = home + "/Pictures/RGBD_Face_dataset_testing/Test1";
-
-//    string dirPath = "../RGBD_Face_dataset_training/";
-//    ImageLoader loader(dirPath, "014.*pcd"); // example: loads only .png files starting with 014
-
-//    while (loader.hasNext()) {
-//        pcl::PointCloud<pcl::PointXYZ>::Ptr cloud;
-//        loader.get(cloud);
-//        pcl::visualization::CloudViewer viewer("Simple Cloud Viewer");
-//        viewer.showCloud(cloud);
-//        while (!viewer.wasStopped()) {
-//        }
-
-//        waitKey(0);
-//    }
-//}
-
 int main()
 {
     cout << "Hello World!" << endl;
@@ -118,7 +103,7 @@ int main()
     cout << "Yaml test..." << endl;
     testYaml();
 
-    cout << "\n\nFace loader test..."  << endl;
+    cout << "\n\nFace loader test..." << endl;
     testFaceLoader();
 
     cout << "\n\nFind threshold test..." << endl;

@@ -29,3 +29,5 @@ unix: LIBS += -L$$(OPENCV_LIBS) -lopencv_core -lopencv_videoio -lopencv_imgproc 
 unix: LIBS += -lboost_filesystem -lboost_system -lboost_iostreams
 
 unix: LIBS += -lpcl_io -lpcl_ml -lpcl_common -lpcl_visualization #-lpcl_openni
+
+unix: LIBS += -lvtkCommonDataModel -lvtkRenderingCore -lvtkCommonMath -lvtkCommonCore
