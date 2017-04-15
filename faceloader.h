@@ -20,8 +20,6 @@ class Face;
  */
 class FaceLoader {
 public:
-    //float downscalingRatio = 1;
-
     /**
      * @brief ImageLoader, basic constructor.
      *
@@ -82,7 +80,12 @@ public:
      */
     void setCurrentPath(const std::string& dirPath);
 
+    float getDownscalingRatio() const;
+    void setDownscalingRatio(float value);
+
 private:
+    float downscalingRatio = 1;
+
     std::string currentPath;
     std::regex fileTemplate;
     std::vector<std::string> imageFileNames;
