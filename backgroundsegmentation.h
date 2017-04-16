@@ -1,6 +1,10 @@
 #ifndef BACKGROUNDSEGMENTATION_H
 #define BACKGROUNDSEGMENTATION_H
-#include <opencv2/core/cvstd.hpp>
+
+//#include <opencv2/core/cvstd.hpp>
+
+#include "face.h"
+
 #include <opencv2/opencv.hpp>
 #include <pcl/common/common.h>
 #include <pcl/ml/kmeans.h>
@@ -11,48 +15,44 @@
  */
 class BackgroundSegmentation : public pcl::Kmeans {
 public:
-    BackgroundSegmentation();
+    /**
+     * @brief BackgroundSegmentation: constructor
+     * @param face: the face to be used
+     */
+    BackgroundSegmentation(const Face& face);
 
     /**
-     * @brief findTreshold: Automatically finds and sets the threshold to be used for filtering
-     * @return A float containing the threshold value
+     * @brief findClusters: finds clusters in the cloud of the face
      */
-    float findTreshold();
+
+    void findClusters();
 
     /**
-     * @brief filter: Remove the background in each image of the collection using the threshold
-     * @return return True if everything worked, false otherwise.
+     * @brief filter: remove face cloud the points that are not in the cluster specified
+     * @param clusterId: the id of the cluster, it can be 0 or 1
+     * @return
      */
-    bool filter();
+    void filter(unsigned int clusterId);
 
     /**
-     * @brief filter: set the threshold and calls filter()
-     * @param threshold: the value to use as threshold
-     * @return same as filter
+     * @brief filterBackground: finds clusters and then calls filter(1)
      */
-    bool filter(double threshold);
+    void filterBackground();
 
-    float getTreshold() const;
-    void setTreshold(float value);
+    /**
+     * @brief filterBackground: same as filterBackground() but for every face in the vector
+     * @param faces
+     */
+    void filterBackground(std::vector<Face>& faces);
 
-    cv::Mat getImageRGB() const;
-    void setImageRGB(cv::Mat& value);
-
-    pcl::PointCloud<pcl::PointXYZ>::Ptr getImageDepth() const;
-    void setImageDepth(const pcl::PointCloud<pcl::PointXYZ>::Ptr& value);
+    Face getFace() const;
+    void setFace(const Face& value);
 
 private:
     /**
-     * @brief collectionRGB is a vector containing all the images with RGB values
+     * @brief face: the face that contains the RGB-D image to be process
      */
-    cv::Mat imageRGB;
-
-    /**
-     * @brief collectionDepth is a vector containing all the images with Depth values
-     */
-    pcl::PointCloud<pcl::PointXYZ>::Ptr imageDepth;
-
-    float threshold;
+    Face face;
 };
 
 #endif // BACKGROUNDSEGMENTATION_H

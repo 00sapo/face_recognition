@@ -1,13 +1,19 @@
+#include <iostream>
+
+#include <opencv2/highgui.hpp>
+
+#include <pcl/visualization/area_picking_event.h>
+#include <pcl/visualization/pcl_visualizer.h>
+
 #include "backgroundsegmentation.h"
-#include "imageloader.hpp"
+#include "face.h"
+#include "faceloader.h"
 #include "singletonsettings.h"
 #include "yamlloader.h"
-#include <iostream>
-#include <opencv2/highgui.hpp>
-//#include <pcl/visualization/cloud_viewer.h>
 
 using namespace std;
 using namespace cv;
+using namespace pcl;
 
 void testYaml()
 {
@@ -26,64 +32,96 @@ void testYaml()
          << settings.getWidth() << endl;
 }
 
-void findThreshold()
+void keyboardEventHandler(const visualization::KeyboardEvent& event, void* viewer_void)
 {
-    BackgroundSegmentation segmenter;
 
-    string dirPath = "../RGBD_Face_dataset_training/";
-    ImageLoader loader(dirPath, "014.*pcd"); // example: loads only .png files starting with 014
+    //    boost::shared_ptr<visualization::PCLVisualizer> viewer = *static_cast<boost::shared_ptr<visualization::PCLVisualizer>*>(viewer_void);
+    visualization::PCLVisualizer* viewer = (visualization::PCLVisualizer*)viewer_void;
 
-    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud;
-    loader.get(cloud);
-
-    segmenter.setImageDepth(cloud);
-
-    cout << "Treshold found: " << segmenter.findTreshold() << endl;
+    if (event.getKeySym() == "n" && event.keyDown())
+        viewer->close();
 }
 
-void testImageLoader()
+void viewPointCloud(PointCloud<PointXYZ>::Ptr cloud)
 {
-    string home = getenv("HOME");
-    //    string dirPath = home + "/Pictures/RGBD_Face_dataset_testing/Test1";
 
-    string dirPath = "../RGBD_Face_dataset_training/";
-    ImageLoader loader(dirPath, "0_14.*png"); // example: loads only .png files
+    visualization::PCLVisualizer* viewer = new visualization::PCLVisualizer("PCL Viewer");
+    viewer->setBackgroundColor(0.0, 0.0, 0.5);
+    viewer->addCoordinateSystem(0.1);
+    viewer->initCameraParameters();
 
-    while (loader.hasNext()) {
-        Mat image;
-        loader.get(image);
-        imshow("image", image);
+    //visualization::PointCloudColorHandlerRGBField<PointXYZRGB> rgb(cloud);
+    viewer->addPointCloud<PointXYZ>(cloud, "input_cloud");
 
-        waitKey(0);
+    viewer->registerKeyboardCallback(keyboardEventHandler, (void*)viewer);
+    while (!viewer->wasStopped()) {
+        viewer->spin();
     }
 }
 
-//void testCloudLoader()
-//{
-//    string home = getenv("HOME");
-//    //    string dirPath = home + "/Pictures/RGBD_Face_dataset_testing/Test1";
+void testFaceLoader()
+{
+    string dirPath = "../RGBD_Face_dataset_training/";
+    FaceLoader loader(dirPath, "014.*");
+    vector<Face> faceSequence(0);
+    if (!loader.get(faceSequence)) {
+        cout << "Error loading face!" << endl;
+        return;
+    }
+    cout << "\n\nFaces loaded!" << endl;
 
-//    string dirPath = "../RGBD_Face_dataset_training/";
-//    ImageLoader loader(dirPath, "014.*pcd"); // example: loads only .png files starting with 014
+    namedWindow("image", WINDOW_NORMAL);
+    for (const auto& face : faceSequence) {
+        imshow("image", face.image);
+        while (waitKey(0) != 'm') {
+        }
 
-//    while (loader.hasNext()) {
-//        pcl::PointCloud<pcl::PointXYZ>::Ptr cloud;
-//        loader.get(cloud);
-//        pcl::visualization::CloudViewer viewer("Simple Cloud Viewer");
-//        viewer.showCloud(cloud);
-//        while (!viewer.wasStopped()) {
-//        }
+        viewPointCloud(face.cloud);
+    }
+}
 
-//        waitKey(0);
-//    }
-//}
+void testFindThreshold()
+{
+
+    string dirPath = "../RGBD_Face_dataset_training/";
+    FaceLoader loader(dirPath, "014.*"); // example: loads only .png files starting with 014
+
+    Face face;
+
+    //    loader.setDownscalingRatio(0.5);
+
+    if (!loader.get(face)) {
+        cout << "Failed loading face" << endl;
+        return;
+    }
+
+    cout << "Face loaded!" << endl;
+
+    cout << "\nFiltering background..." << endl;
+
+    BackgroundSegmentation segmenter(face);
+    segmenter.filterBackground();
+
+    //cout << "Treshold found: " << segmenter.findTreshold() << endl;
+
+    viewPointCloud(segmenter.getFace().cloud);
+}
 
 int main()
 {
     cout << "Hello World!" << endl;
-    testYaml();
-    testImageLoader();
-    findThreshold();
+
+    //    cout << "Yaml test..." << endl;
+    //    testYaml();
+
+    //    cout << "\n\nFace loader test..." << endl;
+    //    testFaceLoader();
+
+    cout << "\n\nFind threshold test..." << endl;
+    testFindThreshold();
+
+    cout << "\n\nTests finished!" << endl;
+
     //    testCloudLoader();
     return 0;
 }
