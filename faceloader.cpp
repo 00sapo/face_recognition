@@ -80,7 +80,7 @@ bool FaceLoader::get(Face& face)
         VoxelGrid<PointXYZ> voxel;
         voxel.setInputCloud(face.cloud);
         voxel.setLeafSize(leafSize, leafSize, leafSize);
-        voxel.filter(face.cloud);
+        voxel.filter(*face.cloud);
     }
 
     return true;

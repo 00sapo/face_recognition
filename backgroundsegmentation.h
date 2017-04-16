@@ -7,7 +7,6 @@
 #include <pcl/ml/kmeans.h>
 #include <pcl/point_types.h>
 
-
 class Face;
 
 /**
@@ -41,29 +40,6 @@ public:
     void filterBackground(Face& face);
 
     void filterBackground(std::vector<Face>& faces);
-
-
-    //float getTreshold() const;
-    //void setTreshold(float value);
-    //
-    //cv::Mat getImageRGB() const;
-    //void setImageRGB(cv::Mat& value);
-
-    //pcl::PointCloud<pcl::PointXYZ>::Ptr getImageDepth() const;
-    //void setImageDepth(const pcl::PointCloud<pcl::PointXYZ>::Ptr& value);
-
-private:
-    /**
-     * @brief collectionRGB is a vector containing all the images with RGB values
-     */
-    //cv::Mat imageRGB;
-
-    /**
-     * @brief collectionDepth is a vector containing all the images with Depth values
-     */
-    //pcl::PointCloud<pcl::PointXYZ>::Ptr imageDepth;
-
-    //float threshold;
 };
 
 #endif // BACKGROUNDSEGMENTATION_H

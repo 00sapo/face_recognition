@@ -7,10 +7,10 @@
 using pcl::PointCloud;
 using pcl::PointXYZ;
 
-
 BackgroundSegmentation::BackgroundSegmentation()
     : Kmeans(0, 1)
 {
+    num_clusters_ = 2;
 }
 
 float BackgroundSegmentation::findThreshold(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud)
@@ -18,6 +18,8 @@ float BackgroundSegmentation::findThreshold(pcl::PointCloud<pcl::PointXYZ>::Ptr 
 
     std::cout << "Adding points to KMeans..." << std::endl;
     num_points_ = cloud->size();
+    points_to_clusters_ = PointsToClusters(num_points_, 0);
+
     for (unsigned int i = 0; i < cloud->size(); ++i) {
         pcl::Kmeans::Point p = { cloud->at(i).z };
         this->addDataPoint(p);
@@ -30,7 +32,7 @@ float BackgroundSegmentation::findThreshold(pcl::PointCloud<pcl::PointXYZ>::Ptr 
 
     /* TODO verificare se bisogna prendere l'indice 0 o 1*/
     std::cout << "Set points..." << std::endl;
-    pcl::Kmeans::SetPoints background = this->clusters_to_points_[0];
+    pcl::Kmeans::SetPoints background = this->clusters_to_points_[1];
     std::cout << "Done!" << std::endl;
 
     std::cout << "Computing min thresh..." << std::endl;
@@ -44,8 +46,8 @@ float BackgroundSegmentation::findThreshold(pcl::PointCloud<pcl::PointXYZ>::Ptr 
     return minimum;
 }
 
-
-bool BackgroundSegmentation::filter(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, float threshold) {
+bool BackgroundSegmentation::filter(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, float threshold)
+{
     PointCloud<PointXYZ>::Ptr filteredCloud(new PointCloud<PointXYZ>);
     for (auto& point : *cloud) {
         if (point.z < threshold)
@@ -57,9 +59,8 @@ bool BackgroundSegmentation::filter(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, f
     return true;
 }
 
-
-void BackgroundSegmentation::filterBackground(Face& face) {
-
+void BackgroundSegmentation::filterBackground(Face& face)
+{
     std::cout << "Looking for threshold..." << std::endl;
     float threshold = findThreshold(face.cloud);
     std::cout << "Done!" << std::endl;
@@ -69,9 +70,10 @@ void BackgroundSegmentation::filterBackground(Face& face) {
     std::cout << "Done!" << std::endl;
 }
 
-void BackgroundSegmentation::filterBackground(std::vector<Face>& faces) {
+void BackgroundSegmentation::filterBackground(std::vector<Face>& faces)
+{
 
-    for(auto& face : faces) {
+    for (auto& face : faces) {
         filterBackground(face);
     }
 }

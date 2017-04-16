@@ -42,6 +42,22 @@ void keyboardEventHandler(const visualization::KeyboardEvent& event, void* viewe
         viewer->close();
 }
 
+void viewPointCloud(PointCloud<PointXYZ>::Ptr cloud)
+{
+
+    visualization::PCLVisualizer* viewer = new visualization::PCLVisualizer("PCL Viewer");
+    viewer->setBackgroundColor(0.0, 0.0, 0.5);
+    viewer->addCoordinateSystem(0.1);
+    viewer->initCameraParameters();
+    //visualization::PointCloudColorHandlerRGBField<PointXYZRGB> rgb(cloud);
+    viewer->addPointCloud<PointXYZ>(cloud, "input_cloud");
+
+    viewer->registerKeyboardCallback(keyboardEventHandler, (void*)viewer);
+    while (!viewer->wasStopped()) {
+        viewer->spin();
+    }
+}
+
 void testFaceLoader()
 {
     string dirPath = "../RGBD_Face_dataset_training/";
@@ -59,17 +75,7 @@ void testFaceLoader()
         while (waitKey(0) != 'm') {
         }
 
-        visualization::PCLVisualizer* viewer = new visualization::PCLVisualizer("PCL Viewer");
-        viewer->setBackgroundColor(0.0, 0.0, 0.5);
-        viewer->addCoordinateSystem(0.1);
-        viewer->initCameraParameters();
-        //visualization::PointCloudColorHandlerRGBField<PointXYZRGB> rgb(cloud);
-        viewer->addPointCloud<PointXYZ>(face.cloud, "input_cloud");
-
-        viewer->registerKeyboardCallback(keyboardEventHandler, (void*)viewer);
-        while (!viewer->wasStopped()) {
-            viewer->spin();
-        }
+        viewPointCloud(face.cloud);
     }
 }
 
@@ -81,6 +87,8 @@ void testFindThreshold()
     FaceLoader loader(dirPath, "014.*"); // example: loads only .png files starting with 014
 
     Face face;
+
+    //    loader.setDownscalingRatio(0.5);
 
     if (!loader.get(face)) {
         cout << "Failed loading face" << endl;
@@ -94,17 +102,19 @@ void testFindThreshold()
     segmenter.filterBackground(face);
 
     //cout << "Treshold found: " << segmenter.findTreshold() << endl;
+
+    viewPointCloud(face.cloud);
 }
 
 int main()
 {
     cout << "Hello World!" << endl;
 
-    cout << "Yaml test..." << endl;
-    testYaml();
+    //    cout << "Yaml test..." << endl;
+    //    testYaml();
 
-    cout << "\n\nFace loader test..." << endl;
-    testFaceLoader();
+    //    cout << "\n\nFace loader test..." << endl;
+    //    testFaceLoader();
 
     cout << "\n\nFind threshold test..." << endl;
     testFindThreshold();
