@@ -72,10 +72,11 @@ bool FaceLoader::get(Face& face)
         int height = face.image.rows;
         resize(face.image, face.image, Size(width * downscalingRatio, height * downscalingRatio), INTER_AREA);
 
-        // TODO how to compute leaf size from downscalingRatio?
-        // maybe it is easier to set the leaf size, then to filter the pointcloud,
-        // and then to compute downscaleRatio from the final cloud sizes
-
+        /* TODO:
+         * how to compute leaf size from downscalingRatio?
+         * maybe it is easier to set the leaf size, then to filter the pointcloud,
+         * and then to compute downscaleRatio from the final cloud sizes
+         */
         float leafSize = 0.1f;
         VoxelGrid<PointXYZ> voxel;
         voxel.setInputCloud(face.cloud);

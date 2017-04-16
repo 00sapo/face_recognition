@@ -15,37 +15,43 @@
  */
 class BackgroundSegmentation : public pcl::Kmeans {
 public:
+    /**
+     * @brief BackgroundSegmentation: constructor
+     * @param face: the face to be used
+     */
     BackgroundSegmentation(const Face& face);
 
     /**
-     * @brief findTreshold: Automatically finds and sets the threshold to be used for filtering
-     * @return A float containing the threshold value
+     * @brief findClusters: finds clusters in the cloud of the face
      */
-    //float findThreshold();
 
-    void findThreshold();
+    void findClusters();
 
     /**
-     * @brief filter: Remove the background in each image of the collection using the threshold
-     * @return return True if everything worked, false otherwise.
+     * @brief filter: remove face cloud the points that are not in the cluster specified
+     * @param clusterId: the id of the cluster, it can be 0 or 1
+     * @return
      */
-    //bool filter();
+    void filter(unsigned int clusterId);
 
     /**
-     * @brief filter: set the threshold and calls filter()
-     * @param threshold: the value to use as threshold
-     * @return same as filter
+     * @brief filterBackground: finds clusters and then calls filter(1)
      */
-    bool filter(unsigned int clusterId);
-
     void filterBackground();
 
+    /**
+     * @brief filterBackground: same as filterBackground() but for every face in the vector
+     * @param faces
+     */
     void filterBackground(std::vector<Face>& faces);
 
     Face getFace() const;
     void setFace(const Face& value);
 
 private:
+    /**
+     * @brief face: the face that contains the RGB-D image to be process
+     */
     Face face;
 };
 

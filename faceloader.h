@@ -84,6 +84,9 @@ public:
     void setDownscalingRatio(float value);
 
 private:
+    /**
+     * @brief downscalingRatio: not working
+     */
     float downscalingRatio = 1;
 
     std::string currentPath;

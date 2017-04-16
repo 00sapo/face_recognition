@@ -14,7 +14,7 @@ BackgroundSegmentation::BackgroundSegmentation(const Face& face)
     setFace(face);
 }
 
-void BackgroundSegmentation::findThreshold()
+void BackgroundSegmentation::findClusters()
 {
 
     std::cout << "Adding points to KMeans..." << std::endl;
@@ -32,25 +32,9 @@ void BackgroundSegmentation::findThreshold()
     std::cout << "Clustering..." << std::endl;
     this->kMeans();
     std::cout << "Done!" << std::endl;
-
-    /* TODO verificare se bisogna prendere l'indice 0 o 1*/
-    //    std::cout << "Set points..." << std::endl;
-    //    pcl::Kmeans::SetPoints background = this->clusters_to_points_[1];
-    //    std::cout << "Done!" << std::endl;
-
-    //    std::cout << "Computing min thresh..." << std::endl;
-    //    float minimum = std::numeric_limits<float>::max();
-    //    for (auto& t : background) {
-    //        PointXYZ point = cloud->at(t);
-    //        if (point.z < minimum)
-    //            minimum = cloud->at(t).z;
-    //    }
-    //    std::cout << "Done!" << std::endl;
-
-    //    return minimum;
 }
 
-bool BackgroundSegmentation::filter(unsigned int clusterId)
+void BackgroundSegmentation::filter(unsigned int clusterId)
 {
     PointCloud<PointXYZ>::Ptr filteredCloud(new PointCloud<PointXYZ>);
     for (unsigned int i; i < points_to_clusters_.size(); i++) {
@@ -60,15 +44,14 @@ bool BackgroundSegmentation::filter(unsigned int clusterId)
     }
 
     face.cloud = filteredCloud;
-
-    return true;
+    /* TODO: remove points from RGB image! */
 }
 
 void BackgroundSegmentation::filterBackground()
 {
     std::cout << "Looking for threshold..." << std::endl;
 
-    findThreshold();
+    findClusters();
     std::cout << "Done!" << std::endl;
 
     std::cout << "Removing background..." << std::endl;

@@ -49,6 +49,7 @@ void viewPointCloud(PointCloud<PointXYZ>::Ptr cloud)
     viewer->setBackgroundColor(0.0, 0.0, 0.5);
     viewer->addCoordinateSystem(0.1);
     viewer->initCameraParameters();
+
     //visualization::PointCloudColorHandlerRGBField<PointXYZRGB> rgb(cloud);
     viewer->addPointCloud<PointXYZ>(cloud, "input_cloud");
 
