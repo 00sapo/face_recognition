@@ -81,7 +81,6 @@ void testFaceLoader()
 
 void testFindThreshold()
 {
-    BackgroundSegmentation segmenter;
 
     string dirPath = "../RGBD_Face_dataset_training/";
     FaceLoader loader(dirPath, "014.*"); // example: loads only .png files starting with 014
@@ -99,11 +98,12 @@ void testFindThreshold()
 
     cout << "\nFiltering background..." << endl;
 
-    segmenter.filterBackground(face);
+    BackgroundSegmentation segmenter(face);
+    segmenter.filterBackground();
 
     //cout << "Treshold found: " << segmenter.findTreshold() << endl;
 
-    viewPointCloud(face.cloud);
+    viewPointCloud(segmenter.getFace().cloud);
 }
 
 int main()
