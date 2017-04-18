@@ -32,32 +32,9 @@ void testYaml()
          << settings.getWidth() << endl;
 }
 
-void keyboardEventHandler(const visualization::KeyboardEvent& event, void* viewer_void)
-{
 
-    //    boost::shared_ptr<visualization::PCLVisualizer> viewer = *static_cast<boost::shared_ptr<visualization::PCLVisualizer>*>(viewer_void);
-    visualization::PCLVisualizer* viewer = (visualization::PCLVisualizer*)viewer_void;
 
-    if (event.getKeySym() == "n" && event.keyDown())
-        viewer->close();
-}
 
-void viewPointCloud(PointCloud<PointXYZ>::Ptr cloud)
-{
-
-    visualization::PCLVisualizer* viewer = new visualization::PCLVisualizer("PCL Viewer");
-    viewer->setBackgroundColor(0.0, 0.0, 0.5);
-    viewer->addCoordinateSystem(0.1);
-    viewer->initCameraParameters();
-
-    //visualization::PointCloudColorHandlerRGBField<PointXYZRGB> rgb(cloud);
-    viewer->addPointCloud<PointXYZ>(cloud, "input_cloud");
-
-    viewer->registerKeyboardCallback(keyboardEventHandler, (void*)viewer);
-    while (!viewer->wasStopped()) {
-        viewer->spin();
-    }
-}
 
 void testFaceLoader()
 {

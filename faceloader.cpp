@@ -84,6 +84,8 @@ bool FaceLoader::get(Face& face)
         voxel.filter(*face.cloud);
     }
 
+    viewPointCloud(face.cloud);
+
     return true;
 }
 
@@ -193,3 +195,37 @@ bool FaceLoader::matchTemplate(const string& fileName)
 {
     return regex_match(fileName, fileTemplate, regex_constants::match_any);
 }
+
+
+
+
+void keyboardEventHandler(const pcl::visualization::KeyboardEvent& event, void* viewer_void)
+{
+
+    //    boost::shared_ptr<visualization::PCLVisualizer> viewer = *static_cast<boost::shared_ptr<visualization::PCLVisualizer>*>(viewer_void);
+    pcl::visualization::PCLVisualizer* viewer = (pcl::visualization::PCLVisualizer*)viewer_void;
+
+    if (event.getKeySym() == "n" && event.keyDown())
+        viewer->close();
+}
+
+void viewPointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud)
+{
+
+    pcl::visualization::PCLVisualizer* viewer = new pcl::visualization::PCLVisualizer("PCL Viewer");
+    viewer->setBackgroundColor(0.0, 0.0, 0.5);
+    viewer->addCoordinateSystem(0.1);
+    viewer->initCameraParameters();
+
+    //visualization::PointCloudColorHandlerRGBField<PointXYZRGB> rgb(cloud);
+    viewer->addPointCloud<pcl::PointXYZ>(cloud, "input_cloud");
+
+    viewer->registerKeyboardCallback(keyboardEventHandler, (void*)viewer);
+    while (!viewer->wasStopped()) {
+        viewer->spin();
+    }
+
+    delete viewer;
+}
+
+

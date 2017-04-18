@@ -1,6 +1,7 @@
 #include "backgroundsegmentation.h"
 
 #include <iostream>
+#include <math.h>
 
 #include "face.h"
 
@@ -21,7 +22,7 @@ void BackgroundSegmentation::findClusters()
 
     for (unsigned int i = 0; i < face.cloud->size(); ++i) {
         float value = face.cloud->at(i).z;
-        if (isnan(value)) {
+        if (std::isnan(value)) {
             value = 0.0f;
         }
         pcl::Kmeans::Point p = { value };
