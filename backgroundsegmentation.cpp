@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <math.h>
+#include <pointprojector.h>
 
 #include "face.h"
 
@@ -23,7 +24,7 @@ void BackgroundSegmentation::findClusters()
     for (unsigned int i = 0; i < face.cloud->size(); ++i) {
         float value = face.cloud->at(i).z;
         if (std::isnan(value)) {
-            value = 0.0f;
+            value = FLT_MIN;
         }
         pcl::Kmeans::Point p = { value };
         this->addDataPoint(p);
@@ -37,14 +38,23 @@ void BackgroundSegmentation::findClusters()
 
 void BackgroundSegmentation::filter(unsigned int clusterId)
 {
+    cv::Mat filteredImage = cv::Mat::zeros(face.image.rows, face.image.cols, CV_8UC1);
     PointCloud<PointXYZ>::Ptr filteredCloud(new PointCloud<PointXYZ>);
     for (unsigned int i; i < points_to_clusters_.size(); i++) {
 
-        if (clusterId == points_to_clusters_[i])
-            filteredCloud->push_back(face.cloud->at(i));
+        if (clusterId == points_to_clusters_[i]) {
+            PointXYZ point = face.cloud->at(i);
+            if (!isnan(point.x) && !isnan(point.y) && !isnan(point.z)) {
+                filteredCloud->push_back(point);
+                std::vector<float> xy = PointProjector::get2DCoordinates(point);
+                filteredImage.at<float>(xy[0], xy[1])
+                    = face.image.at<float>(xy[0], xy[1]);
+            }
+        }
     }
 
     face.cloud = filteredCloud;
+    face.image = filteredImage;
     /* TODO: remove points from RGB image! */
 }
 

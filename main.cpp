@@ -32,10 +32,6 @@ void testYaml()
          << settings.getWidth() << endl;
 }
 
-
-
-
-
 void testFaceLoader()
 {
     string dirPath = "../RGBD_Face_dataset_training/";
@@ -77,10 +73,16 @@ void testFindThreshold()
     cout << "\nFiltering background..." << endl;
 
     BackgroundSegmentation segmenter(face);
+    imshow("image", segmenter.getFace().image);
+    while (waitKey(0) != 'm') {
+    }
+
     segmenter.filterBackground();
 
     //cout << "Treshold found: " << segmenter.findTreshold() << endl;
-
+    imshow("image", segmenter.getFace().image);
+    while (waitKey(0) != 'm') {
+    }
     viewPointCloud(segmenter.getFace().cloud);
 }
 

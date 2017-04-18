@@ -52,7 +52,7 @@ bool FaceLoader::get(Face& face)
     //   return false;
     //}
 
-    face.image = cv::imread(imageFile);
+    face.image = cv::imread(imageFile, CV_LOAD_IMAGE_GRAYSCALE);
     if (face.image.empty()) {
         cout << "Unable to load file " << imageFile << endl;
         return false;
@@ -67,24 +67,58 @@ bool FaceLoader::get(Face& face)
     imageFileNames.pop_back();
     cloudFileNames.pop_back();
 
-    if (downscalingRatio != 1) {
-        int width = face.image.cols;
-        int height = face.image.rows;
-        resize(face.image, face.image, Size(width * downscalingRatio, height * downscalingRatio), INTER_AREA);
+    uint32_t cloudHeight = face.cloud->height;
+    uint32_t cloudWidth = face.cloud->width;
+    //    uint32_t totalCloudPoints = cloudHeight * cloudWidth;
 
-        /* TODO:
-         * how to compute leaf size from downscalingRatio?
-         * maybe it is easier to set the leaf size, then to filter the pointcloud,
-         * and then to compute downscaleRatio from the final cloud sizes
-         */
-        float leafSize = 0.1f;
-        VoxelGrid<PointXYZ> voxel;
-        voxel.setInputCloud(face.cloud);
-        voxel.setLeafSize(leafSize, leafSize, leafSize);
-        voxel.filter(*face.cloud);
+    //    if (leafSize != 0.0f) {
+
+    //        VoxelGrid<PointXYZ> voxel;
+    //        voxel.setInputCloud(face.cloud);
+    //        voxel.setLeafSize(leafSize, leafSize, leafSize);
+    //        voxel.filter(*face.cloud);
+    //    }
+
+    //    /* VoxelGrid outputs a cloud without structure.
+    //     * Now we'll recompute the size of the cloud after VoxelGrid
+    //     */
+    //    uint32_t cloudHeightAfterVoxel = face.cloud->height;
+    //    uint32_t cloudWidthAfterVoxel = face.cloud->width;
+    //    uint32_t totalCloudPointsAfterVoxel = cloudHeightAfterVoxel * cloudWidthAfterVoxel;
+    //    float voxelRatio = sqrt((float)totalCloudPoints / totalCloudPointsAfterVoxel);
+
+    //    /* this is a little trick to mantains proportions */
+    //    int newCloudHeight = cloudHeight / voxelRatio;
+    //    cloudWidth = cloudWidth * (float)newCloudHeight / cloudHeight;
+    //    cloudHeight = newCloudHeight;
+
+    //    face.cloud->width = cloudWidth;
+    //    face.cloud->height = cloudHeight;
+
+    int rgbWidth = face.image.cols;
+    int rgbHeight = face.image.rows;
+
+    float downscalingRatio = (float)cloudHeight / rgbHeight;
+    if (((float)cloudWidth / rgbWidth) != downscalingRatio) {
+        cerr << "Error: "
+             << imageFile << " and " << cloudFile
+             << " sizes are not proportional!" << endl;
+        return false;
     }
 
-    viewPointCloud(face.cloud);
+    if (downscalingRatio > 1) {
+        cerr << "Error: "
+             << imageFile << " is smaller than " << cloudFile
+             << ". Set leafSize to use voxel grid filter and reduce the size of the cloud." << endl;
+        return false;
+    }
+
+    resize(face.image,
+        face.image,
+        Size(rgbWidth * downscalingRatio, rgbHeight * downscalingRatio),
+        INTER_AREA);
+
+    //    viewPointCloud(face.cloud);
 
     return true;
 }
@@ -117,14 +151,14 @@ void FaceLoader::setCurrentPath(const string& dirPath)
     loadFileNames(currentPath);
 }
 
-float FaceLoader::getDownscalingRatio() const
+float FaceLoader::getLeafSize() const
 {
-    return downscalingRatio;
+    return leafSize;
 }
 
-void FaceLoader::setDownscalingRatio(float value)
+void FaceLoader::setLeafSize(float value)
 {
-    downscalingRatio = value;
+    leafSize = value;
 }
 
 //bool ImageLoader::loadFileName(const string &path) {
@@ -196,9 +230,6 @@ bool FaceLoader::matchTemplate(const string& fileName)
     return regex_match(fileName, fileTemplate, regex_constants::match_any);
 }
 
-
-
-
 void keyboardEventHandler(const pcl::visualization::KeyboardEvent& event, void* viewer_void)
 {
 
@@ -227,5 +258,3 @@ void viewPointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud)
 
     delete viewer;
 }
-
-

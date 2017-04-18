@@ -82,14 +82,15 @@ public:
      */
     void setCurrentPath(const std::string& dirPath);
 
-    float getDownscalingRatio() const;
-    void setDownscalingRatio(float value);
+    float getLeafSize() const;
+    void setLeafSize(float value);
 
 private:
     /**
-     * @brief downscalingRatio: not working
+     * @brief leafSize: not working for now. If it is setted, the images will be filtered with a Voxel Grid filter of this leaf size.
+     *
      */
-    float downscalingRatio = 1;
+    float leafSize = 0.0f;
 
     std::string currentPath;
     std::regex fileTemplate;
@@ -101,7 +102,6 @@ private:
 
     bool matchTemplate(const std::string& fileName);
 };
-
 
 void keyboardEventHandler(const pcl::visualization::KeyboardEvent& event, void* viewer_void);
 
