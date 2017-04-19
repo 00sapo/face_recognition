@@ -46,7 +46,7 @@ void BackgroundSegmentation::filter(unsigned int clusterId)
             PointXYZ point = face.cloud->at(i);
             if (!isnan(point.x) && !isnan(point.y) && !isnan(point.z)) {
                 filteredCloud->push_back(point);
-                std::vector<float> xy = PointProjector::get2DCoordinates(point);
+                std::vector<unsigned int> xy = PointProjector::get2DCoordinates(point);
                 filteredImage.at<float>(xy[0], xy[1])
                     = face.image.at<float>(xy[0], xy[1]);
             }

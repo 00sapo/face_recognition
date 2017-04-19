@@ -10,7 +10,12 @@ class PointProjector {
 public:
     PointProjector();
 
-    static std::vector<float> get2DCoordinates(pcl::PointXYZ point);
+    /**
+     * @brief get2DCoordinates: returns the coordinates of 3D point projected in a 2D space
+     * @param point
+     * @return
+     */
+    static std::vector<unsigned int> get2DCoordinates(pcl::PointXYZ point);
 };
 
 #endif // POINTPROJECTOR_H

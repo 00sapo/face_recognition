@@ -69,6 +69,8 @@ bool FaceLoader::get(Face& face)
 
     uint32_t cloudHeight = face.cloud->height;
     uint32_t cloudWidth = face.cloud->width;
+
+    /* VOXEL GRID FILTERING */
     //    uint32_t totalCloudPoints = cloudHeight * cloudWidth;
 
     //    if (leafSize != 0.0f) {
@@ -94,7 +96,7 @@ bool FaceLoader::get(Face& face)
 
     //    face.cloud->width = cloudWidth;
     //    face.cloud->height = cloudHeight;
-
+    /**/
     int rgbWidth = face.image.cols;
     int rgbHeight = face.image.rows;
 
@@ -117,7 +119,7 @@ bool FaceLoader::get(Face& face)
         face.image,
         Size(rgbWidth * downscalingRatio, rgbHeight * downscalingRatio),
         INTER_AREA);
-
+    /**/
     //    viewPointCloud(face.cloud);
 
     return true;

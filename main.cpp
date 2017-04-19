@@ -88,7 +88,11 @@ void testFindThreshold()
 
 int main()
 {
-    cout << "Hello World!" << endl;
+    YamlLoader loader = YamlLoader();
+
+    loader.setPath("camera_info.yaml");
+
+    loader.read();
 
     //    cout << "Yaml test..." << endl;
     //    testYaml();
