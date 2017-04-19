@@ -70,7 +70,7 @@ bool FaceLoader::get(Face& face)
     uint32_t cloudHeight = face.cloud->height;
     uint32_t cloudWidth = face.cloud->width;
 
-    /* VOXEL GRID FILTERING */
+    /* VOXEL GRID FILTERING -- not working by now */
     //    uint32_t totalCloudPoints = cloudHeight * cloudWidth;
 
     //    if (leafSize != 0.0f) {
@@ -252,6 +252,7 @@ void viewPointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud)
 
     //visualization::PointCloudColorHandlerRGBField<PointXYZRGB> rgb(cloud);
     viewer->addPointCloud<pcl::PointXYZ>(cloud, "input_cloud");
+    viewer->setCameraPosition(-0.24917, -0.0187087, -1.29032, 0.0228136, -0.996651, 0.0785278);
 
     viewer->registerKeyboardCallback(keyboardEventHandler, (void*)viewer);
     while (!viewer->wasStopped()) {

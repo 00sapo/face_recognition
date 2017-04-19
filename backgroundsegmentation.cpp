@@ -38,7 +38,7 @@ void BackgroundSegmentation::findClusters()
 
 void BackgroundSegmentation::filter(unsigned int clusterId)
 {
-    cv::Mat filteredImage = cv::Mat::zeros(face.image.rows, face.image.cols, CV_8UC1);
+    cv::Mat filteredImage = cv::Mat::zeros(face.image.rows, face.image.cols, CV_32SC1);
     PointCloud<PointXYZ>::Ptr filteredCloud(new PointCloud<PointXYZ>);
     for (unsigned int i; i < points_to_clusters_.size(); i++) {
 
@@ -46,16 +46,16 @@ void BackgroundSegmentation::filter(unsigned int clusterId)
             PointXYZ point = face.cloud->at(i);
             if (!isnan(point.x) && !isnan(point.y) && !isnan(point.z)) {
                 filteredCloud->push_back(point);
-                std::vector<unsigned int> xy = PointProjector::get2DCoordinates(point);
-                filteredImage.at<float>(xy[0], xy[1])
-                    = face.image.at<float>(xy[0], xy[1]);
+                std::vector<int> xy = { i / face.cloud->width, i % face.cloud->width };
+                //                std::vector<unsigned int> xy = PointProjector::get2DCoordinates(point);
+                filteredImage.at<int>(xy[0], xy[1])
+                    = face.image.at<int>(xy[0], xy[1]);
             }
         }
     }
 
     face.cloud = filteredCloud;
     face.image = filteredImage;
-    /* TODO: remove points from RGB image! */
 }
 
 void BackgroundSegmentation::filterBackground()
