@@ -1,5 +1,6 @@
 #include <iostream>
 
+#include <opencv2/opencv.hpp>
 #include <opencv2/highgui.hpp>
 
 #include <pcl/visualization/area_picking_event.h>
@@ -86,6 +87,28 @@ void testFindThreshold()
     viewPointCloud(segmenter.getFace().cloud);
 }
 
+void testGetDepthMap()
+{
+    string dirPath = "../RGBD_Face_dataset_training/";
+    FaceLoader loader(dirPath, "014.*"); // example: loads only .png files starting with 014
+
+    Face face;
+
+    //    loader.setDownscalingRatio(0.5);
+
+    if (!loader.get(face)) {
+        cout << "Failed loading face" << endl;
+        return;
+    }
+
+    cout << "Face loaded!" << endl;
+
+    cv::Mat depthMap = face.getDepthMap();
+
+    imshow("Depth Map", depthMap);
+    waitKey(0);
+}
+
 int main()
 {
     YamlLoader loader = YamlLoader();
@@ -106,5 +129,8 @@ int main()
     cout << "\n\nTests finished!" << endl;
 
     //    testCloudLoader();
+
+    //testGetDepthMap();
+
     return 0;
 }

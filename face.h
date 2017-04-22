@@ -14,6 +14,8 @@ public:
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud;
 
     Face();
+
+    cv::Mat getDepthMap();
 };
 
 #endif // FACE_H

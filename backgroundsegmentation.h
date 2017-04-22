@@ -53,6 +53,8 @@ private:
      * @brief face: the face that contains the RGB-D image to be process
      */
     Face face;
+
+    void cropFace();
 };
 
 #endif // BACKGROUNDSEGMENTATION_H

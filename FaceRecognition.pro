@@ -9,7 +9,9 @@ SOURCES += main.cpp \
     backgroundsegmentation.cpp \
     pointprojector.cpp \
     face.cpp \
-    faceloader.cpp
+    faceloader.cpp \
+    head_pose_estimation/CRForestEstimator.cpp \
+    head_pose_estimation/CRTree.cpp
 
 HEADERS += \
     singletonsettings.h \
@@ -17,7 +19,9 @@ HEADERS += \
     backgroundsegmentation.h \
     pointprojector.h \
     face.h \
-    faceloader.h
+    faceloader.h \
+    head_pose_estimation/CRForestEstimator.h \
+    head_pose_estimation/CRTree.h
 
 DISTFILES += \
     camera_info.yaml

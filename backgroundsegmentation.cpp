@@ -5,9 +5,11 @@
 #include <pointprojector.h>
 
 #include "face.h"
+#include "head_pose_estimation/CRForestEstimator.h"
 
 using pcl::PointCloud;
 using pcl::PointXYZ;
+using std::isnan;
 
 BackgroundSegmentation::BackgroundSegmentation(const Face& face)
     : Kmeans(0, 1)
@@ -21,8 +23,11 @@ void BackgroundSegmentation::findClusters()
 
     std::cout << "Adding points to KMeans..." << std::endl;
 
-    for (unsigned int i = 0; i < face.cloud->size(); ++i) {
-        float value = face.cloud->at(i).z;
+	
+    //for (unsigned int i = 0; i < face.cloud->size(); ++i) {
+    //    float value = face.cloud->at(i).z;
+    for(auto& point : *face.cloud) {
+        float value = point.z;
         if (std::isnan(value)) {
             value = FLT_MIN;
         }
@@ -90,35 +95,14 @@ void BackgroundSegmentation::setFace(const Face& value)
     points_to_clusters_ = PointsToClusters(num_points_, 0);
 }
 
-/*
-float BackgroundSegmentation::getTreshold() const
-{
-    return threshold;
-}
+void BackgroundSegmentation::cropFace() {
+    //CRForestEstimator estimator;
+    //if(!estimator.loadForest("../trees", 10)) {
+    //    std::cerr << "Can't find forest files" << std::endl;
+    //}
+    //
+    //estimator.estimate(img3D, g_means, g_clusters, g_votes, g_stride, g_maxv, g_prob_th,
+    //                   g_larger_radius_ratio, g_smaller_radius_ratio, false, g_th);
+    //
 
-void BackgroundSegmentation::setTreshold(float value)
-{
-    threshold = value;
 }
-
-cv::Mat BackgroundSegmentation::getImageRGB() const
-{
-    return imageRGB;
-}
-
-void BackgroundSegmentation::setImageRGB(cv::Mat& value)
-{
-    imageRGB = value;
-}
-*/
-
-//void BackgroundSegmentation::setImageDepth(const pcl::PointCloud<pcl::PointXYZ>::Ptr& value)
-//{
-//    imageDepth = value;
-//    num_points_ = imageDepth->size();
-//}
-//
-//pcl::PointCloud<pcl::PointXYZ>::Ptr BackgroundSegmentation::getImageDepth() const
-//{
-//    return imageDepth;
-//}
