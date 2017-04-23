@@ -78,6 +78,10 @@ void testFindThreshold()
     while (waitKey(0) != 'm') {
     }
     viewPointCloud(segmenter.getFace().cloud);
+
+    Mat depthMap = segmenter.getFace().getDepthMap();
+    imshow("Depth Map", depthMap);
+    waitKey(0);
 }
 
 void testGetDepthMap()
@@ -106,10 +110,10 @@ int main()
 {
 
     cout << "SingletonSettings test..." << endl;
-    testSingletonSettings();
+    //testSingletonSettings();
 
     cout << "\n\nFace loader test..." << endl;
-    testFaceLoader();
+    //testFaceLoader();
 
     cout << "\n\nFind threshold test..." << endl;
     testFindThreshold();

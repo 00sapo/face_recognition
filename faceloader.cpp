@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <opencv2/imgproc.hpp>
+#include <pcl/filters/filter.h>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/io/pcd_io.h>
 
@@ -9,7 +10,8 @@
 
 using namespace std;
 using namespace cv;
-using namespace pcl;
+using pcl::PointCloud;
+using pcl::PointXYZ;
 
 namespace fs = boost::filesystem;
 
@@ -58,14 +60,23 @@ bool FaceLoader::get(Face& face)
         return false;
     }
 
-    int result = pcl::io::loadPCDFile<pcl::PointXYZ>(cloudFile, *(face.cloud));
+    int result = pcl::io::loadPCDFile<PointXYZ>(cloudFile, *face.cloud);
     if (result == -1) {
         cout << "Unable to load file " << cloudFile << endl;
         return false;
     }
 
-    imageFileNames.pop_back();
-    cloudFileNames.pop_back();
+    if(!face.cloud->isOrganized())
+        cout << "WARNING: loading unorganized point cloud!" << endl;
+
+    // setting nans to 0 keeping the cloud organized
+    //for(auto& point : *face.cloud) {
+    //    if(isnan(point.x) || isnan(point.y) || isnan(point.z)) {
+    //        point.x = 0;
+    //        point.y = 0;
+    //        point.z = 0;
+    //    }
+    //}
 
     uint32_t cloudHeight = face.cloud->height;
     uint32_t cloudWidth = face.cloud->width;
@@ -115,12 +126,18 @@ bool FaceLoader::get(Face& face)
         return false;
     }
 
+    face.cloudImageRatio = downscalingRatio;
+
     resize(face.image,
         face.image,
         Size(rgbWidth * downscalingRatio, rgbHeight * downscalingRatio),
         INTER_AREA);
     /**/
     //    viewPointCloud(face.cloud);
+
+
+    imageFileNames.pop_back();
+    cloudFileNames.pop_back();
 
     return true;
 }
@@ -162,21 +179,6 @@ void FaceLoader::setLeafSize(float value)
 {
     leafSize = value;
 }
-
-//bool ImageLoader::loadFileName(const string &path) {
-//    fs::path full_path = fs::system_complete(fs::path(path));
-//
-//    // check if exsists
-//    if (!fs::exists(full_path)) {
-//        cerr << "\nNot found: " << full_path.filename() << endl;
-//        return false;
-//    }
-//
-//    // adds to the LIFO list of files to load
-//    fileNames.push_back(full_path);
-//
-//    return true;
-//}
 
 bool FaceLoader::loadFileNames(const string& dirPath)
 {
