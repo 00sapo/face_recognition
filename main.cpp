@@ -10,20 +10,13 @@
 #include "face.h"
 #include "faceloader.h"
 #include "singletonsettings.h"
-#include "yamlloader.h"
 
 using namespace std;
 using namespace cv;
 using namespace pcl;
 
-void testYaml()
+void testSingletonSettings()
 {
-    YamlLoader loader = YamlLoader();
-
-    loader.setPath("camera_info.yaml");
-
-    loader.read();
-
     SingletonSettings& settings = SingletonSettings::getInstance();
     cout << settings.getD() << endl
          << settings.getK() << endl
@@ -111,26 +104,20 @@ void testGetDepthMap()
 
 int main()
 {
-    YamlLoader loader = YamlLoader();
 
-    loader.setPath("camera_info.yaml");
+    cout << "SingletonSettings test..." << endl;
+    testSingletonSettings();
 
-    loader.read();
-
-    //    cout << "Yaml test..." << endl;
-    //    testYaml();
-
-    //    cout << "\n\nFace loader test..." << endl;
-    //    testFaceLoader();
+    cout << "\n\nFace loader test..." << endl;
+    testFaceLoader();
 
     cout << "\n\nFind threshold test..." << endl;
     testFindThreshold();
 
-    cout << "\n\nTests finished!" << endl;
-
-    //    testCloudLoader();
-
+    cout << "\n\nGet depth map test..." << endl;
     //testGetDepthMap();
+
+    cout << "\n\nTests finished!" << endl;
 
     return 0;
 }

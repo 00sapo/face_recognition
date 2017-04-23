@@ -1,6 +1,8 @@
 #include "pointprojector.h"
-#include "singletonsettings.h"
+
 #include <opencv2/core/eigen.hpp>
+
+#include "singletonsettings.h"
 
 PointProjector::PointProjector()
 {

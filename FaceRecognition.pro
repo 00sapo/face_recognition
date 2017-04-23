@@ -1,11 +1,10 @@
 TEMPLATE = app
 CONFIG += console c++14
 CONFIG -= app_bundle
-CONFIG -= qt
+CONFIG -= qt 
 
 SOURCES += main.cpp \
     singletonsettings.cpp \
-    yamlloader.cpp \
     backgroundsegmentation.cpp \
     pointprojector.cpp \
     face.cpp \
@@ -15,7 +14,6 @@ SOURCES += main.cpp \
 
 HEADERS += \
     singletonsettings.h \
-    yamlloader.h \
     backgroundsegmentation.h \
     pointprojector.h \
     face.h \

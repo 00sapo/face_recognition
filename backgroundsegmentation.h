@@ -1,14 +1,12 @@
 #ifndef BACKGROUNDSEGMENTATION_H
 #define BACKGROUNDSEGMENTATION_H
 
-//#include <opencv2/core/cvstd.hpp>
-
-#include "face.h"
-
 #include <opencv2/opencv.hpp>
 #include <pcl/common/common.h>
 #include <pcl/ml/kmeans.h>
 #include <pcl/point_types.h>
+
+#include "face.h"
 
 /**
  * @brief The BackgroundSegmentation class performs the removing of background from a RGB-D image.
