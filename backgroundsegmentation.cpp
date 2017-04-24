@@ -23,10 +23,9 @@ void BackgroundSegmentation::findClusters()
 
     std::cout << "Adding points to KMeans..." << std::endl;
 
-	
     //for (unsigned int i = 0; i < face.cloud->size(); ++i) {
     //    float value = face.cloud->at(i).z;
-    for(auto& point : *face.cloud) {
+    for (auto& point : *face.cloud) {
         float value = point.z;
         if (std::isnan(value)) {
             value = FLT_MIN;
@@ -41,8 +40,18 @@ void BackgroundSegmentation::findClusters()
     std::cout << "Done!" << std::endl;
 }
 
-void BackgroundSegmentation::filter(unsigned int clusterId)
+void BackgroundSegmentation::filter()
 {
+    Point min = { FLT_MAX };
+    unsigned int clusterId = 0;
+    for (int i = 0; i < num_clusters_; i++) {
+
+        if (centroids_[i][0] < min[0]) {
+            clusterId = i;
+            min = centroids_[i];
+        }
+    }
+
     cv::Mat filteredImage = cv::Mat::zeros(face.image.rows, face.image.cols, CV_8U);
     PointCloud<PointXYZ>::Ptr filteredCloud(new PointCloud<PointXYZ>);
     for (unsigned int i; i < points_to_clusters_.size(); i++) {
@@ -70,7 +79,7 @@ void BackgroundSegmentation::filterBackground()
     std::cout << "Done!" << std::endl;
 
     std::cout << "Removing background..." << std::endl;
-    filter(1);
+    filter();
     std::cout << "Done!" << std::endl;
 }
 
@@ -95,7 +104,8 @@ void BackgroundSegmentation::setFace(const Face& value)
     points_to_clusters_ = PointsToClusters(num_points_, 0);
 }
 
-void BackgroundSegmentation::cropFace() {
+void BackgroundSegmentation::cropFace()
+{
     //CRForestEstimator estimator;
     //if(!estimator.loadForest("../trees", 10)) {
     //    std::cerr << "Can't find forest files" << std::endl;
@@ -104,5 +114,4 @@ void BackgroundSegmentation::cropFace() {
     //estimator.estimate(img3D, g_means, g_clusters, g_votes, g_stride, g_maxv, g_prob_th,
     //                   g_larger_radius_ratio, g_smaller_radius_ratio, false, g_th);
     //
-
 }

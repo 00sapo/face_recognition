@@ -30,7 +30,7 @@ public:
      * @param clusterId: the id of the cluster, it can be 0 or 1
      * @return
      */
-    void filter(unsigned int clusterId);
+    void filter();
 
     /**
      * @brief filterBackground: finds clusters and then calls filter(1)
