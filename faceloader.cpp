@@ -54,19 +54,20 @@ bool FaceLoader::get(Face& face)
     //   return false;
     //}
 
-    face.image = cv::imread(imageFile, CV_LOAD_IMAGE_GRAYSCALE);
-    if (face.image.empty()) {
+    Mat image = cv::imread(imageFile, CV_LOAD_IMAGE_GRAYSCALE);
+    if (image.empty()) {
         cout << "Unable to load file " << imageFile << endl;
         return false;
     }
 
-    int result = pcl::io::loadPCDFile<PointXYZ>(cloudFile, *face.cloud);
+    PointCloud<PointXYZ>::Ptr cloud(new PointCloud<PointXYZ>);
+    int result = pcl::io::loadPCDFile<PointXYZ>(cloudFile, *cloud);
     if (result == -1) {
         cout << "Unable to load file " << cloudFile << endl;
         return false;
     }
 
-    if(!face.cloud->isOrganized())
+    if(cloud->isOrganized())
         cout << "WARNING: loading unorganized point cloud!" << endl;
 
     // setting nans to 0 keeping the cloud organized
@@ -78,8 +79,8 @@ bool FaceLoader::get(Face& face)
     //    }
     //}
 
-    uint32_t cloudHeight = face.cloud->height;
-    uint32_t cloudWidth = face.cloud->width;
+    uint32_t cloudHeight = cloud->height;
+    uint32_t cloudWidth  = cloud->width;
 
     /* VOXEL GRID FILTERING -- not working by now */
     //    uint32_t totalCloudPoints = cloudHeight * cloudWidth;
@@ -108,8 +109,8 @@ bool FaceLoader::get(Face& face)
     //    face.cloud->width = cloudWidth;
     //    face.cloud->height = cloudHeight;
     /**/
-    int rgbWidth = face.image.cols;
-    int rgbHeight = face.image.rows;
+    int rgbWidth  = image.cols;
+    int rgbHeight = image.rows;
 
     float downscalingRatio = (float)cloudHeight / rgbHeight;
     if (((float)cloudWidth / rgbWidth) != downscalingRatio) {
@@ -126,14 +127,15 @@ bool FaceLoader::get(Face& face)
         return false;
     }
 
-    face.cloudImageRatio = downscalingRatio;
+    //face.cloudImageRatio = downscalingRatio;
 
-    resize(face.image,
-        face.image,
-        Size(rgbWidth * downscalingRatio, rgbHeight * downscalingRatio),
+    resize(image, image,
+           Size(rgbWidth * downscalingRatio, rgbHeight * downscalingRatio),
         INTER_AREA);
     /**/
     //    viewPointCloud(face.cloud);
+
+    face = Face(image, cloud);
 
 
     imageFileNames.pop_back();

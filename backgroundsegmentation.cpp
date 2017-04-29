@@ -11,6 +11,8 @@ using pcl::PointCloud;
 using pcl::PointXYZ;
 using std::isnan;
 
+typedef unsigned int uint;
+
 BackgroundSegmentation::BackgroundSegmentation(const Face& face)
     : Kmeans(0, 1)
 {
@@ -43,8 +45,8 @@ void BackgroundSegmentation::findClusters()
 void BackgroundSegmentation::filter()
 {
     Point min = { FLT_MAX };
-    unsigned int clusterId = 0;
-    for (int i = 0; i < num_clusters_; i++) {
+    uint clusterId = 0;
+    for (uint i = 0; i < num_clusters_; i++) {
 
         if (centroids_[i][0] < min[0]) {
             clusterId = i;
@@ -52,17 +54,19 @@ void BackgroundSegmentation::filter()
         }
     }
 
-    cv::Mat filteredImage = cv::Mat::zeros(face.image.rows, face.image.cols, CV_8U);
-    PointCloud<PointXYZ>::Ptr filteredCloud(new PointCloud<PointXYZ>);
-    for (unsigned int i; i < points_to_clusters_.size(); i++) {
+    const uint WIDTH  = face.getWidth();
+    const uint HEIGHT = face.getHeight();
 
+    cv::Mat filteredImage = cv::Mat::zeros(HEIGHT, WIDTH, CV_8U);
+    PointCloud<PointXYZ>::Ptr filteredCloud(new PointCloud<PointXYZ>(WIDTH, HEIGHT));
+    for (uint i = 0; i < face.cloud->size(); ++i) {
+        uint x = i / WIDTH;
+        uint y = i % WIDTH / 4;
         if (clusterId == points_to_clusters_[i]) {
-            PointXYZ point = face.cloud->at(i);
+            const auto& point = face.cloud->at(i);
             if (!isnan(point.x) && !isnan(point.y) && !isnan(point.z)) {
-                filteredCloud->push_back(point);
-                std::vector<int> xy = { i / face.cloud->width, i % face.cloud->width / 4 };
-                filteredImage.at<int>(xy[0], xy[1])
-                    = face.image.at<int>(xy[0], xy[1]);
+                filteredCloud->at(x,y) = point;
+                filteredImage.at<int>(x, y) = face.image.at<int>(x, y);
             }
         }
     }
@@ -106,12 +110,26 @@ void BackgroundSegmentation::setFace(const Face& value)
 
 void BackgroundSegmentation::cropFace()
 {
-    //CRForestEstimator estimator;
-    //if(!estimator.loadForest("../trees", 10)) {
-    //    std::cerr << "Can't find forest files" << std::endl;
-    //}
-    //
-    //estimator.estimate(img3D, g_means, g_clusters, g_votes, g_stride, g_maxv, g_prob_th,
-    //                   g_larger_radius_ratio, g_smaller_radius_ratio, false, g_th);
-    //
+    CRForestEstimator estimator;
+    if(!estimator.loadForest("../trees/", 10)) {
+        std::cerr << "Can't find forest files" << std::endl;
+    }
+
+    cv::Mat img3D = face.get3DImage();
+    std::vector< cv::Vec<float,POSE_SIZE> > means; //outputs
+    std::vector< std::vector< Vote > > clusters; //full clusters of votes
+    std::vector< Vote > votes; //all votes returned by the forest
+    int stride = 5;
+
+    estimator.estimate(img3D, means, clusters, votes, stride, 800);
+
+    if (means.empty())
+        std::cout << "Detection and pose estimation failed!" << std::endl;
+
+    for (auto& pose : means) {
+        std::cout << "Face detected!" << std::endl;
+        std::cout << pose[0] << ", " << pose[1] << ", " << pose[2] << ", "
+                  << pose[3] << ", " << pose[4] << ", " << pose[5] << std::endl;
+    }
+
 }
