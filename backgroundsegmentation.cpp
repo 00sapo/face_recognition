@@ -11,6 +11,8 @@ using pcl::PointCloud;
 using pcl::PointXYZ;
 using std::isnan;
 
+typedef unsigned int uint;
+
 BackgroundSegmentation::BackgroundSegmentation(const Face& face)
     : Kmeans(0, 1)
 {
@@ -43,8 +45,8 @@ void BackgroundSegmentation::findClusters()
 void BackgroundSegmentation::filter()
 {
     Point min = { FLT_MAX };
-    unsigned int clusterId = 0;
-    for (int i = 0; i < num_clusters_; i++) {
+    uint clusterId = 0;
+    for (uint i = 0; i < num_clusters_; i++) {
 
         if (centroids_[i][0] < min[0]) {
             clusterId = i;
@@ -52,22 +54,20 @@ void BackgroundSegmentation::filter()
         }
     }
 
-    cv::Mat filteredImage = cv::Mat::zeros(face.image.rows, face.image.cols, CV_8U);
-    PointCloud<PointXYZ>::Ptr filteredCloud(new PointCloud<PointXYZ>);
-    filteredCloud->width  = face.cloud->width;
-    filteredCloud->height = face.cloud->height;
-    filteredCloud->resize(face.cloud->size());
-    //for (unsigned int i = 0; i < points_to_clusters_.size(); i++) {
-    for (unsigned int i = 0; i < face.cloud->size(); ++i) {
-        int x = i / face.cloud->width;
-        int y = i % face.cloud->width / 4;
+    const uint WIDTH  = face.getWidth();
+    const uint HEIGHT = face.getHeight();
+
+    cv::Mat filteredImage = cv::Mat::zeros(HEIGHT, WIDTH, CV_8U);
+    PointCloud<PointXYZ>::Ptr filteredCloud(new PointCloud<PointXYZ>(WIDTH, HEIGHT));
+    for (uint i = 0; i < face.cloud->size(); ++i) {
+        uint x = i / WIDTH;
+        uint y = i % WIDTH / 4;
         if (clusterId == points_to_clusters_[i]) {
-            PointXYZ point = face.cloud->at(i);
+            const auto& point = face.cloud->at(i);
             if (!isnan(point.x) && !isnan(point.y) && !isnan(point.z)) {
                 filteredCloud->at(x,y) = point;
                 filteredImage.at<int>(x, y) = face.image.at<int>(x, y);
             }
-
         }
     }
 

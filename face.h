@@ -5,6 +5,7 @@
 #include <pcl/common/common.h>
 #include <pcl/point_types.h>
 
+typedef unsigned int uint;
 
 class Face
 {
@@ -18,12 +19,15 @@ public:
     Face(cv::Mat image, pcl::PointCloud<pcl::PointXYZ>::Ptr cloud);
     Face(cv::Mat image, pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, float cloudImageRatio);
 
-    cv::Mat get3DImage();
-    cv::Point2i get2DCoordinates(const pcl::PointXYZ &point) const;
+    cv::Mat get3DImage() const;
+    //cv::Point2i get2DCoordinates(const pcl::PointXYZ &point) const;
+
+    uint getWidth() const;
+    uint getHeight() const;
 
 private:
-    unsigned int cloudWidth;
-    unsigned int cloudHeight;
+    uint WIDTH;
+    uint HEIGHT;
 };
 
 #endif // FACE_H
