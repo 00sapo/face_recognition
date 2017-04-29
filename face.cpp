@@ -19,31 +19,34 @@ Face::Face()
 
 Face::Face(Mat image, PointCloud<PointXYZ>::Ptr cloud) : image(image), cloud(cloud) {
     cloudImageRatio = image.cols/cloud->width;
+    cloudWidth  = cloud->width;
+    cloudHeight = cloud->height;
 }
 
-Face::Face(Mat image, PointCloud<PointXYZ>::Ptr cloud, float cloudImageRatio) :
-    image(image), cloud(cloud), cloudImageRatio(cloudImageRatio) { }
+Face::Face(Mat image, PointCloud<PointXYZ>::Ptr cloud, float cloudImageRatio)
+    : image(image), cloud(cloud), cloudImageRatio(cloudImageRatio) {
+
+    cloudWidth  = cloud->width;
+    cloudHeight = cloud->height;
+}
 
 Mat Face::get3DImage()
 {
-    Mat image3D(cv::Size(image.cols, image.rows), CV_32FC3);
+    Mat image3D(cv::Size(cloudHeight, cloudWidth), CV_32FC3);
 
-    // TODO: probably NANs should be removed unless we guarantee they can't be present
-    //for (int x = 0; x < cloud->width; ++x) {
-     //   for (int y = 0; y < cloud->height; ++y) {
-    for (unsigned int i = 0; i < cloud->size(); ++i) {
-        int x = i / cloud->width;
-        int y = i % cloud->width / 4;
+   for (unsigned int i = 0; i < cloud->size(); ++i) {
+        int x = i / cloudWidth;
+        int y = i % cloudWidth / 4;
         const PointXYZ& point = cloud->at(i);
         image3D.at<Vec3f>(x,y) = {point.x, point.y, point.z};
     }
 
-    Mat displayDepth = Mat::zeros(cv::Size(image.cols, image.rows), CV_32FC1);
-    for (int x = 0; x < image.cols; ++x) {
-        for (int y = 0; y < image.rows; ++y) {
+    Mat displayDepth = Mat::zeros(cv::Size(cloudHeight, cloudWidth), CV_32FC1);
+    for (int x = 0; x < image3D.rows; ++x) {
+        for (int y = 0; y < image3D.cols; ++y) {
             float depth = image3D.at<Vec3f>(x,y)[2];
             if(std::isnan(depth) || std::isinf(depth))
-                depth = 1000;
+                depth = 0;
             displayDepth.at<float>(x,y) = depth;
         }
     }

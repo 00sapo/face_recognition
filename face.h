@@ -20,6 +20,10 @@ public:
 
     cv::Mat get3DImage();
     cv::Point2i get2DCoordinates(const pcl::PointXYZ &point) const;
+
+private:
+    unsigned int cloudWidth;
+    unsigned int cloudHeight;
 };
 
 #endif // FACE_H
