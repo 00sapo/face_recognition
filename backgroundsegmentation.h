@@ -37,7 +37,6 @@ public:
      */
     void filterBackground();
 
-private:
     /**
      * @brief filterBackground: same as filterBackground() but for every face in the vector
      * @param faces
@@ -47,13 +46,13 @@ private:
     Face getFace() const;
     void setFace(const Face& value);
 
+    void cropFace();
+
 private:
     /**
      * @brief face: the face that contains the RGB-D image to be process
      */
     Face face;
-
-    void cropFace();
 };
 
 #endif // BACKGROUNDSEGMENTATION_H

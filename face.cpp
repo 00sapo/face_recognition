@@ -24,9 +24,38 @@ Face::Face(Mat image, PointCloud<PointXYZ>::Ptr cloud) : image(image), cloud(clo
 Face::Face(Mat image, PointCloud<PointXYZ>::Ptr cloud, float cloudImageRatio) :
     image(image), cloud(cloud), cloudImageRatio(cloudImageRatio) { }
 
-Mat Face::getDepthMap()
+Mat Face::get3DImage()
 {
-    Mat depthMap = Mat::zeros(cv::Size(image.cols, image.rows), CV_32FC1);
+    Mat image3D(cv::Size(image.cols, image.rows), CV_32FC3);
+
+    // TODO: probably NANs should be removed unless we guarantee they can't be present
+    //for (int x = 0; x < cloud->width; ++x) {
+     //   for (int y = 0; y < cloud->height; ++y) {
+    for (unsigned int i = 0; i < cloud->size(); ++i) {
+        int x = i / cloud->width;
+        int y = i % cloud->width / 4;
+        const PointXYZ& point = cloud->at(i);
+        image3D.at<Vec3f>(x,y) = {point.x, point.y, point.z};
+    }
+
+    Mat displayDepth = Mat::zeros(cv::Size(image.cols, image.rows), CV_32FC1);
+    for (int x = 0; x < image.cols; ++x) {
+        for (int y = 0; y < image.rows; ++y) {
+            float depth = image3D.at<Vec3f>(x,y)[2];
+            if(std::isnan(depth) || std::isinf(depth))
+                depth = 1000;
+            displayDepth.at<float>(x,y) = depth;
+        }
+    }
+
+    Mat newMat;
+    cv::normalize(displayDepth, newMat, 0, 255, NORM_MINMAX, CV_8UC1);
+
+    imshow("Depth", newMat);
+    waitKey(0);
+
+
+    /*
     Mat mask = Mat::zeros(cv::Size(image.cols, image.rows), CV_8UC1);
     for(auto& point : *cloud) {
         if(!isnan(point.x) && !isnan(point.y) && !isnan(point.z)) {
@@ -44,9 +73,10 @@ Mat Face::getDepthMap()
     }
 
     Mat normalizedDepthMap;
-    cv::normalize(depthMap, normalizedDepthMap, 0, 255, NORM_MINMAX, CV_8UC1, mask);
+    */
+    //cv::normalize(depthMap, normalizedDepthMap, 0, 255, NORM_MINMAX, CV_8UC1, mask);
 
-    return normalizedDepthMap;
+    return image3D;
 }
 
 Point2i Face::get2DCoordinates(const pcl::PointXYZ &point) const

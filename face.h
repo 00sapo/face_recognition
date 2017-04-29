@@ -18,7 +18,7 @@ public:
     Face(cv::Mat image, pcl::PointCloud<pcl::PointXYZ>::Ptr cloud);
     Face(cv::Mat image, pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, float cloudImageRatio);
 
-    cv::Mat getDepthMap();
+    cv::Mat get3DImage();
     cv::Point2i get2DCoordinates(const pcl::PointXYZ &point) const;
 };
 

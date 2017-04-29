@@ -106,12 +106,26 @@ void BackgroundSegmentation::setFace(const Face& value)
 
 void BackgroundSegmentation::cropFace()
 {
-    //CRForestEstimator estimator;
-    //if(!estimator.loadForest("../trees", 10)) {
-    //    std::cerr << "Can't find forest files" << std::endl;
-    //}
-    //
-    //estimator.estimate(img3D, g_means, g_clusters, g_votes, g_stride, g_maxv, g_prob_th,
-    //                   g_larger_radius_ratio, g_smaller_radius_ratio, false, g_th);
-    //
+    CRForestEstimator estimator;
+    if(!estimator.loadForest("../trees/", 10)) {
+        std::cerr << "Can't find forest files" << std::endl;
+    }
+
+    cv::Mat img3D = face.get3DImage();
+    std::vector< cv::Vec<float,POSE_SIZE> > means; //outputs
+    std::vector< std::vector< Vote > > clusters; //full clusters of votes
+    std::vector< Vote > votes; //all votes returned by the forest
+    int stride = 5;
+
+    estimator.estimate(img3D, means, clusters, votes, stride, 800);
+
+    if (means.empty())
+        std::cout << "Detection and pose estimation failed!" << std::endl;
+
+    for (auto& pose : means) {
+        std::cout << "Face detected!" << std::endl;
+        std::cout << pose[0] << ", " << pose[1] << ", " << pose[2] << ", "
+                  << pose[3] << ", " << pose[4] << ", " << pose[5] << std::endl;
+    }
+
 }

@@ -79,7 +79,7 @@ void testFindThreshold()
     }
     viewPointCloud(segmenter.getFace().cloud);
 
-    Mat depthMap = segmenter.getFace().getDepthMap();
+    Mat depthMap = segmenter.getFace().get3DImage();
     imshow("Depth Map", depthMap);
     waitKey(0);
 }
@@ -100,9 +100,45 @@ void testGetDepthMap()
 
     cout << "Face loaded!" << endl;
 
-    cv::Mat depthMap = face.getDepthMap();
+    cv::Mat depthMap = face.get3DImage();
 
     imshow("Depth Map", depthMap);
+    waitKey(0);
+}
+
+void testDetectFacePose()
+{
+
+    string dirPath = "../RGBD_Face_dataset_training/";
+    FaceLoader loader(dirPath, "000_.*"); // example: loads only .png files starting with 014
+
+    Face face;
+
+    //    loader.setDownscalingRatio(0.5);
+
+    if (!loader.get(face)) {
+        cout << "Failed loading face" << endl;
+        return;
+    }
+
+    cout << "Face loaded!" << endl;
+
+    cout << "\nFiltering background..." << endl;
+
+    BackgroundSegmentation segmenter(face);
+    imshow("image", segmenter.getFace().image);
+    while (waitKey(0) != 'm') {
+    }
+
+    segmenter.filterBackground();
+
+    //cout << "Treshold found: " << segmenter.findTreshold() << endl;
+    imshow("image", segmenter.getFace().image);
+    while (waitKey(0) != 'm') {
+    }
+    viewPointCloud(segmenter.getFace().cloud);
+
+    segmenter.cropFace();
     waitKey(0);
 }
 
@@ -116,10 +152,13 @@ int main()
     //testFaceLoader();
 
     cout << "\n\nFind threshold test..." << endl;
-    testFindThreshold();
+    //testFindThreshold();
 
     cout << "\n\nGet depth map test..." << endl;
     //testGetDepthMap();
+
+    cout << "\n\nDetect face pose..." << endl;
+    testDetectFacePose();
 
     cout << "\n\nTests finished!" << endl;
 
