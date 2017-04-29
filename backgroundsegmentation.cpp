@@ -1,11 +1,15 @@
 #include "backgroundsegmentation.h"
 
 #include <iostream>
+#include <math.h>
+#include <pointprojector.h>
 
 #include "face.h"
+#include "head_pose_estimation/CRForestEstimator.h"
 
 using pcl::PointCloud;
 using pcl::PointXYZ;
+using std::isnan;
 
 BackgroundSegmentation::BackgroundSegmentation(const Face& face)
     : Kmeans(0, 1)
@@ -19,10 +23,12 @@ void BackgroundSegmentation::findClusters()
 
     std::cout << "Adding points to KMeans..." << std::endl;
 
-    for (unsigned int i = 0; i < face.cloud->size(); ++i) {
-        float value = face.cloud->at(i).z;
-        if (isnan(value)) {
-            value = 0.0f;
+    //for (unsigned int i = 0; i < face.cloud->size(); ++i) {
+    //    float value = face.cloud->at(i).z;
+    for (auto& point : *face.cloud) {
+        float value = point.z;
+        if (std::isnan(value)) {
+            value = FLT_MIN;
         }
         pcl::Kmeans::Point p = { value };
         this->addDataPoint(p);
@@ -34,17 +40,35 @@ void BackgroundSegmentation::findClusters()
     std::cout << "Done!" << std::endl;
 }
 
-void BackgroundSegmentation::filter(unsigned int clusterId)
+void BackgroundSegmentation::filter()
 {
+    Point min = { FLT_MAX };
+    unsigned int clusterId = 0;
+    for (int i = 0; i < num_clusters_; i++) {
+
+        if (centroids_[i][0] < min[0]) {
+            clusterId = i;
+            min = centroids_[i];
+        }
+    }
+
+    cv::Mat filteredImage = cv::Mat::zeros(face.image.rows, face.image.cols, CV_8U);
     PointCloud<PointXYZ>::Ptr filteredCloud(new PointCloud<PointXYZ>);
     for (unsigned int i; i < points_to_clusters_.size(); i++) {
 
-        if (clusterId == points_to_clusters_[i])
-            filteredCloud->push_back(face.cloud->at(i));
+        if (clusterId == points_to_clusters_[i]) {
+            PointXYZ point = face.cloud->at(i);
+            if (!isnan(point.x) && !isnan(point.y) && !isnan(point.z)) {
+                filteredCloud->push_back(point);
+                std::vector<int> xy = { i / face.cloud->width, i % face.cloud->width / 4 };
+                filteredImage.at<int>(xy[0], xy[1])
+                    = face.image.at<int>(xy[0], xy[1]);
+            }
+        }
     }
 
     face.cloud = filteredCloud;
-    /* TODO: remove points from RGB image! */
+    face.image = filteredImage;
 }
 
 void BackgroundSegmentation::filterBackground()
@@ -55,7 +79,7 @@ void BackgroundSegmentation::filterBackground()
     std::cout << "Done!" << std::endl;
 
     std::cout << "Removing background..." << std::endl;
-    filter(1);
+    filter();
     std::cout << "Done!" << std::endl;
 }
 
@@ -80,35 +104,14 @@ void BackgroundSegmentation::setFace(const Face& value)
     points_to_clusters_ = PointsToClusters(num_points_, 0);
 }
 
-/*
-float BackgroundSegmentation::getTreshold() const
+void BackgroundSegmentation::cropFace()
 {
-    return threshold;
+    //CRForestEstimator estimator;
+    //if(!estimator.loadForest("../trees", 10)) {
+    //    std::cerr << "Can't find forest files" << std::endl;
+    //}
+    //
+    //estimator.estimate(img3D, g_means, g_clusters, g_votes, g_stride, g_maxv, g_prob_th,
+    //                   g_larger_radius_ratio, g_smaller_radius_ratio, false, g_th);
+    //
 }
-
-void BackgroundSegmentation::setTreshold(float value)
-{
-    threshold = value;
-}
-
-cv::Mat BackgroundSegmentation::getImageRGB() const
-{
-    return imageRGB;
-}
-
-void BackgroundSegmentation::setImageRGB(cv::Mat& value)
-{
-    imageRGB = value;
-}
-*/
-
-//void BackgroundSegmentation::setImageDepth(const pcl::PointCloud<pcl::PointXYZ>::Ptr& value)
-//{
-//    imageDepth = value;
-//    num_points_ = imageDepth->size();
-//}
-//
-//pcl::PointCloud<pcl::PointXYZ>::Ptr BackgroundSegmentation::getImageDepth() const
-//{
-//    return imageDepth;
-//}

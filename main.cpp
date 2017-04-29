@@ -1,5 +1,6 @@
 #include <iostream>
 
+#include <opencv2/opencv.hpp>
 #include <opencv2/highgui.hpp>
 
 #include <pcl/visualization/area_picking_event.h>
@@ -9,20 +10,13 @@
 #include "face.h"
 #include "faceloader.h"
 #include "singletonsettings.h"
-#include "yamlloader.h"
 
 using namespace std;
 using namespace cv;
 using namespace pcl;
 
-void testYaml()
+void testSingletonSettings()
 {
-    YamlLoader loader = YamlLoader();
-
-    loader.setPath("camera_info.yaml");
-
-    loader.read();
-
     SingletonSettings& settings = SingletonSettings::getInstance();
     cout << settings.getD() << endl
          << settings.getK() << endl
@@ -30,33 +24,6 @@ void testYaml()
          << settings.getR() << endl
          << settings.getHeight() << endl
          << settings.getWidth() << endl;
-}
-
-void keyboardEventHandler(const visualization::KeyboardEvent& event, void* viewer_void)
-{
-
-    //    boost::shared_ptr<visualization::PCLVisualizer> viewer = *static_cast<boost::shared_ptr<visualization::PCLVisualizer>*>(viewer_void);
-    visualization::PCLVisualizer* viewer = (visualization::PCLVisualizer*)viewer_void;
-
-    if (event.getKeySym() == "n" && event.keyDown())
-        viewer->close();
-}
-
-void viewPointCloud(PointCloud<PointXYZ>::Ptr cloud)
-{
-
-    visualization::PCLVisualizer* viewer = new visualization::PCLVisualizer("PCL Viewer");
-    viewer->setBackgroundColor(0.0, 0.0, 0.5);
-    viewer->addCoordinateSystem(0.1);
-    viewer->initCameraParameters();
-
-    //visualization::PointCloudColorHandlerRGBField<PointXYZRGB> rgb(cloud);
-    viewer->addPointCloud<PointXYZ>(cloud, "input_cloud");
-
-    viewer->registerKeyboardCallback(keyboardEventHandler, (void*)viewer);
-    while (!viewer->wasStopped()) {
-        viewer->spin();
-    }
 }
 
 void testFaceLoader()
@@ -100,28 +67,61 @@ void testFindThreshold()
     cout << "\nFiltering background..." << endl;
 
     BackgroundSegmentation segmenter(face);
+    imshow("image", segmenter.getFace().image);
+    while (waitKey(0) != 'm') {
+    }
+
     segmenter.filterBackground();
 
     //cout << "Treshold found: " << segmenter.findTreshold() << endl;
-
+    imshow("image", segmenter.getFace().image);
+    while (waitKey(0) != 'm') {
+    }
     viewPointCloud(segmenter.getFace().cloud);
+
+    Mat depthMap = segmenter.getFace().getDepthMap();
+    imshow("Depth Map", depthMap);
+    waitKey(0);
+}
+
+void testGetDepthMap()
+{
+    string dirPath = "../RGBD_Face_dataset_training/";
+    FaceLoader loader(dirPath, "014.*"); // example: loads only .png files starting with 014
+
+    Face face;
+
+    //    loader.setDownscalingRatio(0.5);
+
+    if (!loader.get(face)) {
+        cout << "Failed loading face" << endl;
+        return;
+    }
+
+    cout << "Face loaded!" << endl;
+
+    cv::Mat depthMap = face.getDepthMap();
+
+    imshow("Depth Map", depthMap);
+    waitKey(0);
 }
 
 int main()
 {
-    cout << "Hello World!" << endl;
 
-    //    cout << "Yaml test..." << endl;
-    //    testYaml();
+    cout << "SingletonSettings test..." << endl;
+    //testSingletonSettings();
 
-    //    cout << "\n\nFace loader test..." << endl;
-    //    testFaceLoader();
+    cout << "\n\nFace loader test..." << endl;
+    //testFaceLoader();
 
     cout << "\n\nFind threshold test..." << endl;
     testFindThreshold();
 
+    cout << "\n\nGet depth map test..." << endl;
+    //testGetDepthMap();
+
     cout << "\n\nTests finished!" << endl;
 
-    //    testCloudLoader();
     return 0;
 }

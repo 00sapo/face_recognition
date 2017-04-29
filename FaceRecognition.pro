@@ -1,23 +1,25 @@
 TEMPLATE = app
 CONFIG += console c++14
 CONFIG -= app_bundle
-CONFIG -= qt
+CONFIG -= qt 
 
 SOURCES += main.cpp \
     singletonsettings.cpp \
-    yamlloader.cpp \
     backgroundsegmentation.cpp \
     pointprojector.cpp \
     face.cpp \
-    faceloader.cpp
+    faceloader.cpp \
+    head_pose_estimation/CRForestEstimator.cpp \
+    head_pose_estimation/CRTree.cpp
 
 HEADERS += \
     singletonsettings.h \
-    yamlloader.h \
     backgroundsegmentation.h \
     pointprojector.h \
     face.h \
-    faceloader.h
+    faceloader.h \
+    head_pose_estimation/CRForestEstimator.h \
+    head_pose_estimation/CRTree.h
 
 DISTFILES += \
     camera_info.yaml

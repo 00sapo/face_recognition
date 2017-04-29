@@ -7,28 +7,30 @@ using namespace cv;
 
 class SingletonSettings {
 public:
+    static void setPath(const std::string &pathName);
     static SingletonSettings& getInstance();
     //    ~SingletonSettings();
 
-    Mat getK();
-    Mat getD();
-    Mat getP();
-    Mat getR();
+    const Mat getK();
+    const Mat getD();
+    const Mat getP();
+    const Mat getR();
     int getHeight();
     int getWidth();
 
-    void setHeight(int height);
-    void setWidth(int width);
-    void setK(Mat K);
-    void setD(Mat D);
-    void setP(Mat P);
-    void setR(Mat R);
+    //void setHeight(int height);
+    //void setWidth(int width);
+    //void setK(Mat K);
+    //void setD(Mat D);
+    //void setP(Mat P);
+    //void setR(Mat R);
 
     SingletonSettings(SingletonSettings const&) = delete;
     void operator=(SingletonSettings const&)    = delete;
 
 protected:
     SingletonSettings();
+    bool read();
 
     /*
      * Camera parameters
@@ -39,6 +41,9 @@ protected:
     Mat R;
     int height;
     int width;
+
+    static std::string path;
+    static bool pathHasChanged;
 };
 
 #endif // SINGLETONSETTINGS_H

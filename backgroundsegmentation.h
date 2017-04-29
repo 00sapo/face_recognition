@@ -1,14 +1,12 @@
 #ifndef BACKGROUNDSEGMENTATION_H
 #define BACKGROUNDSEGMENTATION_H
 
-//#include <opencv2/core/cvstd.hpp>
-
-#include "face.h"
-
 #include <opencv2/opencv.hpp>
 #include <pcl/common/common.h>
 #include <pcl/ml/kmeans.h>
 #include <pcl/point_types.h>
+
+#include "face.h"
 
 /**
  * @brief The BackgroundSegmentation class performs the removing of background from a RGB-D image.
@@ -32,13 +30,14 @@ public:
      * @param clusterId: the id of the cluster, it can be 0 or 1
      * @return
      */
-    void filter(unsigned int clusterId);
+    void filter();
 
     /**
      * @brief filterBackground: finds clusters and then calls filter(1)
      */
     void filterBackground();
 
+private:
     /**
      * @brief filterBackground: same as filterBackground() but for every face in the vector
      * @param faces
@@ -53,6 +52,8 @@ private:
      * @brief face: the face that contains the RGB-D image to be process
      */
     Face face;
+
+    void cropFace();
 };
 
 #endif // BACKGROUNDSEGMENTATION_H

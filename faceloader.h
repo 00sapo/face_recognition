@@ -6,6 +6,8 @@
 #include <opencv2/opencv.hpp>
 #include <pcl/common/common.h>
 #include <pcl/point_types.h>
+#include <pcl/visualization/area_picking_event.h>
+#include <pcl/visualization/pcl_visualizer.h>
 #include <regex>
 
 class Face;
@@ -80,14 +82,15 @@ public:
      */
     void setCurrentPath(const std::string& dirPath);
 
-    float getDownscalingRatio() const;
-    void setDownscalingRatio(float value);
+    float getLeafSize() const;
+    void setLeafSize(float value);
 
 private:
     /**
-     * @brief downscalingRatio: not working
+     * @brief leafSize: not working for now. If it is setted, the images will be filtered with a Voxel Grid filter of this leaf size.
+     *
      */
-    float downscalingRatio = 1;
+    float leafSize = 0.0f;
 
     std::string currentPath;
     std::regex fileTemplate;
@@ -99,5 +102,9 @@ private:
 
     bool matchTemplate(const std::string& fileName);
 };
+
+void keyboardEventHandler(const pcl::visualization::KeyboardEvent& event, void* viewer_void);
+
+void viewPointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud);
 
 #endif // IMAGELOADER_Hs
