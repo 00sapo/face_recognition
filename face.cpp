@@ -29,30 +29,33 @@ uint  Face::getWidth()  const { return WIDTH;  }
 uint  Face::getHeight() const { return HEIGHT; }
 float Face::getCloudImageRatio() const { return CLOUD_IMG_RATIO; }
 
-Mat Face::get3DImage() const
+Mat Face::get3DImage()
 {
     Mat image3D(cv::Size(WIDTH, HEIGHT), CV_32FC3);
 
-    Mat displayDepth = Mat::zeros(cv::Size(WIDTH, HEIGHT), CV_32FC1);
-
-    auto size = cloud->size();
-    for (uint i = 0; i < cloud->size(); ++i) {
-        int x = i / WIDTH;
-        int y = i % WIDTH;
-        const PointXYZ& point = cloud->at(i);
-        //image3D.at<cv::Vec3f>(x,y) = {point.x, point.y, point.z};
-        displayDepth.at<float>(x,y) = point.z;
-    }
-
-    cv::normalize(displayDepth, displayDepth, 0, 255, cv::NORM_MINMAX, CV_8UC1);
-
-    std::cout << "newMat width: "    << displayDepth.cols
-              << "\nnewMat height: " << displayDepth.rows << std::endl;
-
-    imshow("Depth", displayDepth);
-    cv::waitKey(0);
+    cloudForEach([image3D](unsigned int x, unsigned int y, PointXYZ& point) mutable {
+        image3D.at<cv::Vec3f>(x,y) = {point.x, point.y, point.z};
+     });
 
     return image3D;
+}
+
+
+void Face::cloudForEach(std::function<void(uint, uint, pcl::PointXYZ &)> function) {
+    const auto SIZE = cloud->size();
+    for (ulong i = 0; i < SIZE; ++i) {
+        int x = i / WIDTH;
+        int y = i % WIDTH;
+        function(x,y,cloud->at(i));
+    }
+}
+
+void Face::imageForEach(std::function<void(uint,uint,float&)> function) {
+    for (uint x = 0; x < HEIGHT; ++x) {
+        for (uint y = 0; y < WIDTH; ++y) {
+            function(x,y,image.at<float>(x,y));
+        }
+    }
 }
 
 // ---------- private member functions ----------

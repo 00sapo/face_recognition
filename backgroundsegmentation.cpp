@@ -58,12 +58,10 @@ void BackgroundSegmentation::filter()
 
     cv::Mat filteredImage = cv::Mat::zeros(HEIGHT, WIDTH, CV_8U);
     PointCloud<PointXYZ>::Ptr filteredCloud(new PointCloud<PointXYZ>(WIDTH, HEIGHT));
-    //auto size = face.cloud->size();
-    //filteredCloud->resize(size);
 
     for (ulong i = 0; i < face.cloud->size(); ++i) {
-        uint x = i / WIDTH;             //x
-        uint y = i % WIDTH; /// 4;      //y
+        uint x = i / WIDTH;
+        uint y = i % WIDTH;
         if (points_to_clusters_[i] == clusterId) {
             const auto& point = face.cloud->at(i);
             filteredCloud->at(i) = point;

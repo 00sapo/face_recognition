@@ -4,6 +4,7 @@
 #include <opencv2/opencv.hpp>
 #include <pcl/common/common.h>
 #include <pcl/point_types.h>
+#include <functional>
 
 typedef unsigned int uint;
 
@@ -33,7 +34,7 @@ public:
      * @brief get3DImage organizes the cloud in a Mat object with 3 channels (X, Y, Z)
      * @return 3D representation of the face
      */
-    cv::Mat get3DImage() const;
+    cv::Mat get3DImage() ;//const;
 
     /**
      * @brief getWidth gives the width (in pixels) of image and cloud
@@ -54,6 +55,24 @@ public:
      * @return downscaling ratio applied to image by the constructor
      */
     float getCloudImageRatio() const;
+
+
+    /**
+     * @brief cloudForEach applies the function function to every point
+     *        in the cloud. Function receives two coordinates (x,y) of
+     *        the point in the organized cloud and a reference to the point
+     * @param function function to be called on each point
+     */
+    void cloudForEach(std::function<void(uint, uint, pcl::PointXYZ &)> function);
+
+
+    /**
+     * @brief imageForEach applies the function function to every point
+     *        in the image. Function receives two coordinates (x,y) of
+     *        the point in the image and a reference to the point
+     * @param function function to be called on each point
+     */
+    void imageForEach(std::function<void(uint, uint, float &)> function);
 
 private:
     uint WIDTH;             // width of the face
