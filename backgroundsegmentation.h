@@ -9,10 +9,12 @@
 #include "face.h"
 
 /**
- * @brief The BackgroundSegmentation class performs the removing of background from a RGB-D image.
+ * @brief The BackgroundSegmentation class performs the removing of background from a Face.
  */
-class BackgroundSegmentation : public pcl::Kmeans {
+class BackgroundSegmentation : public pcl::Kmeans
+{
 public:
+
     /**
      * @brief BackgroundSegmentation: constructor
      * @param face: the face to be used
@@ -22,7 +24,6 @@ public:
     /**
      * @brief findClusters: finds clusters in the cloud of the face
      */
-
     void findClusters();
 
     /**

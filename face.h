@@ -7,27 +7,63 @@
 
 typedef unsigned int uint;
 
+
+/**
+ * @brief The Face class represents a face with both color and 3D information
+ */
 class Face
 {
 public:
 
-    cv::Mat image;
-    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud;
-    float cloudImageRatio;
+    cv::Mat image;                             // Color or grayscale representation of the face
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud; // Point cloud representation of the face
 
     Face();
+
+    /**
+     * @brief Face stores the two representations of the same face and shrinks
+     *        the image to fit cloud dimensions. Image and cloud must have
+     *        the same aspect ratio and image dimensions must be >= of cloud dimensions
+     * @param image
+     * @param cloud
+     */
     Face(cv::Mat image, pcl::PointCloud<pcl::PointXYZ>::Ptr cloud);
-    Face(cv::Mat image, pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, float cloudImageRatio);
 
+    /**
+     * @brief get3DImage organizes the cloud in a Mat object with 3 channels (X, Y, Z)
+     * @return 3D representation of the face
+     */
     cv::Mat get3DImage() const;
-    //cv::Point2i get2DCoordinates(const pcl::PointXYZ &point) const;
 
-    uint getWidth() const;
-    uint getHeight() const;
+    /**
+     * @brief getWidth gives the width (in pixels) of image and cloud
+     *        which have the same dimensions
+     * @return width of the face
+     */
+    uint  getWidth()  const;
+
+    /**
+     * @brief getHeight gives the height (in pixels) of image and cloud
+     *        which have the same dimensions
+     * @return height of the face
+     */
+    uint  getHeight() const;
+
+    /**
+     * @brief getCloudImageRatio
+     * @return downscaling ratio applied to image by the constructor
+     */
+    float getCloudImageRatio() const;
 
 private:
-    uint WIDTH;
-    uint HEIGHT;
+    uint WIDTH;             // width of the face
+    uint HEIGHT;            // height of the face
+    float CLOUD_IMG_RATIO;  // downscaling ratio applied to image by the constructor
+
+    /**
+     * @brief resizeImage dowscales the image to match cloud dimensions
+     */
+    void resizeImage();
 };
 
 #endif // FACE_H

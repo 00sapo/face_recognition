@@ -49,11 +49,6 @@ bool FaceLoader::get(Face& face)
     string& imageFile = imageFileNames.back();
     string& cloudFile = cloudFileNames.back();
 
-    //if (imageFile.compare(cloudFile) != 0) {
-    //    cerr << "Error! Different filenames" << endl;
-    //   return false;
-    //}
-
     Mat image = cv::imread(imageFile, CV_LOAD_IMAGE_GRAYSCALE);
     if (image.empty()) {
         cout << "Unable to load file " << imageFile << endl;
@@ -70,73 +65,7 @@ bool FaceLoader::get(Face& face)
     if(cloud->isOrganized())
         cout << "WARNING: loading unorganized point cloud!" << endl;
 
-    // setting nans to 0 keeping the cloud organized
-    //for(auto& point : *face.cloud) {
-    //    if(isnan(point.x) || isnan(point.y) || isnan(point.z)) {
-    //        point.x = 0;
-    //        point.y = 0;
-    //        point.z = 0;
-    //    }
-    //}
-
-    uint32_t cloudHeight = cloud->height;
-    uint32_t cloudWidth  = cloud->width;
-
-    /* VOXEL GRID FILTERING -- not working by now */
-    //    uint32_t totalCloudPoints = cloudHeight * cloudWidth;
-
-    //    if (leafSize != 0.0f) {
-
-    //        VoxelGrid<PointXYZ> voxel;
-    //        voxel.setInputCloud(face.cloud);
-    //        voxel.setLeafSize(leafSize, leafSize, leafSize);
-    //        voxel.filter(*face.cloud);
-    //    }
-
-    //    /* VoxelGrid outputs a cloud without structure.
-    //     * Now we'll recompute the size of the cloud after VoxelGrid
-    //     */
-    //    uint32_t cloudHeightAfterVoxel = face.cloud->height;
-    //    uint32_t cloudWidthAfterVoxel = face.cloud->width;
-    //    uint32_t totalCloudPointsAfterVoxel = cloudHeightAfterVoxel * cloudWidthAfterVoxel;
-    //    float voxelRatio = sqrt((float)totalCloudPoints / totalCloudPointsAfterVoxel);
-
-    //    /* this is a little trick to mantains proportions */
-    //    int newCloudHeight = cloudHeight / voxelRatio;
-    //    cloudWidth = cloudWidth * (float)newCloudHeight / cloudHeight;
-    //    cloudHeight = newCloudHeight;
-
-    //    face.cloud->width = cloudWidth;
-    //    face.cloud->height = cloudHeight;
-    /**/
-    int rgbWidth  = image.cols;
-    int rgbHeight = image.rows;
-
-    float downscalingRatio = (float)cloudHeight / rgbHeight;
-    if (((float)cloudWidth / rgbWidth) != downscalingRatio) {
-        cerr << "Error: "
-             << imageFile << " and " << cloudFile
-             << " sizes are not proportional!" << endl;
-        return false;
-    }
-
-    if (downscalingRatio > 1) {
-        cerr << "Error: "
-             << imageFile << " is smaller than " << cloudFile
-             << ". Set leafSize to use voxel grid filter and reduce the size of the cloud." << endl;
-        return false;
-    }
-
-    //face.cloudImageRatio = downscalingRatio;
-
-    resize(image, image,
-           Size(rgbWidth * downscalingRatio, rgbHeight * downscalingRatio),
-        INTER_AREA);
-    /**/
-    //    viewPointCloud(face.cloud);
-
     face = Face(image, cloud);
-
 
     imageFileNames.pop_back();
     cloudFileNames.pop_back();

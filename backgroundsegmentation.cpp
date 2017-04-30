@@ -11,8 +11,6 @@ using pcl::PointCloud;
 using pcl::PointXYZ;
 using std::isnan;
 
-typedef unsigned int uint;
-
 BackgroundSegmentation::BackgroundSegmentation(const Face& face)
     : Kmeans(0, 1)
 {
@@ -47,7 +45,6 @@ void BackgroundSegmentation::filter()
     Point min = { FLT_MAX };
     uint clusterId = 0;
     for (uint i = 0; i < num_clusters_; i++) {
-
         if (centroids_[i][0] < min[0]) {
             clusterId = i;
             min = centroids_[i];
@@ -57,17 +54,25 @@ void BackgroundSegmentation::filter()
     const uint WIDTH  = face.getWidth();
     const uint HEIGHT = face.getHeight();
 
+    float nan = std::numeric_limits<float>::quiet_NaN();
+
     cv::Mat filteredImage = cv::Mat::zeros(HEIGHT, WIDTH, CV_8U);
     PointCloud<PointXYZ>::Ptr filteredCloud(new PointCloud<PointXYZ>(WIDTH, HEIGHT));
-    for (uint i = 0; i < face.cloud->size(); ++i) {
-        uint x = i / WIDTH;
-        uint y = i % WIDTH / 4;
-        if (clusterId == points_to_clusters_[i]) {
+    //auto size = face.cloud->size();
+    //filteredCloud->resize(size);
+
+    for (ulong i = 0; i < face.cloud->size(); ++i) {
+        uint x = i / WIDTH;             //x
+        uint y = i % WIDTH; /// 4;      //y
+        if (points_to_clusters_[i] == clusterId) {
             const auto& point = face.cloud->at(i);
+            filteredCloud->at(i) = point;
             if (!isnan(point.x) && !isnan(point.y) && !isnan(point.z)) {
-                filteredCloud->at(x,y) = point;
-                filteredImage.at<int>(x, y) = face.image.at<int>(x, y);
+                filteredImage.at<uchar>(x, y) = face.image.at<uchar>(x, y);
             }
+        }
+        else {
+            filteredCloud->at(y,x) = {nan, nan, nan};
         }
     }
 
