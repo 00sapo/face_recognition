@@ -56,6 +56,13 @@ public:
      */
     float getCloudImageRatio() const;
 
+    /**
+     * @brief This function crops both the image and the cloud removing
+     *        every point outside the cropping region
+     * @param cropRegion region of interest
+     */
+    void crop(const cv::Rect &cropRegion);
+
 
     /**
      * @brief cloudForEach applies the function function to every point
@@ -63,7 +70,16 @@ public:
      *        the point in the organized cloud and a reference to the point
      * @param function function to be called on each point
      */
-    void cloudForEach(std::function<void(uint, uint, pcl::PointXYZ &)> function);
+    void cloudForEach(std::function<void(int, int, pcl::PointXYZ &)> function);
+
+    /**
+     * @brief cloudForEach applies the function function to every point
+     *        in the ROI of the cloud. Function receives two coordinates (x,y) of
+     *        the point in the organized cloud and a reference to the point
+     * @param function function to be called on each point
+     * @param ROI region of interest to which apply function
+     */
+    void cloudForEach(std::function<void(int, int, pcl::PointXYZ &)> function, const cv::Rect& ROI);
 
 
     /**
@@ -72,7 +88,17 @@ public:
      *        the point in the image and a reference to the point
      * @param function function to be called on each point
      */
-    void imageForEach(std::function<void(uint, uint, float &)> function);
+    void imageForEach(std::function<void(int, int, float &)> function);
+
+
+    /**
+     * @brief imageForEach applies the function function to every point
+     *        in the ROI of the image. Function receives two coordinates (x,y) of
+     *        the point in the image and a reference to the point
+     * @param function function to be called on each point
+     * @param ROI region of interest to which apply function
+     */
+    void imageForEach(std::function<void(int, int, float&)> function, const cv::Rect& ROI);
 
 private:
     uint WIDTH;             // width of the face

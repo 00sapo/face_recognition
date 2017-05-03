@@ -170,6 +170,12 @@ void testFaceDetection() {
     else {
         std::cout << "No face detected!" << std::endl;
     }
+
+    face.crop(faces[0]);
+    imshow("image", face.image);
+    waitKey(0);
+
+    viewPointCloud(face.cloud);
 }
 
 int main()

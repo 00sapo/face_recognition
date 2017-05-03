@@ -21,12 +21,41 @@ BackgroundSegmentation::BackgroundSegmentation(const Face& face)
 
 bool BackgroundSegmentation::detectFaces(std::vector<cv::Rect> &faces)
 {
+    // load the pretrained model
     cv::CascadeClassifier classifier("../haarcascade_frontalface_default.xml");
     if (classifier.empty()) {
         std::cerr << "ERROR! Unable to load haarcascade_frontalface_default.xml" << std::endl;
         return false;
     }
+
+    // face detection
+    //std::vector<cv::Rect> faces;
     classifier.detectMultiScale(face.image, faces);
+
+    // choose foreground face if more than one detected
+    /*
+    int foregroundFaceindex = -1;
+    float foregroundFaceDepth = std::numeric_limits<float>::max();
+    for (int i = 0; i < faces.size(); ++i) {
+
+        // estimate depth for candidate face
+        float depth = 0;
+        for (int j = 0; j < 10; j++) {
+
+        }
+
+
+    }
+    */
+
+    // enlarge a bit the face region
+    for (auto& face : faces) {
+        face.x -= 20;
+        face.y -= 20;
+        face.height += 40;
+        face.width  += 40;
+    }
+
     return !faces.empty();
 }
 
