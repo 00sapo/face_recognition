@@ -1,4 +1,5 @@
 #include <iostream>
+#include <vector>
 
 #include <opencv2/opencv.hpp>
 #include <opencv2/highgui.hpp>
@@ -142,6 +143,35 @@ void testDetectFacePose()
     waitKey(0);
 }
 
+void testFaceDetection() {
+    string dirPath = "../RGBD_Face_dataset_training/";
+    FaceLoader loader(dirPath, "000_.*"); // example: loads only .png files starting with 014
+
+    Face face;
+
+    //    loader.setDownscalingRatio(0.5);
+
+    if (!loader.get(face)) {
+        cout << "Failed loading face" << endl;
+        return;
+    }
+
+    cout << "Face loaded!" << endl;
+
+    BackgroundSegmentation segmenter(face);
+    std::vector<cv::Rect> faces;
+    if(segmenter.detectFaces(faces)) {
+        for(const auto& rect : faces) {
+            cv::rectangle(face.image, rect, Scalar(255,255,255), 5);
+        }
+        imshow("image", face.image);
+        waitKey(0);
+    }
+    else {
+        std::cout << "No face detected!" << std::endl;
+    }
+}
+
 int main()
 {
 
@@ -158,7 +188,10 @@ int main()
     //testGetDepthMap();
 
     cout << "\n\nDetect face pose..." << endl;
-    testDetectFacePose();
+    //testDetectFacePose();
+
+    cout << "\n\nDetect faces test..." << endl;
+    testFaceDetection();
 
     cout << "\n\nTests finished!" << endl;
 

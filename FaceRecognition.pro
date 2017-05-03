@@ -26,7 +26,7 @@ DISTFILES += \
 
 INCLUDEPATH += $$(OPENCV_INCLUDE) $$(VTK_INCLUDES)
 
-unix: LIBS += -L$$(OPENCV_LIBS) -lopencv_core -lopencv_videoio -lopencv_imgproc -lopencv_highgui -lopencv_imgcodecs
+unix: LIBS += -L$$(OPENCV_LIBS) -lopencv_core -lopencv_videoio -lopencv_imgproc -lopencv_highgui -lopencv_imgcodecs -lopencv_objdetect
 
 unix: LIBS += -lboost_filesystem -lboost_system -lboost_iostreams
 

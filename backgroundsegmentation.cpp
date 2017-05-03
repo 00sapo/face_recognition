@@ -3,6 +3,7 @@
 #include <iostream>
 #include <math.h>
 #include <pointprojector.h>
+#include <opencv2/objdetect.hpp>
 
 #include "face.h"
 #include "head_pose_estimation/CRForestEstimator.h"
@@ -16,6 +17,17 @@ BackgroundSegmentation::BackgroundSegmentation(const Face& face)
 {
     num_clusters_ = 2;
     setFace(face);
+}
+
+bool BackgroundSegmentation::detectFaces(std::vector<cv::Rect> &faces)
+{
+    cv::CascadeClassifier classifier("../haarcascade_frontalface_default.xml");
+    if (classifier.empty()) {
+        std::cerr << "ERROR! Unable to load haarcascade_frontalface_default.xml" << std::endl;
+        return false;
+    }
+    classifier.detectMultiScale(face.image, faces);
+    return !faces.empty();
 }
 
 void BackgroundSegmentation::findClusters()

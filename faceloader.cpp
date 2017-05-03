@@ -150,12 +150,12 @@ bool FaceLoader::loadFileNames(const string& dirPath)
     std::sort(imageFileNames.begin(), imageFileNames.end());
     std::sort(cloudFileNames.begin(), cloudFileNames.end());
 
-    for (const auto& s : imageFileNames) {
-        cout << s << endl;
-    }
-    for (const auto& s : cloudFileNames) {
-        cout << s << endl;
-    }
+    //for (const auto& s : imageFileNames) {
+    //    cout << s << endl;
+    //}
+    //for (const auto& s : cloudFileNames) {
+    //    cout << s << endl;
+    //}
 
     return true;
 }

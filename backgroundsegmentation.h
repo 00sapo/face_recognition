@@ -21,6 +21,8 @@ public:
      */
     BackgroundSegmentation(const Face& face);
 
+    bool detectFaces(std::vector<cv::Rect> &faces);
+
     /**
      * @brief findClusters: finds clusters in the cloud of the face
      */
