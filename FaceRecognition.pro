@@ -3,28 +3,27 @@ CONFIG += console c++14
 CONFIG -= app_bundle
 CONFIG -= qt 
 
-SOURCES += main.cpp \
-    singletonsettings.cpp \
-    backgroundsegmentation.cpp \
-    pointprojector.cpp \
-    face.cpp \
-    faceloader.cpp \
-    head_pose_estimation/CRForestEstimator.cpp \
-    head_pose_estimation/CRTree.cpp
+SOURCES += src/main.cpp \
+           src/singletonsettings.cpp \
+           src/backgroundsegmentation.cpp \
+           src/pointprojector.cpp \
+           src/face.cpp \
+           src/faceloader.cpp \
+           extern_libs/head_pose_estimation/CRForestEstimator.cpp \
+           extern_libs/head_pose_estimation/CRTree.cpp
 
-HEADERS += \
-    singletonsettings.h \
-    backgroundsegmentation.h \
-    pointprojector.h \
-    face.h \
-    faceloader.h \
-    head_pose_estimation/CRForestEstimator.h \
-    head_pose_estimation/CRTree.h
+HEADERS += include/singletonsettings.h \
+           include/backgroundsegmentation.h \
+           include/pointprojector.h \
+           include/face.h \
+           include/faceloader.h \
+           extern_libs/head_pose_estimation/CRForestEstimator.h \
+           extern_libs/head_pose_estimation/CRTree.h
 
 DISTFILES += \
     camera_info.yaml
 
-INCLUDEPATH += $$(OPENCV_INCLUDE) $$(VTK_INCLUDES)
+INCLUDEPATH += include $$(OPENCV_INCLUDE) $$(VTK_INCLUDES)
 
 unix: LIBS += -L$$(OPENCV_LIBS) -lopencv_core -lopencv_videoio -lopencv_imgproc -lopencv_highgui -lopencv_imgcodecs -lopencv_objdetect
 

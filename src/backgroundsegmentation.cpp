@@ -2,11 +2,11 @@
 
 #include <iostream>
 #include <math.h>
-#include <pointprojector.h>
 #include <opencv2/objdetect.hpp>
 
+#include "pointprojector.h"
 #include "face.h"
-#include "head_pose_estimation/CRForestEstimator.h"
+#include "extern_libs/head_pose_estimation/CRForestEstimator.h"
 
 using pcl::PointCloud;
 using pcl::PointXYZ;
