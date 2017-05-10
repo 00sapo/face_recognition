@@ -152,7 +152,7 @@ void BackgroundSegmentation::setFace(const Face& value)
     points_to_clusters_ = PointsToClusters(num_points_, 0);
 }
 
-void BackgroundSegmentation::cropFace()
+void BackgroundSegmentation::estimateFacePose()
 {
     CRForestEstimator estimator;
     if(!estimator.loadForest("../trees/", 10)) {
@@ -161,8 +161,8 @@ void BackgroundSegmentation::cropFace()
 
     cv::Mat img3D = face.get3DImage();
     std::vector< cv::Vec<float,POSE_SIZE> > means; //outputs
-    std::vector< std::vector< Vote > > clusters; //full clusters of votes
-    std::vector< Vote > votes; //all votes returned by the forest
+    std::vector< std::vector< Vote > > clusters;   //full clusters of votes
+    std::vector< Vote > votes;                     //all votes returned by the forest
     int stride = 5;
 
     estimator.estimate(img3D, means, clusters, votes, stride, 800);
@@ -176,4 +176,39 @@ void BackgroundSegmentation::cropFace()
                   << pose[3] << ", " << pose[4] << ", " << pose[5] << std::endl;
     }
 
+}
+
+void BackgroundSegmentation::removeBackground(Face& face) {
+
+    std::cout << "Building depth map..." << std::endl;
+    cv::Mat depth(face.cloud->size(), 1, CV_32F);
+    //std::vector<int> bestLabels(face.cloud->size());
+    const float THRESHOLD = (face.getMinDepth()+face.getMaxDepth())/2;
+
+    for (int i = 0; i < face.cloud->size(); ++i) {
+        float pointDepth = face.cloud->at(i).z;
+        depth.at<float>(i) = pointDepth;
+        //bestLabels[i] = pointDepth < THRESHOLD ? 0 : 1;
+    }
+    std::cout << "Done!" << std::endl;
+
+
+    cv::Mat centers, bestLabels;
+    std::cout << "Clustering..." << std::endl;
+    cv::TermCriteria criteria(cv::TermCriteria::EPS+cv::TermCriteria::COUNT, 10, 1.0);
+    cv::kmeans(depth, 2, bestLabels, criteria, 3, cv::KMEANS_PP_CENTERS, centers);
+    std::cout << "Done!" << std::endl;
+
+    std::cout << "Size: " << centers.size() << std::endl;
+    //std::cout << "Cols: " << centers.cols << std::endl;
+
+    const int FACE_CLUSTER = 0;//centers.row(0) < centers.row(1) ? 0 : 1;
+
+    std::cout << "Removing background..." << std::endl;
+    for (int i = 0; i < face.cloud->size(); ++i) {
+        std::cout << bestLabels.at<int>(i) << std::endl;
+        if (bestLabels.at<int>(i) != FACE_CLUSTER)
+            face.cloud->at(i).z = 0;
+    }
+    std::cout << "Done!" << std::endl;
 }

@@ -143,7 +143,7 @@ void testDetectFacePose()
     }
     viewPointCloud(segmenter.getFace().cloud);
 
-    segmenter.cropFace();
+    segmenter.estimateFacePose();
     waitKey(0);
 }
 

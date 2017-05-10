@@ -12,7 +12,7 @@ using pcl::PointXYZ;
 
 // ---------- constructors ----------
 
-Face::Face() : WIDTH(0), HEIGHT(0), CLOUD_IMG_RATIO(0)
+Face::Face() : WIDTH(0), HEIGHT(0), CLOUD_IMG_RATIO(0), MAX_DEPTH(0), MIN_DEPTH(0)
 {
     image = Mat::zeros(1,1,CV_16UC3);
     cloud = pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
@@ -24,6 +24,16 @@ Face::Face(Mat image, PointCloud<PointXYZ>::Ptr cloud) : image(image), cloud(clo
     HEIGHT = cloud->height;
 
     resizeImage();
+
+    MIN_DEPTH = std::numeric_limits<float>::max();
+    MAX_DEPTH = std::numeric_limits<float>::min();
+    for (uint i = 0; i < cloud->size(); ++i) {
+        float pointDepth = cloud->at(i).z;
+        if (pointDepth > MAX_DEPTH)
+            MAX_DEPTH = pointDepth;
+        if (pointDepth < MIN_DEPTH)
+            MIN_DEPTH = pointDepth;
+    }
 }
 
 // ---------- public member functions ----------
@@ -31,6 +41,8 @@ Face::Face(Mat image, PointCloud<PointXYZ>::Ptr cloud) : image(image), cloud(clo
 uint  Face::getWidth()  const { return WIDTH;  }
 uint  Face::getHeight() const { return HEIGHT; }
 float Face::getCloudImageRatio() const { return CLOUD_IMG_RATIO; }
+float Face::getMaxDepth() const { return MAX_DEPTH; }
+float Face::getMinDepth() const { return MIN_DEPTH; }
 
 Mat Face::get3DImage()
 {

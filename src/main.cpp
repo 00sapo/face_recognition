@@ -7,7 +7,54 @@ void testFunctions();
 int main()
 {
 
-    testFunctions();
+    //testFunctions();
+
+
+    string dirPath = "../RGBD_Face_dataset_training/";
+    FaceLoader loader(dirPath, "000_.*"); // example: loads only .png files starting with 014
+
+    Face face;
+
+    //    loader.setDownscalingRatio(0.5);
+
+    if (!loader.get(face)) {
+        cout << "Failed loading face" << endl;
+        return 0;
+    }
+
+    cout << "Face loaded!" << endl;
+
+    BackgroundSegmentation segmenter(face);
+    std::vector<cv::Rect> faces;
+    if(segmenter.detectFaces(faces)) {
+        for(const auto& rect : faces) {
+            cv::rectangle(face.image, rect, Scalar(255,255,255), 5);
+        }
+        imshow("image", face.image);
+        waitKey(0);
+    }
+    else {
+        std::cout << "No face detected!" << std::endl;
+    }
+
+    face.crop(faces[0]);
+    imshow("image", face.image);
+    waitKey(0);
+
+    viewPointCloud(face.cloud);
+
+    std::cout << "Removing background..." << std::endl;
+    segmenter.removeBackground(face);
+    std::cout << "Done!" << std::endl;
+
+    viewPointCloud(face.cloud);
+
+    segmenter.setFace(face);
+
+    std::cout << "Estimating face pose..." << std::endl;
+    segmenter.estimateFacePose();
+    std::cout << "Done!" << std::endl;
+
 
     return 0;
 }
