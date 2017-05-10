@@ -18,7 +18,8 @@ HEADERS += include/singletonsettings.h \
            include/face.h \
            include/faceloader.h \
            extern_libs/head_pose_estimation/CRForestEstimator.h \
-           extern_libs/head_pose_estimation/CRTree.h
+           extern_libs/head_pose_estimation/CRTree.h \
+    include/test.h
 
 DISTFILES += \
     camera_info.yaml
