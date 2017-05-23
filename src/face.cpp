@@ -47,10 +47,29 @@ float Face::getMinDepth() const { return MIN_DEPTH; }
 Mat Face::get3DImage()
 {
     Mat image3D(cv::Size(WIDTH, HEIGHT), CV_32FC3);
+    //Mat image3D(cv::Size(cloud->size(),3), CV_32F);
 
     cloudForEach([image3D](int x, int y, PointXYZ& point) mutable {
         image3D.at<cv::Vec3f>(x,y) = {point.x, point.y, point.z};
      });
+
+    /*
+    int count = 0;
+    cloudForEach([image3D, count](int x, int y, PointXYZ& point) mutable {
+        image3D.at<float>(count,0) = point.x;
+        image3D.at<float>(count,1) = point.y;
+        image3D.at<float>(count,2) = point.z;
+        ++count;
+     });
+
+    /*
+    for (int i = 0; i < cloud->size(); ++i) {
+        const auto& point = cloud->at(i);
+        image3D.at<float>(i,0) = point.x;
+        image3D.at<float>(i,1) = point.y;
+        image3D.at<float>(i,2) = point.z;
+    }
+    */
 
     return image3D;
 }

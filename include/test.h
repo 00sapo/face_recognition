@@ -182,6 +182,34 @@ void testFaceDetection() {
     viewPointCloud(face.cloud);
 }
 
+void testKmeans() {
+
+    cv::Mat depth(4, 3, CV_32F);
+    depth.row(0) = (cv::Mat){0, 0, 0};
+    depth.row(1) = (cv::Mat){-1,-1,-1};
+    depth.row(2) = (cv::Mat){100,100,100};
+    depth.row(3) = (cv::Mat){110,110,110};
+
+    cv::Mat centers(2, 3, CV_32F);
+    std::vector<int> bestLabels;
+    std::cout << "Clustering..." << std::endl;
+    cv::TermCriteria criteria(cv::TermCriteria::EPS+cv::TermCriteria::COUNT, 10, 1.0);
+    cv::kmeans(depth, 2, bestLabels, criteria, 3, cv::KMEANS_RANDOM_CENTERS, centers);
+    std::cout << "Done!" << std::endl;
+
+    std::cout << "Size: " << centers.size() << std::endl;
+    //std::cout << "Cols: " << centers.cols << std::endl;
+
+    std::cout << "Labels for points..." << std::endl;
+    for (uint i = 0; i < 4; ++i) {
+        std::cout << bestLabels.at(i) << std::endl;
+    }
+    std::cout << "Done!" << std::endl;
+
+    string x;
+    cin >> x;
+}
+
 }
 
 #endif // TEST_H

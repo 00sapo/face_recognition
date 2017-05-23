@@ -7,9 +7,9 @@ void testFunctions();
 int main()
 {
 
-    //testFunctions();
+    testFunctions();
 
-
+/*
     string dirPath = "../RGBD_Face_dataset_training/";
     FaceLoader loader(dirPath, "000_.*"); // example: loads only .png files starting with 014
 
@@ -54,7 +54,7 @@ int main()
     std::cout << "Estimating face pose..." << std::endl;
     segmenter.estimateFacePose();
     std::cout << "Done!" << std::endl;
-
+*/
 
     return 0;
 }
@@ -77,7 +77,10 @@ void testFunctions()  {
     //test::testDetectFacePose();
 
     cout << "\n\nDetect faces test..." << endl;
-    test::testFaceDetection();
+    //test::testFaceDetection();
+
+    cout << "\n\nKmeans test..." << endl;
+    test::testKmeans();
 
     cout << "\n\nTests finished!" << endl;
 }
