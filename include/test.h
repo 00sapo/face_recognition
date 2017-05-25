@@ -3,8 +3,8 @@
 
 #include <vector>
 
-#include <opencv2/opencv.hpp>
 #include <opencv2/highgui.hpp>
+#include <opencv2/opencv.hpp>
 
 #include <pcl/visualization/area_picking_event.h>
 #include <pcl/visualization/pcl_visualizer.h>
@@ -147,7 +147,8 @@ void testDetectFacePose()
     waitKey(0);
 }
 
-void testFaceDetection() {
+void testFaceDetection()
+{
     string dirPath = "../RGBD_Face_dataset_training/";
     FaceLoader loader(dirPath, "000_.*"); // example: loads only .png files starting with 014
 
@@ -164,14 +165,13 @@ void testFaceDetection() {
 
     BackgroundSegmentation segmenter(face);
     std::vector<cv::Rect> faces;
-    if(segmenter.detectFaces(faces)) {
-        for(const auto& rect : faces) {
-            cv::rectangle(face.image, rect, Scalar(255,255,255), 5);
+    if (segmenter.detectFaces(faces)) {
+        for (const auto& rect : faces) {
+            cv::rectangle(face.image, rect, Scalar(255, 255, 255), 5);
         }
         imshow("image", face.image);
         waitKey(0);
-    }
-    else {
+    } else {
         std::cout << "No face detected!" << std::endl;
     }
 
@@ -182,26 +182,28 @@ void testFaceDetection() {
     viewPointCloud(face.cloud);
 }
 
-void testKmeans() {
+void testKmeans()
+{
 
-    cv::Mat depth(4, 3, CV_32F);
-    depth.row(0) = (cv::Mat){0, 0, 0};
-    depth.row(1) = (cv::Mat){-1,-1,-1};
-    depth.row(2) = (cv::Mat){100,100,100};
-    depth.row(3) = (cv::Mat){110,110,110};
+    cv::Mat depth(4, 1, CV_32F);
 
-    cv::Mat centers(2, 3, CV_32F);
+    depth.at<float>(0, 0) = 0;
+    depth.at<float>(1, 0) = 1;
+    depth.at<float>(2, 0) = 110;
+    depth.at<float>(3, 0) = 109;
+
+    cv::Mat centers(1, 2, CV_32F);
     std::vector<int> bestLabels;
     std::cout << "Clustering..." << std::endl;
-    cv::TermCriteria criteria(cv::TermCriteria::EPS+cv::TermCriteria::COUNT, 10, 1.0);
-    cv::kmeans(depth, 2, bestLabels, criteria, 3, cv::KMEANS_RANDOM_CENTERS, centers);
+    cv::TermCriteria criteria(cv::TermCriteria::EPS, 10, 1.0);
+    cv::kmeans(depth, 2, bestLabels, criteria, 3, cv::KMEANS_PP_CENTERS, centers);
     std::cout << "Done!" << std::endl;
 
     std::cout << "Size: " << centers.size() << std::endl;
     //std::cout << "Cols: " << centers.cols << std::endl;
 
     std::cout << "Labels for points..." << std::endl;
-    for (uint i = 0; i < 4; ++i) {
+    for (uint i = 0; i < bestLabels.size(); ++i) {
         std::cout << bestLabels.at(i) << std::endl;
     }
     std::cout << "Done!" << std::endl;
@@ -209,7 +211,6 @@ void testKmeans() {
     string x;
     cin >> x;
 }
-
 }
 
 #endif // TEST_H
