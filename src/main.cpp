@@ -7,9 +7,8 @@ void testFunctions();
 int main()
 {
 
-    testFunctions();
+    //    testFunctions();
 
-/*
     string dirPath = "../RGBD_Face_dataset_training/";
     FaceLoader loader(dirPath, "000_.*"); // example: loads only .png files starting with 014
 
@@ -26,14 +25,13 @@ int main()
 
     BackgroundSegmentation segmenter(face);
     std::vector<cv::Rect> faces;
-    if(segmenter.detectFaces(faces)) {
-        for(const auto& rect : faces) {
-            cv::rectangle(face.image, rect, Scalar(255,255,255), 5);
+    if (segmenter.detectFaces(faces)) {
+        for (const auto& rect : faces) {
+            cv::rectangle(face.image, rect, Scalar(255, 255, 255), 5);
         }
         imshow("image", face.image);
         waitKey(0);
-    }
-    else {
+    } else {
         std::cout << "No face detected!" << std::endl;
     }
 
@@ -54,13 +52,13 @@ int main()
     std::cout << "Estimating face pose..." << std::endl;
     segmenter.estimateFacePose();
     std::cout << "Done!" << std::endl;
-*/
+    /**/
 
     return 0;
 }
 
-
-void testFunctions()  {
+void testFunctions()
+{
     cout << "SingletonSettings test..." << endl;
     //test::testSingletonSettings();
 
