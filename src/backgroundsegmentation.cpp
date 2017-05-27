@@ -4,9 +4,9 @@
 #include <math.h>
 #include <opencv2/objdetect.hpp>
 
-#include "pointprojector.h"
-#include "face.h"
 #include "extern_libs/head_pose_estimation/CRForestEstimator.h"
+#include "face.h"
+#include "pointprojector.h"
 
 using pcl::PointCloud;
 using pcl::PointXYZ;
@@ -19,7 +19,7 @@ BackgroundSegmentation::BackgroundSegmentation(const Face& face)
     setFace(face);
 }
 
-bool BackgroundSegmentation::detectFaces(std::vector<cv::Rect> &faces)
+bool BackgroundSegmentation::detectFaces(std::vector<cv::Rect>& faces)
 {
     // load the pretrained model
     cv::CascadeClassifier classifier("../haarcascade_frontalface_default.xml");
@@ -53,7 +53,7 @@ bool BackgroundSegmentation::detectFaces(std::vector<cv::Rect> &faces)
         face.x -= 20;
         face.y -= 20;
         face.height += 40;
-        face.width  += 40;
+        face.width += 40;
     }
 
     return !faces.empty();
@@ -92,7 +92,7 @@ void BackgroundSegmentation::filter()
         }
     }
 
-    const uint WIDTH  = face.getWidth();
+    const uint WIDTH = face.getWidth();
     const uint HEIGHT = face.getHeight();
 
     float nan = std::numeric_limits<float>::quiet_NaN();
@@ -109,9 +109,8 @@ void BackgroundSegmentation::filter()
             if (!isnan(point.x) && !isnan(point.y) && !isnan(point.z)) {
                 filteredImage.at<uchar>(x, y) = face.image.at<uchar>(x, y);
             }
-        }
-        else {
-            filteredCloud->at(y,x) = {nan, nan, nan};
+        } else {
+            filteredCloud->at(y, x) = { nan, nan, nan };
         }
     }
 
@@ -152,17 +151,17 @@ void BackgroundSegmentation::setFace(const Face& value)
     points_to_clusters_ = PointsToClusters(num_points_, 0);
 }
 
-void BackgroundSegmentation::cropFace()
+void BackgroundSegmentation::estimateFacePose()
 {
     CRForestEstimator estimator;
-    if(!estimator.loadForest("../trees/", 10)) {
+    if (!estimator.loadForest("../trees/", 10)) {
         std::cerr << "Can't find forest files" << std::endl;
     }
 
     cv::Mat img3D = face.get3DImage();
-    std::vector< cv::Vec<float,POSE_SIZE> > means; //outputs
-    std::vector< std::vector< Vote > > clusters; //full clusters of votes
-    std::vector< Vote > votes; //all votes returned by the forest
+    std::vector<cv::Vec<float, POSE_SIZE>> means; //outputs
+    std::vector<std::vector<Vote>> clusters; //full clusters of votes
+    std::vector<Vote> votes; //all votes returned by the forest
     int stride = 5;
 
     estimator.estimate(img3D, means, clusters, votes, stride, 800);
@@ -175,5 +174,58 @@ void BackgroundSegmentation::cropFace()
         std::cout << pose[0] << ", " << pose[1] << ", " << pose[2] << ", "
                   << pose[3] << ", " << pose[4] << ", " << pose[5] << std::endl;
     }
+}
 
+void BackgroundSegmentation::removeBackground(Face& face)
+{
+
+    std::cout << "Building depth map..." << std::endl;
+
+    std::vector<float> depth;
+
+    auto it = face.cloud->begin();
+    while (it != face.cloud->end()) {
+        if (std::isnan((*it).z)) {
+            //            depth.push_back(face.getMinDepth());
+            it = face.cloud->erase(it);
+        } else {
+            depth.push_back((*it).z);
+            ++it;
+        }
+    }
+    std::cout << std::endl;
+
+    std::cout << "Done!" << std::endl;
+
+    //    cv::Mat centers = cv::Mat(4, 3, CV_32F).clone();
+    std::vector<int> bestLabels;
+    std::vector<float> centers;
+
+    std::cout << "Clustering..." << std::endl;
+    cv::TermCriteria criteria(cv::TermCriteria::EPS, 10, 1.0);
+    cv::kmeans(depth, 2, bestLabels, criteria, 3, cv::KMEANS_PP_CENTERS, centers);
+    std::cout << "Done!" << std::endl;
+
+    std::cout << "Size: " << centers.size() << std::endl;
+    //std::cout << "Cols: " << centers.cols << std::endl;
+
+    const int FACE_CLUSTER = centers.at(0) < centers.at(1) ? 0 : 1;
+
+    std::cout << "Removing background..." << std::endl;
+    if (bestLabels.size() != face.cloud->size()) {
+        std::cerr << "Can't removing background: labels and cloud not coherent!!" << std::endl;
+        return;
+    }
+    it = face.cloud->begin();
+    for (uint label : bestLabels) {
+        std::cout << label;
+        if (label != FACE_CLUSTER) {
+            std::cout << "-R";
+            it = face.cloud->erase(it);
+        } else
+            ++it;
+        std::cout << "; ";
+    }
+    std::cout << std::endl
+              << "Done!" << std::endl;
 }

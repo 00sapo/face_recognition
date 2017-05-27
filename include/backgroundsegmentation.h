@@ -49,7 +49,11 @@ public:
     Face getFace() const;
     void setFace(const Face& value);
 
-    void cropFace();
+    void estimateFacePose();
+
+    void removeBackground(Face& face);
+
+
 
 private:
     /**

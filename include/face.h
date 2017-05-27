@@ -56,6 +56,9 @@ public:
      */
     float getCloudImageRatio() const;
 
+    float getMaxDepth() const;
+    float getMinDepth() const;
+
     /**
      * @brief This function crops both the image and the cloud removing
      *        every point outside the cropping region
@@ -104,6 +107,8 @@ private:
     uint WIDTH;             // width of the face
     uint HEIGHT;            // height of the face
     float CLOUD_IMG_RATIO;  // downscaling ratio applied to image by the constructor
+    float MAX_DEPTH;
+    float MIN_DEPTH;
 
     /**
      * @brief resizeImage dowscales the image to match cloud dimensions
