@@ -185,12 +185,20 @@ void testFaceDetection()
 void testKmeans()
 {
 
-    cv::Mat depth(4, 1, CV_32F);
+    vector<float> depth;
 
-    depth.at<float>(0, 0) = 0;
-    depth.at<float>(1, 0) = 1;
-    depth.at<float>(2, 0) = 110;
-    depth.at<float>(3, 0) = 109;
+    depth.push_back(1.543);
+    depth.push_back(1.563);
+    depth.push_back(1.547);
+    depth.push_back(1.743);
+    depth.push_back(5.543);
+    depth.push_back(5.673);
+    depth.push_back(1.915);
+    depth.push_back(1.543);
+    depth.push_back(5.563);
+    depth.push_back(4.743);
+    depth.push_back(6.542);
+    depth.push_back(1.246);
 
     cv::Mat centers(1, 2, CV_32F);
     std::vector<int> bestLabels;

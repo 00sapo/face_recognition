@@ -181,30 +181,17 @@ void BackgroundSegmentation::removeBackground(Face& face)
 
     std::cout << "Building depth map..." << std::endl;
 
-    //    cv::Mat depth = cv::Mat(face.cloud->size(), 3, CV_32FC1).clone();
-    //    //cv::Mat bestLabels(face.cloud->size(), 1, CV_32S);
-    //    const float THRESHOLD = (face.getMinDepth() + face.getMaxDepth()) / 2;
+    std::vector<float> depth;
 
-    //    for (uint i = 0; i < face.cloud->size(); ++i) {
-    //        const auto& point = face.cloud->at(i);
-    //        //if (pointDepth != NAN)
-
-    //        depth.at<float>(i, 0) = point.x; //{face.cloud->at(i).x,face.cloud->at(i).y,face.cloud->at(i).z};
-    //        depth.at<float>(i, 1) = point.y;
-    //        depth.at<float>(i, 2) = point.z;
-    //        //bestLabels.at<int>(i) = pointDepth < THRESHOLD ? 0 : 1;
-    //    }
-    //cv::Mat depth = face.get3DImage();
-
-    cv::Mat depth = cv::Mat(face.cloud->size(), 1, CV_32F);
-    for (uint i = 0; i < face.cloud->size(); ++i) {
-        const auto& point = face.cloud->at(i);
-        if (std::isnan(point.z))
-            depth.at<float>(i, 0) = 0;
-        else
-            depth.at<float>(i, 0) = point.z;
-
-        std::cout << depth.at<float>(i, 0) << "; ";
+    auto it = face.cloud->begin();
+    while (it != face.cloud->end()) {
+        if (std::isnan((*it).z)) {
+            //            depth.push_back(face.getMinDepth());
+            it = face.cloud->erase(it);
+        } else {
+            depth.push_back((*it).z);
+            ++it;
+        }
     }
     std::cout << std::endl;
 
@@ -212,7 +199,7 @@ void BackgroundSegmentation::removeBackground(Face& face)
 
     //    cv::Mat centers = cv::Mat(4, 3, CV_32F).clone();
     std::vector<int> bestLabels;
-    cv::Mat centers = cv::Mat(1, 2, CV_32F);
+    std::vector<float> centers;
 
     std::cout << "Clustering..." << std::endl;
     cv::TermCriteria criteria(cv::TermCriteria::EPS, 10, 1.0);
@@ -222,14 +209,23 @@ void BackgroundSegmentation::removeBackground(Face& face)
     std::cout << "Size: " << centers.size() << std::endl;
     //std::cout << "Cols: " << centers.cols << std::endl;
 
-    const int FACE_CLUSTER = 1; //centers.row(0) < centers.row(1) ? 0 : 1;
+    const int FACE_CLUSTER = centers.at(0) < centers.at(1) ? 0 : 1;
 
     std::cout << "Removing background..." << std::endl;
-    for (uint i = 0; i < face.cloud->size(); ++i) {
-        if (bestLabels.at(i) != FACE_CLUSTER) {
-            std::cout << bestLabels.at(i) << std::endl;
-            face.cloud->erase(face.cloud->begin() + i);
-        }
+    if (bestLabels.size() != face.cloud->size()) {
+        std::cerr << "Can't removing background: labels and cloud not coherent!!" << std::endl;
+        return;
     }
-    std::cout << "Done!" << std::endl;
+    it = face.cloud->begin();
+    for (uint label : bestLabels) {
+        std::cout << label;
+        if (label != FACE_CLUSTER) {
+            std::cout << "-R";
+            it = face.cloud->erase(it);
+        } else
+            ++it;
+        std::cout << "; ";
+    }
+    std::cout << std::endl
+              << "Done!" << std::endl;
 }
