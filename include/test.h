@@ -164,18 +164,17 @@ void testFaceDetection()
     cout << "Face loaded!" << endl;
 
     BackgroundSegmentation segmenter(face);
-    std::vector<cv::Rect> faces;
-    if (segmenter.detectFaces(faces)) {
-        for (const auto& rect : faces) {
-            cv::rectangle(face.image, rect, Scalar(255, 255, 255), 5);
-        }
+    cv::Rect detectedRegion;
+    if (segmenter.detectForegroundFace(detectedRegion)) {
+        cv::rectangle(face.image, detectedRegion, Scalar(255, 255, 255), 5);
+
         imshow("image", face.image);
         waitKey(0);
     } else {
         std::cout << "No face detected!" << std::endl;
     }
 
-    face.crop(faces[0]);
+    face.crop(detectedRegion);
     imshow("image", face.image);
     waitKey(0);
 

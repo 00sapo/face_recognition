@@ -11,17 +11,15 @@
 /**
  * @brief The BackgroundSegmentation class performs the removing of background from a Face.
  */
-class BackgroundSegmentation : public pcl::Kmeans
-{
+class BackgroundSegmentation : public pcl::Kmeans {
 public:
-
     /**
      * @brief BackgroundSegmentation: constructor
      * @param face: the face to be used
      */
     BackgroundSegmentation(const Face& face);
 
-    bool detectFaces(std::vector<cv::Rect> &faces);
+    bool detectForegroundFace(cv::Rect& detectedFace);
 
     /**
      * @brief findClusters: finds clusters in the cloud of the face
@@ -52,8 +50,6 @@ public:
     void estimateFacePose();
 
     void removeBackground(Face& face);
-
-
 
 private:
     /**

@@ -19,7 +19,7 @@ BackgroundSegmentation::BackgroundSegmentation(const Face& face)
     setFace(face);
 }
 
-bool BackgroundSegmentation::detectFaces(std::vector<cv::Rect>& faces)
+bool BackgroundSegmentation::detectForegroundFace(cv::Rect& detectedFace)
 {
     // load the pretrained model
     cv::CascadeClassifier classifier("../haarcascade_frontalface_default.xml");
@@ -29,32 +29,30 @@ bool BackgroundSegmentation::detectFaces(std::vector<cv::Rect>& faces)
     }
 
     // face detection
-    //std::vector<cv::Rect> faces;
+    std::vector<cv::Rect> faces;
     classifier.detectMultiScale(face.image, faces);
 
     // choose foreground face if more than one detected
-    /*
-    int foregroundFaceindex = -1;
-    float foregroundFaceDepth = std::numeric_limits<float>::max();
-    for (int i = 0; i < faces.size(); ++i) {
-
-        // estimate depth for candidate face
-        float depth = 0;
-        for (int j = 0; j < 10; j++) {
-
+    float foregroundFaceDepth = FLT_MAX;
+    for (cv::Rect f : faces) {
+        for (int x = f.x; x < f.x + f.width; x++) {
+            for (int y = f.y; y < f.y + f.height; y++) {
+                if (face.cloud->at(x, y).z < foregroundFaceDepth) {
+                    foregroundFaceDepth = face.cloud->at(x, y).z;
+                    detectedFace = f;
+                }
+            }
         }
-
-
     }
-    */
+    /**/
 
     // enlarge a bit the face region
-    for (auto& face : faces) {
-        face.x -= 20;
-        face.y -= 20;
-        face.height += 40;
-        face.width += 40;
-    }
+    //    for (auto& bestFace : faces) {
+    detectedFace.x -= 20;
+    detectedFace.y -= 20;
+    detectedFace.height += 40;
+    detectedFace.width += 40;
+    //    }
 
     return !faces.empty();
 }
@@ -217,7 +215,7 @@ void BackgroundSegmentation::removeBackground(Face& face)
         return;
     }
     it = face.cloud->begin();
-    for (uint label : bestLabels) {
+    for (int label : bestLabels) {
         std::cout << label;
         if (label != FACE_CLUSTER) {
             std::cout << "-R";
