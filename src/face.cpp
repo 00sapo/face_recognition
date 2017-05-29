@@ -44,12 +44,12 @@ float Face::getCloudImageRatio() const { return CLOUD_IMG_RATIO; }
 float Face::getMaxDepth() const { return MAX_DEPTH; }
 float Face::getMinDepth() const { return MIN_DEPTH; }
 
-Mat Face::get3DImage()
+Mat Face::get3DImage() const
 {
     Mat image3D(cv::Size(WIDTH, HEIGHT), CV_32FC3);
     //Mat image3D(cv::Size(cloud->size(),3), CV_32F);
 
-    cloudForEach([image3D](int x, int y, PointXYZ& point) mutable {
+    cloudForEach([image3D](int x, int y, const PointXYZ& point) mutable {
         image3D.at<cv::Vec3f>(x,y) = {point.x, point.y, point.z};
      });
 
@@ -98,7 +98,30 @@ void Face::crop(const cv::Rect &cropRegion) {
 }
 
 
-void Face::cloudForEach(std::function<void(int, int, pcl::PointXYZ &)> function) {
+void Face::cloudForEach(std::function<void(int, int, pcl::PointXYZ &)> function)
+{
+
+    // if cloud is organized I can skip the computation of x and y at every iteration
+    if (cloud->isOrganized()) {
+        for (uint x = 0; x < HEIGHT; ++x) {
+            for (uint y = 0; y < WIDTH; ++y) {
+                function(x,y,cloud->at(x,y));
+            }
+        }
+    }
+
+    // otherwise I must compute x and y at every iteration
+    else {
+        const auto SIZE = cloud->size();
+        for (ulong i = 0; i < SIZE; ++i) {
+            int x = i / WIDTH;
+            int y = i % WIDTH;
+            function(x,y,cloud->at(i));
+        }
+    }
+}
+
+void Face::cloudForEach(std::function<void(int, int, const pcl::PointXYZ &)> function)  const {
 
     // if cloud is organized I can skip the computation of x and y at every iteration
     if (cloud->isOrganized()) {
@@ -145,6 +168,31 @@ void Face::cloudForEach(std::function<void(int, int, pcl::PointXYZ &)> function,
     }
 }
 
+void Face::cloudForEach(std::function<void(int, int, const pcl::PointXYZ &)> function, const cv::Rect& ROI)  const {
+
+    const uint MAX_X = ROI.x + ROI.height;
+    const uint MAX_Y = ROI.y + ROI.width;
+
+    // if cloud is organized I can skip the computation of i at every iteration
+    if (cloud->isOrganized()) {
+        for (uint x = ROI.x; x < MAX_X; ++x) {
+            for (uint y = ROI.y; y < MAX_Y; ++y) {
+                function(x,y,cloud->at(x,y));
+            }
+        }
+    }
+
+    // otherwise I must compute i at every iteration
+    else {
+        for (uint x = ROI.x; x < MAX_X; ++x) {
+            for (uint y = ROI.y; y < MAX_Y; ++y) {
+                uint i = x * WIDTH + y;
+                function(x,y,cloud->at(i));
+            }
+        }
+    }
+}
+
 void Face::imageForEach(std::function<void(int, int, float &)> function) {
     for (uint x = 0; x < HEIGHT; ++x) {
         for (uint y = 0; y < WIDTH; ++y) {
@@ -153,7 +201,25 @@ void Face::imageForEach(std::function<void(int, int, float &)> function) {
     }
 }
 
+void Face::imageForEach(std::function<void(int, int, const float &)> function) const {
+    for (uint x = 0; x < HEIGHT; ++x) {
+        for (uint y = 0; y < WIDTH; ++y) {
+            function(x,y,image.at<float>(x,y));
+        }
+    }
+}
+
 void Face::imageForEach(std::function<void(int, int, float&)> function, const cv::Rect& ROI) {
+    const uint MAX_X = ROI.x + ROI.height;
+    const uint MAX_Y = ROI.y + ROI.width;
+    for (uint x = ROI.x; x < MAX_X; ++x) {
+        for (uint y = ROI.y; y < MAX_Y; ++y) {
+            function(x,y,image.at<float>(x,y));
+        }
+    }
+}
+
+void Face::imageForEach(std::function<void(int, int, const float&)> function, const cv::Rect& ROI) const {
     const uint MAX_X = ROI.x + ROI.height;
     const uint MAX_Y = ROI.y + ROI.width;
     for (uint x = ROI.x; x < MAX_X; ++x) {

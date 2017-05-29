@@ -34,7 +34,7 @@ public:
      * @brief get3DImage organizes the cloud in a Mat object with 3 channels (X, Y, Z)
      * @return 3D representation of the face
      */
-    cv::Mat get3DImage() ;//const;
+    cv::Mat get3DImage() const ;//const;
 
     /**
      * @brief getWidth gives the width (in pixels) of image and cloud
@@ -75,6 +75,8 @@ public:
      */
     void cloudForEach(std::function<void(int, int, pcl::PointXYZ &)> function);
 
+    void cloudForEach(std::function<void(int, int, const pcl::PointXYZ &)> function) const ;
+
     /**
      * @brief cloudForEach applies the function function to every point
      *        in the ROI of the cloud. Function receives two coordinates (x,y) of
@@ -83,6 +85,8 @@ public:
      * @param ROI region of interest to which apply function
      */
     void cloudForEach(std::function<void(int, int, pcl::PointXYZ &)> function, const cv::Rect& ROI);
+
+    void cloudForEach(std::function<void(int, int, const pcl::PointXYZ &)> function, const cv::Rect& ROI) const;
 
 
     /**
@@ -93,6 +97,8 @@ public:
      */
     void imageForEach(std::function<void(int, int, float &)> function);
 
+    void imageForEach(std::function<void(int, int, const float &)> function) const;
+
 
     /**
      * @brief imageForEach applies the function function to every point
@@ -102,6 +108,8 @@ public:
      * @param ROI region of interest to which apply function
      */
     void imageForEach(std::function<void(int, int, float&)> function, const cv::Rect& ROI);
+
+    void imageForEach(std::function<void(int, int, const float&)> function, const cv::Rect& ROI) const ;
 
 private:
     uint WIDTH;             // width of the face

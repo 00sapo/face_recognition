@@ -23,9 +23,9 @@ int main()
 
     cout << "Face loaded!" << endl;
 
-    BackgroundSegmentation segmenter(face);
+    BackgroundSegmentation segmenter;
     cv::Rect detectedRegion;
-    if (segmenter.detectForegroundFace(detectedRegion)) {
+    if (segmenter.detectForegroundFace(face, detectedRegion)) {
         cv::rectangle(face.image, detectedRegion, Scalar(255, 255, 255), 5);
 
         imshow("image", face.image);
@@ -46,10 +46,10 @@ int main()
 
     viewPointCloud(face.cloud);
 
-    segmenter.setFace(face);
+    //segmenter.setFace(face);
 
     std::cout << "Estimating face pose..." << std::endl;
-    segmenter.estimateFacePose();
+    segmenter.estimateFacePose(face);
     std::cout << "Done!" << std::endl;
     /**/
 

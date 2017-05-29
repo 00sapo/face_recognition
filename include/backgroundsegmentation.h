@@ -1,61 +1,64 @@
 #ifndef BACKGROUNDSEGMENTATION_H
 #define BACKGROUNDSEGMENTATION_H
 
-#include <opencv2/opencv.hpp>
-#include <pcl/common/common.h>
-#include <pcl/ml/kmeans.h>
-#include <pcl/point_types.h>
+#include <opencv2/objdetect.hpp>
+#include "extern_libs/head_pose_estimation/CRForestEstimator.h"
 
 #include "face.h"
 
 /**
- * @brief The BackgroundSegmentation class performs the removing of background from a Face.
+ * @brief The BackgroundSegmentation class performs the preprocessing
  */
-class BackgroundSegmentation : public pcl::Kmeans {
+class BackgroundSegmentation {
 public:
+
     /**
      * @brief BackgroundSegmentation: constructor
-     * @param face: the face to be used
      */
-    BackgroundSegmentation(const Face& face);
-
-    bool detectForegroundFace(cv::Rect& detectedFace);
+    BackgroundSegmentation();
 
     /**
-     * @brief findClusters: finds clusters in the cloud of the face
+     * @brief BackgroundSegmentation: constructor
      */
-    void findClusters();
+    BackgroundSegmentation(const std::string& faceDetectorPath, const std::string& poseEstimatorPath);
 
     /**
-     * @brief filter: remove face cloud the points that are not in the cluster specified
-     * @param clusterId: the id of the cluster, it can be 0 or 1
-     * @return
+     * @brief detectForegroundFace detects the nearest face in the image
+     * @param face: Face containing the image
+     * @param detectedFace: ROI of the detected face
+     * @return false if no face was detected, true otherwise
      */
-    void filter();
+    bool detectForegroundFace(const Face &face, cv::Rect& detectedFace);
 
     /**
-     * @brief filterBackground: finds clusters and then calls filter(1)
+     * @brief removeBackground splits the face cloud in two clusters, discarding
+     *        furthest one
+     * @param face
      */
-    void filterBackground();
+    void removeBackground(Face& face) const;
 
     /**
-     * @brief filterBackground: same as filterBackground() but for every face in the vector
-     * @param faces
+     * @brief removeBackground calls remove background on every Face
+     * @param faces: vector of faces
      */
-    void filterBackground(std::vector<Face>& faces);
+    void removeBackground(std::vector<Face>& faces) const;
 
-    Face getFace() const;
-    void setFace(const Face& value);
-
-    void estimateFacePose();
-
-    void removeBackground(Face& face);
+    /**
+     * @brief estimateFacePose
+     * @param face
+     */
+    bool estimateFacePose(const Face &face);
 
 private:
-    /**
-     * @brief face: the face that contains the RGB-D image to be process
-     */
-    Face face;
+
+    static const std::string FACE_DETECTOR_PATH;
+    static const std::string POSE_ESTIMATOR_PATH;
+
+    bool faceDetectorAvailable  = false;
+    bool poseEstimatorAvailable = false;
+
+    cv::CascadeClassifier classifier;
+    CRForestEstimator estimator;
 };
 
 #endif // BACKGROUNDSEGMENTATION_H

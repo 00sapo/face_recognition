@@ -75,20 +75,20 @@ void testFindThreshold()
 
     cout << "\nFiltering background..." << endl;
 
-    BackgroundSegmentation segmenter(face);
-    imshow("image", segmenter.getFace().image);
+    BackgroundSegmentation segmenter;
+    imshow("image", face.image);
     while (waitKey(0) != 'm') {
     }
 
-    segmenter.filterBackground();
+    segmenter.removeBackground(face);
 
     //cout << "Treshold found: " << segmenter.findTreshold() << endl;
-    imshow("image", segmenter.getFace().image);
+    imshow("image", face.image);
     while (waitKey(0) != 'm') {
     }
-    viewPointCloud(segmenter.getFace().cloud);
+    viewPointCloud(face.cloud);
 
-    Mat depthMap = segmenter.getFace().get3DImage();
+    Mat depthMap = face.get3DImage();
     imshow("Depth Map", depthMap);
     waitKey(0);
     system("read -p 'Press [enter] to continue'");
@@ -173,9 +173,9 @@ void testFaceDetection()
 
     cout << "Face loaded!" << endl;
 
-    BackgroundSegmentation segmenter(face);
+    BackgroundSegmentation segmenter;
     cv::Rect detectedRegion;
-    if (segmenter.detectForegroundFace(detectedRegion)) {
+    if (segmenter.detectForegroundFace(face, detectedRegion)) {
         cv::rectangle(face.image, detectedRegion, Scalar(255, 255, 255), 5);
 
         imshow("image", face.image);
