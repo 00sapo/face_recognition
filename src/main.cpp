@@ -59,15 +59,15 @@ int main()
 void testFunctions()
 {
     //test::testSingletonSettings();
-
+    //
     //test::testFaceLoader();
-
+    //
     //test::testFindThreshold();
-
+    //
     //test::testGetDepthMap();
-
+    //
     //test::testKmeans();
-
+    //
     //test::testFaceDetection();
 
     test::testDetectFacePose();
