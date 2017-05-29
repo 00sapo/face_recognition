@@ -135,9 +135,9 @@ void testDetectFacePose()
 
     cout << "Face loaded!" << endl;
 
-    BackgroundSegmentation segmenter(face);
+    BackgroundSegmentation segmenter;
     cv::Rect detectedRegion;
-    if (segmenter.detectForegroundFace(detectedRegion)) {
+    if (segmenter.detectForegroundFace(face, detectedRegion)) {
         cv::rectangle(face.image, detectedRegion, Scalar(255, 255, 255), 5);
     } else {
         std::cout << "No face detected!" << std::endl;
@@ -149,10 +149,8 @@ void testDetectFacePose()
     segmenter.removeBackground(face);
     std::cout << "Done!" << std::endl;
 
-    segmenter.setFace(face);
-
     std::cout << "Estimating face pose..." << std::endl;
-    segmenter.estimateFacePose();
+    segmenter.estimateFacePose(face);
     system("read -p 'Press [enter] to continue'");
 }
 
