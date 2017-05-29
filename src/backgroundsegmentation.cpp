@@ -211,18 +211,15 @@ void BackgroundSegmentation::removeBackground(Face& face)
 
     std::cout << "Removing background..." << std::endl;
     if (bestLabels.size() != face.cloud->size()) {
-        std::cerr << "Can't removing background: labels and cloud not coherent!!" << std::endl;
+        std::cerr << "Can't removing background: labels and cloud have different sizes!!" << std::endl;
         return;
     }
     it = face.cloud->begin();
     for (int label : bestLabels) {
-        std::cout << label;
         if (label != FACE_CLUSTER) {
-            std::cout << "-R";
             it = face.cloud->erase(it);
         } else
             ++it;
-        std::cout << "; ";
     }
     std::cout << std::endl
               << "Done!" << std::endl;

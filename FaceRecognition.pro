@@ -1,7 +1,8 @@
 TEMPLATE = app
+QMAKE_CFLAGS += -Wcomment
 CONFIG += console c++14
 CONFIG -= app_bundle
-CONFIG -= qt 
+CONFIG -= qt
 
 SOURCES += src/main.cpp \
            src/singletonsettings.cpp \

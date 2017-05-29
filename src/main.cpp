@@ -7,8 +7,8 @@ void testFunctions();
 int main()
 {
 
-    //    testFunctions();
-
+    testFunctions();
+    /*
     string dirPath = "../RGBD_Face_dataset_training/";
     FaceLoader loader(dirPath, "004_.*"); // example: loads only .png files starting with 014
 
@@ -58,26 +58,19 @@ int main()
 
 void testFunctions()
 {
-    cout << "SingletonSettings test..." << endl;
     //test::testSingletonSettings();
 
-    cout << "\n\nFace loader test..." << endl;
     //test::testFaceLoader();
 
-    cout << "\n\nFind threshold test..." << endl;
     //test::testFindThreshold();
 
-    cout << "\n\nGet depth map test..." << endl;
     //test::testGetDepthMap();
 
-    cout << "\n\nDetect face pose..." << endl;
-    //test::testDetectFacePose();
+    //test::testKmeans();
 
-    cout << "\n\nDetect faces test..." << endl;
     //test::testFaceDetection();
 
-    cout << "\n\nKmeans test..." << endl;
-    test::testKmeans();
+    test::testDetectFacePose();
 
     cout << "\n\nTests finished!" << endl;
 }

@@ -22,6 +22,7 @@ namespace test {
 
 void testSingletonSettings()
 {
+    cout << "SingletonSettings test..." << endl;
     SingletonSettings& settings = SingletonSettings::getInstance();
     cout << settings.getD() << endl
          << settings.getK() << endl
@@ -29,10 +30,12 @@ void testSingletonSettings()
          << settings.getR() << endl
          << settings.getHeight() << endl
          << settings.getWidth() << endl;
+    system("read -p 'Press [enter] to continue'");
 }
 
 void testFaceLoader()
 {
+    cout << "\n\nFace loader test..." << endl;
     string dirPath = "../RGBD_Face_dataset_training/";
     FaceLoader loader(dirPath, "014.*");
     vector<Face> faceSequence(0);
@@ -50,11 +53,12 @@ void testFaceLoader()
 
         viewPointCloud(face.cloud);
     }
+    system("read -p 'Press [enter] to continue'");
 }
 
 void testFindThreshold()
 {
-
+    cout << "\n\nFind threshold test..." << endl;
     string dirPath = "../RGBD_Face_dataset_training/";
     FaceLoader loader(dirPath, "014.*"); // example: loads only .png files starting with 014
 
@@ -87,10 +91,12 @@ void testFindThreshold()
     Mat depthMap = segmenter.getFace().get3DImage();
     imshow("Depth Map", depthMap);
     waitKey(0);
+    system("read -p 'Press [enter] to continue'");
 }
 
 void testGetDepthMap()
 {
+    cout << "\n\nGet depth map test..." << endl;
     string dirPath = "../RGBD_Face_dataset_training/";
     FaceLoader loader(dirPath, "014.*"); // example: loads only .png files starting with 014
 
@@ -109,11 +115,12 @@ void testGetDepthMap()
 
     imshow("Depth Map", depthMap);
     waitKey(0);
+    system("read -p 'Press [enter] to continue'");
 }
 
 void testDetectFacePose()
 {
-
+    cout << "\n\nDetect face pose..." << endl;
     string dirPath = "../RGBD_Face_dataset_training/";
     FaceLoader loader(dirPath, "000_.*"); // example: loads only .png files starting with 014
 
@@ -128,27 +135,30 @@ void testDetectFacePose()
 
     cout << "Face loaded!" << endl;
 
-    cout << "\nFiltering background..." << endl;
-
     BackgroundSegmentation segmenter(face);
-    imshow("image", segmenter.getFace().image);
-    while (waitKey(0) != 'm') {
+    cv::Rect detectedRegion;
+    if (segmenter.detectForegroundFace(detectedRegion)) {
+        cv::rectangle(face.image, detectedRegion, Scalar(255, 255, 255), 5);
+    } else {
+        std::cout << "No face detected!" << std::endl;
     }
 
-    segmenter.filterBackground();
+    face.crop(detectedRegion);
 
-    //cout << "Treshold found: " << segmenter.findTreshold() << endl;
-    imshow("image", segmenter.getFace().image);
-    while (waitKey(0) != 'm') {
-    }
-    viewPointCloud(segmenter.getFace().cloud);
+    std::cout << "Removing background..." << std::endl;
+    segmenter.removeBackground(face);
+    std::cout << "Done!" << std::endl;
 
+    segmenter.setFace(face);
+
+    std::cout << "Estimating face pose..." << std::endl;
     segmenter.estimateFacePose();
-    waitKey(0);
+    system("read -p 'Press [enter] to continue'");
 }
 
 void testFaceDetection()
 {
+    cout << "\n\nDetect faces test..." << endl;
     string dirPath = "../RGBD_Face_dataset_training/";
     FaceLoader loader(dirPath, "000_.*"); // example: loads only .png files starting with 014
 
@@ -179,11 +189,12 @@ void testFaceDetection()
     waitKey(0);
 
     viewPointCloud(face.cloud);
+    system("read -p 'Press [enter] to continue'");
 }
 
 void testKmeans()
 {
-
+    cout << "\n\nKmeans test..." << endl;
     vector<float> depth;
 
     depth.push_back(1.543);
@@ -215,8 +226,7 @@ void testKmeans()
     }
     std::cout << "Done!" << std::endl;
 
-    string x;
-    cin >> x;
+    system("read -p 'Press [enter] to continue'");
 }
 }
 
