@@ -13,10 +13,11 @@
 #include "face.h"
 #include "faceloader.h"
 #include "singletonsettings.h"
+#include "utils.h"
 
 using namespace std;
 using namespace cv;
-using namespace pcl;
+//using namespace pcl;
 
 namespace test {
 
@@ -51,7 +52,7 @@ void testFaceLoader()
         while (waitKey(0) != 'm') {
         }
 
-        viewPointCloud(face.cloud);
+        viewPointCloud(face.depthMap);
     }
     system("read -p 'Press [enter] to continue'");
 }
@@ -86,9 +87,9 @@ void testFindThreshold()
     imshow("image", face.image);
     while (waitKey(0) != 'm') {
     }
-    viewPointCloud(face.cloud);
+    viewPointCloud(face.depthMap);
 
-    Mat depthMap = face.get3DImage();
+    Mat depthMap = face.get3DImage(SingletonSettings::getInstance().getK());
     imshow("Depth Map", depthMap);
     waitKey(0);
     system("read -p 'Press [enter] to continue'");
@@ -111,7 +112,7 @@ void testGetDepthMap()
 
     cout << "Face loaded!" << endl;
 
-    cv::Mat depthMap = face.get3DImage();
+    cv::Mat depthMap = face.get3DImage(SingletonSettings::getInstance().getK());
 
     imshow("Depth Map", depthMap);
     waitKey(0);
@@ -139,6 +140,8 @@ void testDetectFacePose()
     cv::Rect detectedRegion;
     if (segmenter.detectForegroundFace(face, detectedRegion)) {
         cv::rectangle(face.image, detectedRegion, Scalar(255, 255, 255), 5);
+        cv::imshow("Face detected", face.image);
+        cv::waitKey(0);
     } else {
         std::cout << "No face detected!" << std::endl;
     }
@@ -146,7 +149,13 @@ void testDetectFacePose()
     face.crop(detectedRegion);
 
     std::cout << "Removing background..." << std::endl;
+    viewPointCloud(face.depthMap);
+    imshow("Face", face.image);
+    waitKey(0);
     segmenter.removeBackground(face);
+    viewPointCloud(face.depthMap);
+    imshow("Face", face.image);
+    waitKey(0);
     std::cout << "Done!" << std::endl;
 
     std::cout << "Estimating face pose..." << std::endl;
@@ -186,7 +195,7 @@ void testFaceDetection()
     imshow("image", face.image);
     waitKey(0);
 
-    viewPointCloud(face.cloud);
+    viewPointCloud(face.depthMap);
     system("read -p 'Press [enter] to continue'");
 }
 

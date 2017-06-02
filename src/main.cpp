@@ -51,7 +51,7 @@ int main()
     std::cout << "Estimating face pose..." << std::endl;
     segmenter.estimateFacePose(face);
     std::cout << "Done!" << std::endl;
-    /**/
+    */
 
     return 0;
 }

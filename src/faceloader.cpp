@@ -62,10 +62,19 @@ bool FaceLoader::get(Face& face)
         return false;
     }
 
-    if(cloud->isOrganized())
-        cout << "WARNING: loading unorganized point cloud!" << endl;
+    if(!cloud->isOrganized()) {
+        cerr << "ERROR: loading unorganized point cloud!" << endl;
+        return false;
+    }
 
-    face = Face(image, cloud);
+    Mat depthMap(cloud->height, cloud->width, CV_32F);
+    for (uint x = 0; x < cloud->height; ++x) {
+        for (uint y = 0; y < cloud->width; ++y) {
+            depthMap.at<float>(x,y) = cloud->at(y,x).z;
+        }
+    }
+
+    face = Face(image, depthMap);
 
     imageFileNames.pop_back();
     cloudFileNames.pop_back();
@@ -150,47 +159,10 @@ bool FaceLoader::loadFileNames(const string& dirPath)
     std::sort(imageFileNames.begin(), imageFileNames.end());
     std::sort(cloudFileNames.begin(), cloudFileNames.end());
 
-    //for (const auto& s : imageFileNames) {
-    //    cout << s << endl;
-    //}
-    //for (const auto& s : cloudFileNames) {
-    //    cout << s << endl;
-    //}
-
     return true;
 }
 
 bool FaceLoader::matchTemplate(const string& fileName)
 {
     return regex_match(fileName, fileTemplate, regex_constants::match_any);
-}
-
-void keyboardEventHandler(const pcl::visualization::KeyboardEvent& event, void* viewer_void)
-{
-
-    //    boost::shared_ptr<visualization::PCLVisualizer> viewer = *static_cast<boost::shared_ptr<visualization::PCLVisualizer>*>(viewer_void);
-    pcl::visualization::PCLVisualizer* viewer = (pcl::visualization::PCLVisualizer*)viewer_void;
-
-    if (event.getKeySym() == "n" && event.keyDown())
-        viewer->close();
-}
-
-void viewPointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud)
-{
-
-    pcl::visualization::PCLVisualizer* viewer = new pcl::visualization::PCLVisualizer("PCL Viewer");
-    viewer->setBackgroundColor(0.0, 0.0, 0.5);
-    viewer->addCoordinateSystem(0.1);
-    viewer->initCameraParameters();
-
-    //visualization::PointCloudColorHandlerRGBField<PointXYZRGB> rgb(cloud);
-    viewer->addPointCloud<pcl::PointXYZ>(cloud, "input_cloud");
-    viewer->setCameraPosition(-0.24917, -0.0187087, -1.29032, 0.0228136, -0.996651, 0.0785278);
-
-    viewer->registerKeyboardCallback(keyboardEventHandler, (void*)viewer);
-    while (!viewer->wasStopped()) {
-        viewer->spin();
-    }
-
-    delete viewer;
 }
