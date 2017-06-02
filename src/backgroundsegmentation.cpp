@@ -2,8 +2,10 @@
 
 #include <iostream>
 #include <opencv2/opencv.hpp>
+#include <opencv2/highgui.hpp>
 
 #include "face.h"
+#include "singletonsettings.h"
 
 using std::vector;
 using std::string;
@@ -46,17 +48,17 @@ bool BackgroundSegmentation::detectForegroundFace(const Face& face, cv::Rect& de
     classifier.detectMultiScale(face.image, faces);
 
     // choose foreground face if more than one detected
-    float foregroundFaceDepth = FLT_MAX;
-    for (cv::Rect f : faces) {
-        for (int x = f.x; x < f.x + f.width; x++) {
-            for (int y = f.y; y < f.y + f.height; y++) {
-                if (face.cloud->at(x, y).z < foregroundFaceDepth) {
-                    foregroundFaceDepth = face.cloud->at(x, y).z;
-                    detectedFace = f;
-                }
-            }
-        }
-    }
+    //float foregroundFaceDepth = FLT_MAX;
+    //for (cv::Rect f : faces) {
+    //    face.depthForEach([detectedFace, foregroundFaceDepth, f] (int x, int y, const float& depth) mutable {
+    //        if (depth < foregroundFaceDepth) {
+    //            foregroundFaceDepth = depth;
+    //            detectedFace = f;
+    //        }
+    //    }, f);
+    //}
+
+    detectedFace = faces[0];
 
     // enlarge a bit the face region
     detectedFace.x -= 20;
@@ -75,54 +77,57 @@ void BackgroundSegmentation::removeBackground(std::vector<Face>& faces) const
 }
 
 
-void BackgroundSegmentation::removeBackground(Face& face) const
+bool BackgroundSegmentation::removeBackground(Face& face) const
 {
-
-    std::cout << "Building depth map..." << std::endl;
-
+    // build nan mask to skip nans
     vector<float> depth;
+    Mat nanMask = Mat::zeros(face.getHeight(), face.getWidth(), CV_8U); // true if nan
 
-    auto it = face.cloud->begin();
-    while (it != face.cloud->end()) {
-        if (std::isnan((*it).z)) {
-            //            depth.push_back(face.getMinDepth());
-            it = face.cloud->erase(it);
-        } else {
-            depth.push_back((*it).z);
-            ++it;
+    const auto HEIGHT = face.getHeight();
+    const auto WIDTH  = face.getWidth();
+
+    for (uint x = 0; x < HEIGHT; ++x) {
+        for (uint y = 0; y < WIDTH; ++y) {
+            float d = face.depthMap.at<float>(x,y);
+            if (std::isnan(d))
+                nanMask.at<bool>(x,y) = true;
+            else
+                depth.push_back(d);
         }
     }
-    std::cout << std::endl;
 
-    std::cout << "Done!" << std::endl;
-
-    //    cv::Mat centers = cv::Mat(4, 3, CV_32F).clone();
+    // clustering
     vector<int>   bestLabels;
     vector<float> centers;
-
-    std::cout << "Clustering..." << std::endl;
     cv::TermCriteria criteria(cv::TermCriteria::EPS, 10, 1.0);
     cv::kmeans(depth, 2, bestLabels, criteria, 3, cv::KMEANS_PP_CENTERS, centers);
-    std::cout << "Done!" << std::endl;
 
-    std::cout << "Size: " << centers.size() << std::endl;
+    if (centers.size() != 2) {
+        std::cout << "Clustering on depth map for background removal failed!" << std::endl;
+        return false;
+    }
 
+    // remove background
     const int FACE_CLUSTER = centers.at(0) < centers.at(1) ? 0 : 1;
+    auto iter = bestLabels.begin();
 
-    std::cout << "Removing background..." << std::endl;
-    if (bestLabels.size() != face.cloud->size()) {
-        std::cerr << "Can't removing background: labels and cloud have different sizes!!" << std::endl;
-        return;
+    for (uint x = 0; x < HEIGHT; ++x) {
+        for (uint y = 0; y < WIDTH; ++y) {
+            if (!nanMask.at<bool>(x,y)) {
+                if (*iter != FACE_CLUSTER) {
+                    face.depthMap.at<float>(x,y) = 0;
+                    face.image.at<uchar>(x,y) = 0;
+                }
+                ++iter;
+            }
+            else {
+                face.depthMap.at<float>(x,y) = 0;
+                face.image.at<uchar>(x,y) = 0;
+            }
+        }
     }
-    it = face.cloud->begin();
-    for (int label : bestLabels) {
-        if (label != FACE_CLUSTER) {
-            it = face.cloud->erase(it);
-        } else
-            ++it;
-    }
-    std::cout << std::endl
-              << "Done!" << std::endl;
+
+    return true;
 }
 
 bool BackgroundSegmentation::estimateFacePose(const Face& face)
@@ -132,7 +137,12 @@ bool BackgroundSegmentation::estimateFacePose(const Face& face)
         return false;
     }
 
-    cv::Mat img3D = face.get3DImage();
+    SingletonSettings& settings = SingletonSettings::getInstance();
+    cv::Mat img3D = face.get3DImage(settings.getK());
+
+    cv::imshow("IMage3D", img3D);
+    cv::waitKey(0);
+
     vector<cv::Vec<float, POSE_SIZE>> means; // outputs
     vector<vector<Vote>> clusters;           // full clusters of votes
     vector<Vote> votes;                      // all votes returned by the forest

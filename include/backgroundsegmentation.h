@@ -35,7 +35,7 @@ public:
      *        furthest one
      * @param face
      */
-    void removeBackground(Face& face) const;
+    bool removeBackground(Face& face) const;
 
     /**
      * @brief removeBackground calls remove background on every Face
