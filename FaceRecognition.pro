@@ -5,21 +5,23 @@ CONFIG -= qt
 
 SOURCES += src/main.cpp \
            src/singletonsettings.cpp \
-           src/backgroundsegmentation.cpp \
            src/face.cpp \
            src/faceloader.cpp \
            extern_libs/head_pose_estimation/CRForestEstimator.cpp \
            extern_libs/head_pose_estimation/CRTree.cpp \
-    src/utils.cpp
+    src/utils.cpp \
+    src/posemanager.cpp \
+    src/facesegmenter.cpp
 
 HEADERS += include/singletonsettings.h \
-           include/backgroundsegmentation.h \
            include/face.h \
            include/faceloader.h \
            extern_libs/head_pose_estimation/CRForestEstimator.h \
            extern_libs/head_pose_estimation/CRTree.h \
     include/test.h \
-    include/utils.h
+    include/utils.h \
+    include/posemanager.h \
+    include/facesegmenter.h
 
 DISTFILES += \
     camera_info.yaml

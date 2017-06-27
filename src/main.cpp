@@ -69,8 +69,12 @@ void testFunctions()
     //test::testKmeans();
     //
     //test::testFaceDetection();
-
-    test::testDetectFacePose();
+    //
+    //    test::testDetectFacePose();
+    //
+    //    test::testEulerAnglesToRotationMatrix();
+    //
+    test::testPoseClustering();
 
     cout << "\n\nTests finished!" << endl;
 }
