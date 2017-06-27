@@ -258,6 +258,41 @@ void testKmeans()
     system("read -p 'Press [enter] to continue'");
 }
 
+void testKmeans2()
+{
+
+    Mat R0 = (Mat_<float>(9, 1) << 0.123, 0.345, 0.987, 0.1842, 0.567, 0.832, 0.324, 0.431, 0.111);
+    Mat R1 = (Mat_<float>(9, 1) << 0.7153, 0.3345, 0.3987, 0.91842, 0.5677, 0.7832, 0.5324, 0.4831, 0.6111);
+    Mat R2 = (Mat_<float>(9, 1) << 0.5123, 0.5345, 0.1987, 0.19842, 0.2567, 0.8832, 0.2324, 0.6431, 0.2111);
+    Mat R3 = (Mat_<float>(9, 1) << 0.3123, 0.4345, 0.5987, 0.91842, 0.3567, 0.8732, 0.9324, 0.8431, 0.9111);
+    Mat R4 = (Mat_<float>(9, 1) << 0.6123, 0.5345, 0.4987, 0.5842, 0.1567, 0.1832, 0.1324, 0.9431, 0.7111);
+    Mat R5 = (Mat_<float>(9, 1) << 0.9123, 0.2345, 0.3987, 0.11842, 0.4567, 0.1832, 0.7324, 0.5431, 0.111);
+    Mat R6 = (Mat_<float>(9, 1) << 0.0123, 0.9345, 0.7987, 0.01842, 0.3567, 0.9832, 0.8324, 0.3431, 0.9111);
+    Mat R7 = (Mat_<float>(9, 1) << 0.6123, 0.0345, 0.0987, 0.31842, 0.0567, 0.0832, 0.7324, 0.5431, 0.6111);
+    Mat R8 = (Mat_<float>(9, 1) << 0.4123, 0.1345, 0.1987, 0.61842, 0.5567, 0.6832, 0.6324, 0.6431, 0.2111);
+    Mat R9 = (Mat_<float>(9, 1) << 0.2123, 0.2345, 0.2987, 0.81842, 0.8567, 0.5832, 0.3324, 0.8431, 0.3111);
+
+    vector<Mat> data = { R0, R1, R2, R3, R4, R5, R6, R7, R8, R9 };
+    vector<Mat> centers;
+
+    std::vector<int> bestLabels;
+    std::cout << "Clustering..." << std::endl;
+    cv::TermCriteria criteria(cv::TermCriteria::EPS, 10, 1.0);
+    cv::kmeans(data, 2, bestLabels, criteria, 3, cv::KMEANS_PP_CENTERS, centers);
+    std::cout << "Done!" << std::endl;
+
+    std::cout << "Size: " << centers.size() << std::endl;
+    //std::cout << "Cols: " << centers.cols << std::endl;
+
+    std::cout << "Labels for points..." << std::endl;
+    for (uint i = 0; i < bestLabels.size(); ++i) {
+        std::cout << bestLabels.at(i) << std::endl;
+    }
+    std::cout << "Done!" << std::endl;
+
+    system("read -p 'Press [enter] to continue'");
+}
+
 void testPoseClustering()
 {
     PoseManager pm = PoseManager();
