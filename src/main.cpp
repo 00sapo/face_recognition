@@ -74,7 +74,9 @@ void testFunctions()
     //
     //    test::testEulerAnglesToRotationMatrix();
     //
-    test::testPoseClustering();
+    //    test::testPoseClustering();
+    //
+    test::testKmeans2();
 
     cout << "\n\nTests finished!" << endl;
 }

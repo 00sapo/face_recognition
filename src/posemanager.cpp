@@ -65,7 +65,7 @@ Mat PoseManager::eulerAnglesToRotationMatrix(Vec3f& theta)
     float cosz = cos(theta[2]);
     float senz = sin(theta[2]);
 
-    Mat R = (Mat_<double>(1, 9) << cosy * cosz, cosx * senz + senx * seny * cosz, senx * senz - cosx * seny * cosz,
+    Mat R = (Mat_<float>(9, 1) << cosy * cosz, cosx * senz + senx * seny * cosz, senx * senz - cosx * seny * cosz,
         -cosy * senz, cosx * cosz - senx * seny * senz, senx * cosz + cosx * seny * senz,
         seny, -senx * cosy, cosx * cosy);
 
