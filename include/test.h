@@ -9,9 +9,10 @@
 #include <pcl/visualization/area_picking_event.h>
 #include <pcl/visualization/pcl_visualizer.h>
 
-#include "backgroundsegmentation.h"
 #include "face.h"
 #include "faceloader.h"
+#include "facesegmenter.h"
+#include "posemanager.h"
 #include "singletonsettings.h"
 #include "utils.h"
 
@@ -57,6 +58,25 @@ void testFaceLoader()
     system("read -p 'Press [enter] to continue'");
 }
 
+Mat testEulerAnglesToRotationMatrix()
+{
+    srand(time(NULL));
+    float r1 = static_cast<float>(rand()) / (static_cast<float>(RAND_MAX / (2 * M_PI)));
+    float r2 = static_cast<float>(rand()) / (static_cast<float>(RAND_MAX / (2 * M_PI)));
+    float r3 = static_cast<float>(rand()) / (static_cast<float>(RAND_MAX / (2 * M_PI)));
+    Vec3f euler = { r1, r2, r3 };
+    PoseManager pm;
+
+    Mat rotation = pm.eulerAnglesToRotationMatrix(euler);
+
+    std::cout << "Euler Angles:" << std::endl;
+    std::cout << euler << std::endl;
+    std::cout << "Rotation Matrix:" << std::endl;
+    std::cout << rotation << std::endl;
+
+    return rotation;
+}
+
 void testFindThreshold()
 {
     cout << "\n\nFind threshold test..." << endl;
@@ -76,7 +96,7 @@ void testFindThreshold()
 
     cout << "\nFiltering background..." << endl;
 
-    BackgroundSegmentation segmenter;
+    FaceSegmenter segmenter;
     imshow("image", face.image);
     while (waitKey(0) != 'm') {
     }
@@ -136,7 +156,7 @@ void testDetectFacePose()
 
     cout << "Face loaded!" << endl;
 
-    BackgroundSegmentation segmenter;
+    FaceSegmenter segmenter;
     cv::Rect detectedRegion;
     if (segmenter.detectForegroundFace(face, detectedRegion)) {
         cv::rectangle(face.image, detectedRegion, Scalar(255, 255, 255), 5);
@@ -158,8 +178,10 @@ void testDetectFacePose()
     waitKey(0);
     std::cout << "Done!" << std::endl;
 
+    PoseManager poseManager = PoseManager();
+
     std::cout << "Estimating face pose..." << std::endl;
-    segmenter.estimateFacePose(face);
+    poseManager.estimateFacePose(face);
     system("read -p 'Press [enter] to continue'");
 }
 
@@ -180,7 +202,7 @@ void testFaceDetection()
 
     cout << "Face loaded!" << endl;
 
-    BackgroundSegmentation segmenter;
+    FaceSegmenter segmenter;
     cv::Rect detectedRegion;
     if (segmenter.detectForegroundFace(face, detectedRegion)) {
         cv::rectangle(face.image, detectedRegion, Scalar(255, 255, 255), 5);
@@ -235,6 +257,20 @@ void testKmeans()
 
     system("read -p 'Press [enter] to continue'");
 }
-}
 
+void testPoseClustering()
+{
+    PoseManager pm = PoseManager();
+    for (int i = 0; i < 40; i++) {
+        Mat pose = testEulerAnglesToRotationMatrix();
+        pm.addPoseData(pose);
+    }
+
+    pm.clusterizePoses(4);
+
+    Mat pose = testEulerAnglesToRotationMatrix();
+    std::cout << "Nearest Center: " << endl;
+    std::cout << pm.getNearestCenterId(pose) << endl;
+}
+}
 #endif // TEST_H
