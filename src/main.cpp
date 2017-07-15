@@ -77,6 +77,4 @@ void testFunctions()
     //    test::testPoseClustering();
     //
     test::testKmeans2();
-
-    cout << "\n\nTests finished!" << endl;
 }
