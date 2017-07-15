@@ -22,6 +22,14 @@ using namespace cv;
 
 namespace test {
 
+Vec3f randomEulerAngle()
+{
+    float r1 = static_cast<float>(rand()) / (static_cast<float>(RAND_MAX / (2 * M_PI)));
+    float r2 = static_cast<float>(rand()) / (static_cast<float>(RAND_MAX / (2 * M_PI)));
+    float r3 = static_cast<float>(rand()) / (static_cast<float>(RAND_MAX / (2 * M_PI)));
+    return { r1, r2, r3 };
+}
+
 void testSingletonSettings()
 {
     cout << "SingletonSettings test..." << endl;
@@ -58,16 +66,13 @@ void testFaceLoader()
     system("read -p 'Press [enter] to continue'");
 }
 
-Mat testEulerAnglesToRotationMatrix()
+Pose testEulerAnglesToRotationMatrix()
 {
     srand(time(NULL));
-    float r1 = static_cast<float>(rand()) / (static_cast<float>(RAND_MAX / (2 * M_PI)));
-    float r2 = static_cast<float>(rand()) / (static_cast<float>(RAND_MAX / (2 * M_PI)));
-    float r3 = static_cast<float>(rand()) / (static_cast<float>(RAND_MAX / (2 * M_PI)));
-    Vec3f euler = { r1, r2, r3 };
+    Vec3f euler = randomEulerAngle();
     PoseManager pm;
 
-    Mat rotation = pm.eulerAnglesToRotationMatrix(euler);
+    Pose rotation = pm.eulerAnglesToRotationMatrix(euler);
 
     std::cout << "Euler Angles:" << std::endl;
     std::cout << euler << std::endl;
@@ -261,19 +266,19 @@ void testKmeans()
 void testKmeans2()
 {
 
-    Matx<float, 9, 1> R0(0.123, 0.345, 0.987, 0.1842, 0.567, 0.832, 0.324, 0.431, 0.111);
-    Matx<float, 9, 1> R1(0.7153, 0.3345, 0.3987, 0.91842, 0.5677, 0.7832, 0.5324, 0.4831, 0.6111);
-    Matx<float, 9, 1> R2(0.5123, 0.5345, 0.1987, 0.19842, 0.2567, 0.8832, 0.2324, 0.6431, 0.2111);
-    Matx<float, 9, 1> R3(0.3123, 0.4345, 0.5987, 0.91842, 0.3567, 0.8732, 0.9324, 0.8431, 0.9111);
-    Matx<float, 9, 1> R4(0.6123, 0.5345, 0.4987, 0.5842, 0.1567, 0.1832, 0.1324, 0.9431, 0.7111);
-    Matx<float, 9, 1> R5(0.9123, 0.2345, 0.3987, 0.11842, 0.4567, 0.1832, 0.7324, 0.5431, 0.111);
-    Matx<float, 9, 1> R6(0.0123, 0.9345, 0.7987, 0.01842, 0.3567, 0.9832, 0.8324, 0.3431, 0.9111);
-    Matx<float, 9, 1> R7(0.6123, 0.0345, 0.0987, 0.31842, 0.0567, 0.0832, 0.7324, 0.5431, 0.6111);
-    Matx<float, 9, 1> R8(0.4123, 0.1345, 0.1987, 0.61842, 0.5567, 0.6832, 0.6324, 0.6431, 0.2111);
-    Matx<float, 9, 1> R9(0.2123, 0.2345, 0.2987, 0.81842, 0.8567, 0.5832, 0.3324, 0.8431, 0.3111);
+    Pose R0(0.123, 0.345, 0.987, 0.1842, 0.567, 0.832, 0.324, 0.431, 0.111);
+    Pose R1(0.7153, 0.3345, 0.3987, 0.91842, 0.5677, 0.7832, 0.5324, 0.4831, 0.6111);
+    Pose R2(0.5123, 0.5345, 0.1987, 0.19842, 0.2567, 0.8832, 0.2324, 0.6431, 0.2111);
+    Pose R3(0.3123, 0.4345, 0.5987, 0.91842, 0.3567, 0.8732, 0.9324, 0.8431, 0.9111);
+    Pose R4(0.6123, 0.5345, 0.4987, 0.5842, 0.1567, 0.1832, 0.1324, 0.9431, 0.7111);
+    Pose R5(0.9123, 0.2345, 0.3987, 0.11842, 0.4567, 0.1832, 0.7324, 0.5431, 0.111);
+    Pose R6(0.0123, 0.9345, 0.7987, 0.01842, 0.3567, 0.9832, 0.8324, 0.3431, 0.9111);
+    Pose R7(0.6123, 0.0345, 0.0987, 0.31842, 0.0567, 0.0832, 0.7324, 0.5431, 0.6111);
+    Pose R8(0.4123, 0.1345, 0.1987, 0.61842, 0.5567, 0.6832, 0.6324, 0.6431, 0.2111);
+    Pose R9(0.2123, 0.2345, 0.2987, 0.81842, 0.8567, 0.5832, 0.3324, 0.8431, 0.3111);
 
-    vector<Matx<float, 9, 1>> data = { R0, R1, R2, R3, R4, R5, R6, R7, R8, R9 };
-    Matx<float, 2, 9> centers;
+    vector<Pose> data = { R0, R1, R2, R3, R4, R5, R6, R7, R8, R9 };
+    Mat centers;
 
     vector<int> bestLabels;
     cout << "Clustering..." << endl;
@@ -281,8 +286,8 @@ void testKmeans2()
     cv::kmeans(data, 2, bestLabels, criteria, 3, cv::KMEANS_PP_CENTERS, centers);
     cout << "Done!" << endl;
 
-    //    cout << "Size: " << centers.size() << endl;
-    //cout << "Cols: " << centers.cols << endl;
+    cout << "Size: " << centers.size() << endl;
+    cout << "Cols: " << centers.cols << endl;
 
     cout << "Labels for points..." << endl;
     for (uint i = 0; i < bestLabels.size(); ++i) {
@@ -300,15 +305,16 @@ void testKmeans2()
 
 void testPoseClustering()
 {
+    srand(time(NULL));
     PoseManager pm = PoseManager();
     for (int i = 0; i < 40; i++) {
-        Mat pose = testEulerAnglesToRotationMatrix();
+        Pose pose = pm.eulerAnglesToRotationMatrix(randomEulerAngle());
         pm.addPoseData(pose);
     }
 
     pm.clusterizePoses(4);
 
-    Mat pose = testEulerAnglesToRotationMatrix();
+    Pose pose = pm.eulerAnglesToRotationMatrix(randomEulerAngle());
     std::cout << "Nearest Center: " << endl;
     std::cout << pm.getNearestCenterId(pose) << endl;
 }
