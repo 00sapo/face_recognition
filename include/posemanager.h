@@ -1,24 +1,23 @@
 #ifndef POSEMANAGER_H
 #define POSEMANAGER_H
-#include "extern_libs/head_pose_estimation/CRForestEstimator.h"
-#include "face.h"
-#include "iostream"
-#include "singletonsettings.h"
 
-using std::string;
-using std::vector;
+#include <iostream>
+
+#include "extern_libs/head_pose_estimation/CRForestEstimator.h"
+
+class Face;     // forward declaration
 
 class PoseManager {
 public:
-    PoseManager();
-    PoseManager(const std::string& poseEstimatorPath);
+    //PoseManager();
+    explicit PoseManager(const std::string& poseEstimatorPath = POSE_ESTIMATOR_PATH);
 
     /**
      * @brief estimateFacePose
      * @param face
      * @return True if pose estimation was successful and rotation matrix was added to posesData, false otherwise
      */
-    bool estimateFacePose(const Face& face);
+    bool estimateFacePose(const Face& face, const cv::Mat &calibration);
 
     /**
      * @brief eulerAnglesToRotationMatrix
@@ -40,9 +39,9 @@ private:
 
     CRForestEstimator estimator;
 
-    vector<cv::Mat> centers;
+    std::vector<cv::Mat> centers;
 
-    vector<cv::Mat> posesData;
+    std::vector<cv::Mat> posesData;
 };
 
 #endif // POSEMANAGER_H

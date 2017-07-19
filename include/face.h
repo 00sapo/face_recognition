@@ -77,9 +77,9 @@ public:
      * @param function function to be called on each pixel
      * @param ROI region of interest to which apply function
      */
-    void depthForEach(std::function<void(int, int, float&)> function, const cv::Rect& ROI);
+    void depthForEach(std::function<void(int, int, uint16_t &)> function, const cv::Rect& ROI);
 
-    void depthForEach(std::function<void(int, int, const float&)> function, const cv::Rect& ROI) const;
+    void depthForEach(std::function<void(int, int, const uint16_t&)> function, const cv::Rect& ROI) const;
 
     /**
      * @brief imageForEach applies the function function to every point

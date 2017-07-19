@@ -15,7 +15,7 @@ using pcl::PointXYZ;
 Face::Face() : WIDTH(0), HEIGHT(0), DEPTH_IMG_RATIO(0)
 {
     image = Mat::zeros(1,1,CV_16UC3);
-    depthMap = Mat::zeros(1,1,CV_16U);
+    depthMap = Mat::zeros(1,1,CV_16SC1);
 }
 
 Face::Face(Mat image, cv::Mat depthMap) : image(image), depthMap(depthMap)
@@ -44,7 +44,7 @@ Mat Face::get3DImage(const Mat& intrinsicCameraMatrix) const
 
     for (uint i = 0; i < HEIGHT; ++i) {
         for (uint j = 0; j < WIDTH; ++j) {
-            float d = depthMap.at<float>(i,j);
+            float d = static_cast<float>(depthMap.at<uint16_t>(i,j));
             auto& vec = image3D.at<cv::Vec3f>(i,j);
             vec[0] = d * (float(j) - cx)/fx;
             vec[1] = d * (float(i) - cy)/fy;
@@ -65,26 +65,26 @@ void Face::crop(const cv::Rect &cropRegion) {
     HEIGHT = cropRegion.height;
 }
 
-void Face::depthForEach(std::function<void(int, int, float&)> function, const cv::Rect& ROI) {
+void Face::depthForEach(std::function<void(int, int, uint16_t&)> function, const cv::Rect& ROI) {
 
     const uint MAX_X = ROI.x + ROI.height;
     const uint MAX_Y = ROI.y + ROI.width;
 
     for (uint x = ROI.x; x < MAX_X; ++x) {
         for (uint y = ROI.y; y < MAX_Y; ++y) {
-            function(x,y,depthMap.at<float>(x,y));
+            function(x,y,depthMap.at<uint16_t>(x,y));
         }
     }
 }
 
-void Face::depthForEach(std::function<void(int, int, const float&)> function, const cv::Rect& ROI)  const {
+void Face::depthForEach(std::function<void(int, int, const uint16_t &)> function, const cv::Rect& ROI)  const {
 
     const uint MAX_X = ROI.x + ROI.height;
     const uint MAX_Y = ROI.y + ROI.width;
 
     for (uint x = ROI.x; x < MAX_X; ++x) {
         for (uint y = ROI.y; y < MAX_Y; ++y) {
-            function(x,y,depthMap.at<float>(x,y));
+            function(x,y,depthMap.at<uint16_t>(x,y));
         }
     }
 }

@@ -143,7 +143,7 @@ void testDetectFacePose()
 {
     cout << "\n\nDetect face pose..." << endl;
     string dirPath = "../RGBD_Face_dataset_training/";
-    FaceLoader loader(dirPath, "000_.*"); // example: loads only .png files starting with 014
+    FaceLoader loader(dirPath, "000_.*");
 
     Face face;
 
@@ -155,10 +155,26 @@ void testDetectFacePose()
     }
 
     cout << "Face loaded!" << endl;
+    cout << "Size: (" << face.getWidth() << "," << face.getHeight() << ")" << endl;
 
     FaceSegmenter segmenter;
     cv::Rect detectedRegion;
     if (segmenter.detectForegroundFace(face, detectedRegion)) {
+
+        // enlarge region to have 640x480 aspect ratio
+        int widthEnlarge  = 640 - detectedRegion.width;
+        int heightEnlarge = 480 - detectedRegion.height;
+
+        detectedRegion.x     -= widthEnlarge/2;
+        detectedRegion.x = detectedRegion.x < 0 ? 0 : detectedRegion.x;
+        detectedRegion.width += widthEnlarge;
+        detectedRegion.width = detectedRegion.width + detectedRegion.x > face.getWidth() ? face.getWidth() - detectedRegion.x :  detectedRegion.width;
+
+        detectedRegion.y -= heightEnlarge/2;
+        detectedRegion.y = detectedRegion.y < 0 ? 0 : detectedRegion.y;
+        detectedRegion.height += heightEnlarge;
+        detectedRegion.height = detectedRegion.height + detectedRegion.y > face.getHeight() ? face.getHeight() - detectedRegion.y :  detectedRegion.height;
+
         cv::rectangle(face.image, detectedRegion, Scalar(255, 255, 255), 5);
         cv::imshow("Face detected", face.image);
         cv::waitKey(0);
@@ -167,6 +183,8 @@ void testDetectFacePose()
     }
 
     face.crop(detectedRegion);
+
+    cout << "Size: (" << face.getWidth() << "," << face.getHeight() << ")" << endl;
 
     std::cout << "Removing background..." << std::endl;
     viewPointCloud(face.depthMap);
@@ -178,11 +196,91 @@ void testDetectFacePose()
     waitKey(0);
     std::cout << "Done!" << std::endl;
 
-    PoseManager poseManager = PoseManager();
+    PoseManager poseManager;
+
+    //Mat depthMap = face.get3DImage(SingletonSettings::getInstance().getK());
 
     std::cout << "Estimating face pose..." << std::endl;
-    poseManager.estimateFacePose(face);
+    poseManager.estimateFacePose(face, SingletonSettings::getInstance().getK());
     system("read -p 'Press [enter] to continue'");
+}
+
+bool loadDepthImageCompressed(Mat& depthImg, const char* fname ){
+
+    //now read the depth image
+    FILE* pFile = fopen(fname, "rb");
+    if(!pFile){
+        cerr << "could not open file " << fname << endl;
+        return false;
+    }
+
+    int im_width = 0;
+    int im_height = 0;
+    bool success = true;
+
+    success &= ( fread(&im_width,sizeof(int),1,pFile) == 1 ); // read width of depthmap
+    success &= ( fread(&im_height,sizeof(int),1,pFile) == 1 ); // read height of depthmap
+
+    depthImg.create( im_height, im_width, CV_16SC1 );
+    depthImg.setTo(0);
+
+
+    int numempty;
+    int numfull;
+    int p = 0;
+
+    if(!depthImg.isContinuous())
+    {
+        cerr << "Image has the wrong size! (should be 640x480)" << endl;
+        return false;
+    }
+
+    int16_t* data = depthImg.ptr<int16_t>(0);
+    while(p < im_width*im_height ){
+
+        success &= ( fread( &numempty,sizeof(int),1,pFile) == 1 );
+
+        for(int i = 0; i < numempty; i++)
+            data[ p + i ] = 0;
+
+        success &= ( fread( &numfull,sizeof(int), 1, pFile) == 1 );
+        success &= ( fread( &data[ p + numempty ], sizeof(int16_t), numfull, pFile) == (unsigned int) numfull );
+        p += numempty+numfull;
+
+    }
+
+    fclose(pFile);
+
+    return success;
+}
+
+void testDetectFacePose2() {
+    Mat depthImage;
+    bool success = loadDepthImageCompressed(depthImage, "/home/alberto/Downloads/hpdb/01/frame_00003_depth.bin");
+
+    if (!success) {
+        cout << "Failed loadeing image" << endl;
+        return;
+    }
+
+    Mat color(depthImage.rows,depthImage.cols, CV_8UC3); // used only because needed by Face constructor
+    Face face(color,depthImage);
+
+    Mat intrinsics(3,3, CV_32FC1);
+    intrinsics.at<float>(0,0) = 575.816;
+    intrinsics.at<float>(0,1) = 0;
+    intrinsics.at<float>(0,2) = 320,
+    intrinsics.at<float>(1,0) = 0;
+    intrinsics.at<float>(1,1) = 575.816;
+    intrinsics.at<float>(1,2) = 240;
+    intrinsics.at<float>(2,0) = 0;
+    intrinsics.at<float>(2,1) = 0;
+    intrinsics.at<float>(2,2) = 1;
+
+    std::cout << "Estimating face pose..." << std::endl;
+    PoseManager poseManager;
+    poseManager.estimateFacePose(face, intrinsics);
+
 }
 
 void testFaceDetection()

@@ -12,8 +12,7 @@ SOURCES += src/main.cpp \
            extern_libs/head_pose_estimation/CRTree.cpp \
     src/utils.cpp \
     src/posemanager.cpp \
-    src/facesegmenter.cpp \
-    ../../../../../opt/opencv-3.2.0/modules/core/src/kmeans.cpp
+    src/facesegmenter.cpp
 
 HEADERS += include/singletonsettings.h \
            include/face.h \
