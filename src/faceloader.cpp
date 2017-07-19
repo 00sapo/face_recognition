@@ -67,10 +67,10 @@ bool FaceLoader::get(Face& face)
         return false;
     }
 
-    Mat depthMap(cloud->height, cloud->width, CV_32F);
+    Mat depthMap(cloud->height, cloud->width, /*CV_32F*/ CV_16SC1);
     for (uint x = 0; x < cloud->height; ++x) {
         for (uint y = 0; y < cloud->width; ++y) {
-            depthMap.at<float>(x,y) = cloud->at(y,x).z;
+            depthMap.at<int16_t>(x,y) = cloud->at(y,x).z;
         }
     }
 

@@ -79,7 +79,7 @@ bool FaceSegmenter::removeBackground(Face& face) const
 
     for (uint x = 0; x < HEIGHT; ++x) {
         for (uint y = 0; y < WIDTH; ++y) {
-            float d = face.depthMap.at<float>(x, y);
+            uint16_t d = face.depthMap.at<uint16_t>(x, y);
             if (std::isnan(d))
                 nanMask.at<bool>(x, y) = true;
             else
@@ -104,6 +104,7 @@ bool FaceSegmenter::removeBackground(Face& face) const
 
     for (uint x = 0; x < HEIGHT; ++x) {
         for (uint y = 0; y < WIDTH; ++y) {
+            /*
             if (!nanMask.at<bool>(x, y)) {
                 if (*iter != FACE_CLUSTER) {
                     face.depthMap.at<float>(x, y) = 0;
@@ -114,6 +115,12 @@ bool FaceSegmenter::removeBackground(Face& face) const
                 face.depthMap.at<float>(x, y) = 0;
                 face.image.at<uchar>(x, y) = 0;
             }
+            */
+            if (face.depthMap.at<uint16_t>(x,y) > 2) {
+                face.depthMap.at<uint16_t>(x, y) = 0;
+                face.image.at<uchar>(x, y) = 0;
+            }
+
         }
     }
 

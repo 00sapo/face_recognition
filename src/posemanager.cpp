@@ -1,13 +1,23 @@
 #include "posemanager.h"
 
+#include "face.h"
+#include "singletonsettings.h"
+
+
+using std::string;
+using std::vector;
+
+
 const string PoseManager::POSE_ESTIMATOR_PATH = "../trees/";
 
+/*
 PoseManager::PoseManager()
     : PoseManager(POSE_ESTIMATOR_PATH)
 {
 }
+*/
 
-PoseManager::PoseManager(const std::string& poseEstimatorPath)
+PoseManager::PoseManager(const string& poseEstimatorPath)
 {
     // load forest for face pose estimation
     if (!estimator.loadForest(poseEstimatorPath.c_str(), 10)) {
@@ -18,7 +28,7 @@ PoseManager::PoseManager(const std::string& poseEstimatorPath)
     poseEstimatorAvailable = true;
 }
 
-bool PoseManager::estimateFacePose(const Face& face)
+bool PoseManager::estimateFacePose(const Face& face, const Mat& calibration)
 {
     if (!poseEstimatorAvailable) {
         std::cout << "Error! Face pose estimator unavailable!" << std::endl;
@@ -26,17 +36,28 @@ bool PoseManager::estimateFacePose(const Face& face)
     }
 
     SingletonSettings& settings = SingletonSettings::getInstance();
-    cv::Mat img3D = face.get3DImage(settings.getK());
+    cv::Mat img3D = face.get3DImage(/*settings.getK()*/calibration);
+    //img3D.forEach<cv::Vec3f>([](cv::Vec3f& point, const int* position) {
+    //    if (point[2] > 0)
+    //        point[2] += 10;
+    //});
 
     cv::imshow("IMage3D", img3D);
     cv::waitKey(0);
 
-    vector<cv::Vec<float, POSE_SIZE>> means; // outputs
+    vector<cv::Vec<float, POSE_SIZE>> means; // outputs, POSE_SIZE defined in CRTree.h
     vector<vector<Vote>> clusters; // full clusters of votes
     vector<Vote> votes; // all votes returned by the forest
     int stride = 5;
+    float maxVariance = 800;
+    float probTH = 1.0;
+    float largerRadiusRatio = 1.5;
+    float smallerRadiusRatio = 5.0;
+    bool verbose = true;
+    int threshold = 500;
 
-    estimator.estimate(img3D, means, clusters, votes, stride, 800);
+    estimator.estimate(img3D, means, clusters, votes, stride, maxVariance,
+                       probTH, largerRadiusRatio, smallerRadiusRatio,verbose, threshold);
 
     if (means.empty()) {
         std::cout << "Detection and pose estimation failed!" << std::endl;
