@@ -1,13 +1,14 @@
 #include <iostream>
 
+#include "covariance_test.h"
 #include "test.h"
 
 void testFunctions();
 
 int main()
 {
-
-    testFunctions();
+    splitImage();
+    //testFunctions();
     /*
     string dirPath = "../RGBD_Face_dataset_training/";
     FaceLoader loader(dirPath, "004_.*"); // example: loads only .png files starting with 014
