@@ -21,14 +21,14 @@ public:
      * @param face
      * @return True if pose estimation was successful and rotation matrix was added to posesData, false otherwise
      */
-    bool estimateFacePose(const Face& face, const cv::Mat &calibration);
+    bool estimateFacePose(const Face& face, const cv::Mat& calibration);
 
     /**
      * @brief eulerAnglesToRotationMatrix
      * @param theta angles in radiant
      * @return Matrix 9x1 containing rotation matrix in row-major order
      */
-    Pose eulerAnglesToRotationMatrix(Vec3f theta);
+    Pose eulerAnglesToRotationMatrix(cv::Vec3f theta);
 
     /**
      * @brief clusterizePoses

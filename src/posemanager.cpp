@@ -3,10 +3,8 @@
 #include "face.h"
 #include "singletonsettings.h"
 
-
 using std::string;
 using std::vector;
-
 
 const string PoseManager::POSE_ESTIMATOR_PATH = "../trees/";
 
@@ -35,8 +33,7 @@ bool PoseManager::estimateFacePose(const Face& face, const Mat& calibration)
         return false;
     }
 
-    SingletonSettings& settings = SingletonSettings::getInstance();
-    cv::Mat img3D = face.get3DImage(/*settings.getK()*/calibration);
+    cv::Mat img3D = face.get3DImage(/*settings.getK()*/ calibration);
     //img3D.forEach<cv::Vec3f>([](cv::Vec3f& point, const int* position) {
     //    if (point[2] > 0)
     //        point[2] += 10;
@@ -57,7 +54,7 @@ bool PoseManager::estimateFacePose(const Face& face, const Mat& calibration)
     int threshold = 500;
 
     estimator.estimate(img3D, means, clusters, votes, stride, maxVariance,
-                       probTH, largerRadiusRatio, smallerRadiusRatio,verbose, threshold);
+        probTH, largerRadiusRatio, smallerRadiusRatio, verbose, threshold);
 
     if (means.empty()) {
         std::cout << "Detection and pose estimation failed!" << std::endl;

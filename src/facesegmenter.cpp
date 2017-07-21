@@ -98,10 +98,6 @@ bool FaceSegmenter::removeBackground(Face& face) const
         return false;
     }
 
-    // remove background
-    const int FACE_CLUSTER = centers.at(0) < centers.at(1) ? 0 : 1;
-    auto iter = bestLabels.begin();
-
     for (uint x = 0; x < HEIGHT; ++x) {
         for (uint y = 0; y < WIDTH; ++y) {
             /*
@@ -116,11 +112,10 @@ bool FaceSegmenter::removeBackground(Face& face) const
                 face.image.at<uchar>(x, y) = 0;
             }
             */
-            if (face.depthMap.at<uint16_t>(x,y) > 2) {
+            if (face.depthMap.at<uint16_t>(x, y) > 2) {
                 face.depthMap.at<uint16_t>(x, y) = 0;
                 face.image.at<uchar>(x, y) = 0;
             }
-
         }
     }
 
