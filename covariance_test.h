@@ -18,25 +18,35 @@ void splitImage()
 
     //    loader.setDownscalingRatio(0.5);
 
-    if (!loader.get(face)) {
-        cout << "Failed loading face" << endl;
-        return;
-    }
+    //    if (!loader.get(face)) {
+    //        cout << "Failed loading face" << endl;
+    //        return;
+    //    }
 
-    cout << "Face loaded!" << endl;
+    //    cout << "Face loaded!" << endl;
 
-    int croppedWidth = face.getWidth() / 4;
-    int croppedHeight = face.getHeight() / 4;
-    for (uint y = 0; y < face.getHeight(); y += croppedHeight) {
-        for (uint x = 0; x < face.getWidth(); x += croppedWidth) {
-            Mat cropped = face.image(Rect(x, y, croppedWidth, croppedHeight));
+    std::vector<Mat> faceSet = vector<Mat>();
 
-            Mat LBPHist = OLBPHist(cropped);
-            cout << LBPHist << endl;
-            imshow("image", cropped);
-            waitKey(0);
+    while (loader.get(face)) {
+        cout << "Face loaded!" << endl;
+        int croppedWidth = face.getWidth() / 4;
+        int croppedHeight = face.getHeight() / 4;
+        for (uint y = 0; y < face.getHeight(); y += croppedHeight) {
+            for (uint x = 0; x < face.getWidth(); x += croppedWidth) {
+                Mat cropped = face.image(Rect(x, y, croppedWidth, croppedHeight));
+
+                faceSet.push_back(OLBPHist(cropped));
+            }
         }
     }
+
+    Mat covar, mean;
+    int flags = cv::COVAR_NORMAL;
+    cv::calcCovarMatrix(faceSet.data(), faceSet.size(), covar, mean, flags, 6);
+    cout << "COVAR" << endl
+         << covar << endl
+         << "MEAN" << endl
+         << mean << endl;
 }
 
 #endif // COVARIANCE_TEST_H

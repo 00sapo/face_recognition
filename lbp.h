@@ -89,4 +89,53 @@ cv::Mat OLBPHist(const cv::Mat src)
     return hist;
 }
 
+template <typename _Tp>
+/**
+ * @brief HistMean_ computes the mean of a histogram
+ * @param hist a Mat containing a histogram (i.e. returned by cv::calcHist())
+ * @return a float representing the mean
+ */
+float HistMean_(const cv::Mat hist)
+{
+    float mean = 0;
+    for (int i = 0; i < hist.cols; i++) {
+        for (int j = 0; j < hist.rows; j++) {
+            mean += hist.at<_Tp>(i, j);
+        }
+    }
+
+    return mean / (hist.cols + hist.rows);
+}
+
+float HistMean(const cv::Mat src)
+{
+    float mean;
+    switch (src.type()) {
+    case CV_8SC1:
+        mean = HistMean_<char>(src);
+        break;
+    case CV_8UC1:
+        mean = HistMean_<unsigned char>(src);
+        break;
+    case CV_16SC1:
+        mean = HistMean_<short>(src);
+        break;
+    case CV_16UC1:
+        mean = HistMean_<unsigned short>(src);
+        break;
+    case CV_32SC1:
+        mean = HistMean_<int>(src);
+        break;
+    case CV_32FC1:
+        mean = HistMean_<float>(src);
+        break;
+    case CV_64FC1:
+        mean = HistMean_<double>(src);
+        break;
+    default:
+        break;
+    }
+    return mean;
+}
+
 #endif // LBP_H
