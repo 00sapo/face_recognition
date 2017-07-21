@@ -12,64 +12,45 @@ using pcl::PointXYZ;
 
 // ---------- constructors ----------
 
-Face::Face() : WIDTH(0), HEIGHT(0), CLOUD_IMG_RATIO(0), MAX_DEPTH(0), MIN_DEPTH(0)
+Face::Face() : WIDTH(0), HEIGHT(0), DEPTH_IMG_RATIO(0)
 {
     image = Mat::zeros(1,1,CV_16UC3);
-    cloud = pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
+    depthMap = Mat::zeros(1,1,CV_16SC1);
 }
 
-Face::Face(Mat image, PointCloud<PointXYZ>::Ptr cloud) : image(image), cloud(cloud)
+Face::Face(Mat image, cv::Mat depthMap) : image(image), depthMap(depthMap)
 {
-    WIDTH  = cloud->width;
-    HEIGHT = cloud->height;
+    WIDTH  = depthMap.cols;
+    HEIGHT = depthMap.rows;
 
     resizeImage();
-
-    MIN_DEPTH = std::numeric_limits<float>::max();
-    MAX_DEPTH = std::numeric_limits<float>::min();
-    for (uint i = 0; i < cloud->size(); ++i) {
-        float pointDepth = cloud->at(i).z;
-        if (pointDepth > MAX_DEPTH)
-            MAX_DEPTH = pointDepth;
-        if (pointDepth < MIN_DEPTH)
-            MIN_DEPTH = pointDepth;
-    }
 }
 
 // ---------- public member functions ----------
 
-uint  Face::getWidth()  const { return WIDTH;  }
-uint  Face::getHeight() const { return HEIGHT; }
-float Face::getCloudImageRatio() const { return CLOUD_IMG_RATIO; }
-float Face::getMaxDepth() const { return MAX_DEPTH; }
-float Face::getMinDepth() const { return MIN_DEPTH; }
+size_t Face::getWidth()  const { return WIDTH;  }
+size_t Face::getHeight() const { return HEIGHT; }
+size_t Face::getArea() const {return WIDTH*HEIGHT;}
+float Face::getDepthImageRatio() const { return DEPTH_IMG_RATIO; }
 
-Mat Face::get3DImage() const
+Mat Face::get3DImage(const Mat& intrinsicCameraMatrix) const
 {
-    Mat image3D(cv::Size(WIDTH, HEIGHT), CV_32FC3);
-    //Mat image3D(cv::Size(cloud->size(),3), CV_32F);
+    float fx = intrinsicCameraMatrix.at<float>(0,0);
+    float fy = intrinsicCameraMatrix.at<float>(1,1);
+    float cx = intrinsicCameraMatrix.at<float>(0,2);
+    float cy = intrinsicCameraMatrix.at<float>(1,2);
 
-    cloudForEach([image3D](int x, int y, const PointXYZ& point) mutable {
-        image3D.at<cv::Vec3f>(x,y) = {point.x, point.y, point.z};
-     });
+    Mat image3D(HEIGHT, WIDTH, CV_32FC3);
 
-    /*
-    int count = 0;
-    cloudForEach([image3D, count](int x, int y, PointXYZ& point) mutable {
-        image3D.at<float>(count,0) = point.x;
-        image3D.at<float>(count,1) = point.y;
-        image3D.at<float>(count,2) = point.z;
-        ++count;
-     });
-
-    /*
-    for (int i = 0; i < cloud->size(); ++i) {
-        const auto& point = cloud->at(i);
-        image3D.at<float>(i,0) = point.x;
-        image3D.at<float>(i,1) = point.y;
-        image3D.at<float>(i,2) = point.z;
+    for (uint i = 0; i < HEIGHT; ++i) {
+        for (uint j = 0; j < WIDTH; ++j) {
+            float d = static_cast<float>(depthMap.at<uint16_t>(i,j));
+            auto& vec = image3D.at<cv::Vec3f>(i,j);
+            vec[0] = d * (float(j) - cx)/fx;
+            vec[1] = d * (float(i) - cy)/fy;
+            vec[2] = d;
+        }
     }
-    */
 
     return image3D;
 }
@@ -77,134 +58,33 @@ Mat Face::get3DImage() const
 
 void Face::crop(const cv::Rect &cropRegion) {
 
-    // crop image
-    cout << "Cropping image..." << endl;
-    image = image(cropRegion);
-    cout << "Done!" << endl;
-
-    // crop cloud
-    cout << "Cropping cloud..." << endl;
-    PointCloud<PointXYZ>::Ptr croppedCloud(new PointCloud<PointXYZ>(cropRegion.width, cropRegion.height));
-    auto lambda = [croppedCloud, cropRegion](int x, int y, PointXYZ& point) mutable {
-                        croppedCloud->at(x-cropRegion.x, y-cropRegion.y) = point;
-                  };
-
-    cloudForEach(lambda, cropRegion);
-    cloud = croppedCloud;
-    cout << "Done!" << endl;
+    image    = image(cropRegion);    // crop image
+    depthMap = depthMap(cropRegion); // crop cloud
 
     WIDTH  = cropRegion.width;
     HEIGHT = cropRegion.height;
 }
 
-
-void Face::cloudForEach(std::function<void(int, int, pcl::PointXYZ &)> function)
-{
-
-    // if cloud is organized I can skip the computation of x and y at every iteration
-    if (cloud->isOrganized()) {
-        for (uint x = 0; x < HEIGHT; ++x) {
-            for (uint y = 0; y < WIDTH; ++y) {
-                function(x,y,cloud->at(x,y));
-            }
-        }
-    }
-
-    // otherwise I must compute x and y at every iteration
-    else {
-        const auto SIZE = cloud->size();
-        for (ulong i = 0; i < SIZE; ++i) {
-            int x = i / WIDTH;
-            int y = i % WIDTH;
-            function(x,y,cloud->at(i));
-        }
-    }
-}
-
-void Face::cloudForEach(std::function<void(int, int, const pcl::PointXYZ &)> function)  const {
-
-    // if cloud is organized I can skip the computation of x and y at every iteration
-    if (cloud->isOrganized()) {
-        for (uint x = 0; x < HEIGHT; ++x) {
-            for (uint y = 0; y < WIDTH; ++y) {
-                function(x,y,cloud->at(x,y));
-            }
-        }
-    }
-
-    // otherwise I must compute x and y at every iteration
-    else {
-        const auto SIZE = cloud->size();
-        for (ulong i = 0; i < SIZE; ++i) {
-            int x = i / WIDTH;
-            int y = i % WIDTH;
-            function(x,y,cloud->at(i));
-        }
-    }
-}
-
-void Face::cloudForEach(std::function<void(int, int, pcl::PointXYZ &)> function, const cv::Rect& ROI) {
+void Face::depthForEach(std::function<void(int, int, uint16_t&)> function, const cv::Rect& ROI) {
 
     const uint MAX_X = ROI.x + ROI.height;
     const uint MAX_Y = ROI.y + ROI.width;
 
-    // if cloud is organized I can skip the computation of i at every iteration
-    if (cloud->isOrganized()) {
-        for (uint x = ROI.x; x < MAX_X; ++x) {
-            for (uint y = ROI.y; y < MAX_Y; ++y) {
-                function(x,y,cloud->at(x,y));
-            }
-        }
-    }
-
-    // otherwise I must compute i at every iteration
-    else {
-        for (uint x = ROI.x; x < MAX_X; ++x) {
-            for (uint y = ROI.y; y < MAX_Y; ++y) {
-                uint i = x * WIDTH + y;
-                function(x,y,cloud->at(i));
-            }
+    for (uint x = ROI.x; x < MAX_X; ++x) {
+        for (uint y = ROI.y; y < MAX_Y; ++y) {
+            function(x,y,depthMap.at<uint16_t>(x,y));
         }
     }
 }
 
-void Face::cloudForEach(std::function<void(int, int, const pcl::PointXYZ &)> function, const cv::Rect& ROI)  const {
+void Face::depthForEach(std::function<void(int, int, const uint16_t &)> function, const cv::Rect& ROI)  const {
 
     const uint MAX_X = ROI.x + ROI.height;
     const uint MAX_Y = ROI.y + ROI.width;
 
-    // if cloud is organized I can skip the computation of i at every iteration
-    if (cloud->isOrganized()) {
-        for (uint x = ROI.x; x < MAX_X; ++x) {
-            for (uint y = ROI.y; y < MAX_Y; ++y) {
-                function(x,y,cloud->at(x,y));
-            }
-        }
-    }
-
-    // otherwise I must compute i at every iteration
-    else {
-        for (uint x = ROI.x; x < MAX_X; ++x) {
-            for (uint y = ROI.y; y < MAX_Y; ++y) {
-                uint i = x * WIDTH + y;
-                function(x,y,cloud->at(i));
-            }
-        }
-    }
-}
-
-void Face::imageForEach(std::function<void(int, int, float &)> function) {
-    for (uint x = 0; x < HEIGHT; ++x) {
-        for (uint y = 0; y < WIDTH; ++y) {
-            function(x,y,image.at<float>(x,y));
-        }
-    }
-}
-
-void Face::imageForEach(std::function<void(int, int, const float &)> function) const {
-    for (uint x = 0; x < HEIGHT; ++x) {
-        for (uint y = 0; y < WIDTH; ++y) {
-            function(x,y,image.at<float>(x,y));
+    for (uint x = ROI.x; x < MAX_X; ++x) {
+        for (uint y = ROI.y; y < MAX_Y; ++y) {
+            function(x,y,depthMap.at<uint16_t>(x,y));
         }
     }
 }
@@ -229,6 +109,7 @@ void Face::imageForEach(std::function<void(int, int, const float&)> function, co
     }
 }
 
+
 // ---------- private member functions ----------
 
 void Face::resizeImage()
@@ -236,18 +117,18 @@ void Face::resizeImage()
     const int IMG_WIDTH  = image.cols;
     const int IMG_HEIGHT = image.rows;
 
-    CLOUD_IMG_RATIO = static_cast<float>(cloud->width) / IMG_WIDTH;
+    DEPTH_IMG_RATIO = static_cast<float>(depthMap.cols) / IMG_WIDTH;
 
-    if (CLOUD_IMG_RATIO == 1)
+    if (DEPTH_IMG_RATIO == 1)
         return;
 
-    assert (static_cast<float>(cloud->height) / IMG_HEIGHT == CLOUD_IMG_RATIO &&
+    assert (static_cast<float>(depthMap.rows) / IMG_HEIGHT == DEPTH_IMG_RATIO &&
             "Asssert failed: image and cloud sizes are not proportional!");
 
-    assert (CLOUD_IMG_RATIO < 1 &&
+    assert (DEPTH_IMG_RATIO < 1 &&
             "Assert failed: image is smaller than cloud!");
 
-    cv::Size newImageSize(IMG_WIDTH * CLOUD_IMG_RATIO, IMG_HEIGHT * CLOUD_IMG_RATIO);
+    cv::Size newImageSize(IMG_WIDTH * DEPTH_IMG_RATIO, IMG_HEIGHT * DEPTH_IMG_RATIO);
     cv::resize(image, image, newImageSize, cv::INTER_AREA);
 
     return;

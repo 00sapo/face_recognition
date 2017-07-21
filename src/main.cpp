@@ -1,12 +1,13 @@
 #include <iostream>
 
+#include "covariance_test.h"
 #include "test.h"
 
 void testFunctions();
 
 int main()
 {
-
+    //    splitImage();
     testFunctions();
     /*
     string dirPath = "../RGBD_Face_dataset_training/";
@@ -51,7 +52,7 @@ int main()
     std::cout << "Estimating face pose..." << std::endl;
     segmenter.estimateFacePose(face);
     std::cout << "Done!" << std::endl;
-    /**/
+    */
 
     return 0;
 }
@@ -69,8 +70,14 @@ void testFunctions()
     //test::testKmeans();
     //
     //test::testFaceDetection();
-
-    test::testDetectFacePose();
+    //
+    test::testDetectFacePose2();
+    //
+    //    test::testEulerAnglesToRotationMatrix();
+    //
+    test::testPoseClustering();
+    //
+    //test::testKmeans2();
 
     cout << "\n\nTests finished!" << endl;
 }
