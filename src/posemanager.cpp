@@ -37,10 +37,7 @@ bool PoseManager::estimateFacePose(const Face& face, const Mat& calibration)
 
     SingletonSettings& settings = SingletonSettings::getInstance();
     cv::Mat img3D = face.get3DImage(/*settings.getK()*/calibration);
-    //img3D.forEach<cv::Vec3f>([](cv::Vec3f& point, const int* position) {
-    //    if (point[2] > 0)
-    //        point[2] += 10;
-    //});
+    std::cout << "IMage 3d" << std::endl;
 
     cv::imshow("IMage3D", img3D);
     cv::waitKey(0);

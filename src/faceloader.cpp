@@ -6,6 +6,8 @@
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/io/pcd_io.h>
 
+#include "singletonsettings.h"
+
 #include "face.h"
 
 using namespace std;
@@ -67,14 +69,20 @@ bool FaceLoader::get(Face& face)
         return false;
     }
 
-    Mat depthMap(cloud->height, cloud->width, /*CV_32F*/ CV_16SC1);
+    Mat depthMap(cloud->height, cloud->width, CV_16SC1);
     for (uint x = 0; x < cloud->height; ++x) {
         for (uint y = 0; y < cloud->width; ++y) {
-            depthMap.at<int16_t>(x,y) = cloud->at(y,x).z;
+            depthMap.at<uint16_t>(x,y) = cloud->at(y,x).z * 10E2;
         }
     }
 
-    face = Face(image, depthMap);
+    auto K = SingletonSettings::getInstance().getK();
+    for (int  i = 0; i < 3; ++i) {
+        for (int j = 0; j < 3; ++j) {
+            std::cout << K.at<float>(i,j) << std::endl;
+        }
+    }
+    face = Face(image, depthMap, SingletonSettings::getInstance().getK());
 
     imageFileNames.pop_back();
     cloudFileNames.pop_back();

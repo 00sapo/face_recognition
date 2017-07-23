@@ -18,6 +18,7 @@ public:
 
     cv::Mat image; // Color or grayscale representation of the face
     cv::Mat depthMap; // Depth representation of the face
+    cv::Mat intrinsicMatrix;
 
     Face();
 
@@ -28,7 +29,9 @@ public:
      * @param image
      * @param depthMap
      */
-    Face(cv::Mat image, cv::Mat depthMap);
+    Face(cv::Mat &image, cv::Mat &depthMap);
+
+    Face(cv::Mat &image, cv::Mat &depthMap, const cv::Mat &intrinsicCameraMatrix);
 
     /**
      * @brief get3DImage organizes the cloud in a Mat object with 3 channels (X, Y, Z)
@@ -79,7 +82,7 @@ public:
      */
     void depthForEach(std::function<void(int, int, uint16_t &)> function, const cv::Rect& ROI);
 
-    void depthForEach(std::function<void(int, int, const uint16_t&)> function, const cv::Rect& ROI) const;
+    void depthForEach(std::function<void(int, int, const uint16_t &)> function, const cv::Rect& ROI) const;
 
     /**
      * @brief imageForEach applies the function function to every point

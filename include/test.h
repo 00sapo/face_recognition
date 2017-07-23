@@ -259,7 +259,7 @@ void testDetectFacePose2() {
     bool success = loadDepthImageCompressed(depthImage, "/home/alberto/Downloads/hpdb/01/frame_00003_depth.bin");
 
     if (!success) {
-        cout << "Failed loadeing image" << endl;
+        cout << "Failed loading image" << endl;
         return;
     }
 

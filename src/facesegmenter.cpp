@@ -79,7 +79,7 @@ bool FaceSegmenter::removeBackground(Face& face) const
 
     for (uint x = 0; x < HEIGHT; ++x) {
         for (uint y = 0; y < WIDTH; ++y) {
-            uint16_t d = face.depthMap.at<uint16_t>(x, y);
+            float d = face.depthMap.at<uint16_t>(x, y);
             if (std::isnan(d))
                 nanMask.at<bool>(x, y) = true;
             else
@@ -104,25 +104,43 @@ bool FaceSegmenter::removeBackground(Face& face) const
 
     for (uint x = 0; x < HEIGHT; ++x) {
         for (uint y = 0; y < WIDTH; ++y) {
-            /*
+/*
             if (!nanMask.at<bool>(x, y)) {
                 if (*iter != FACE_CLUSTER) {
-                    face.depthMap.at<float>(x, y) = 0;
+                    face.depthMap.at<uint16_t>(x, y) = 0;
                     face.image.at<uchar>(x, y) = 0;
                 }
                 ++iter;
             } else {
-                face.depthMap.at<float>(x, y) = 0;
+                face.depthMap.at<uint16_t>(x, y) = 0;
                 face.image.at<uchar>(x, y) = 0;
             }
             */
-            if (face.depthMap.at<uint16_t>(x,y) > 2) {
+            if (face.depthMap.at<uint16_t>(x,y) > static_cast<uint16_t>(2000)) {
+                face.depthMap.at<uint16_t>(x, y) = 0;
+                face.image.at<uchar>(x, y) = 0;
+            }
+            else if (face.depthMap.at<uint16_t>(x, y) != 0 && face.depthMap.at<uint16_t>(x, y) != std::numeric_limits<int16_t>::quiet_NaN()){
+                face.depthMap.at<uint16_t>(x, y) -= 700;
+            }
+            else {
                 face.depthMap.at<uint16_t>(x, y) = 0;
                 face.image.at<uchar>(x, y) = 0;
             }
 
         }
     }
+
+
+    FILE* f = fopen("/home/alberto/Desktop/prova.txt","w");
+
+    for (uint x = 0; x < HEIGHT; ++x) {
+        for (uint y = 0; y < WIDTH; ++y) {
+            fprintf(f,"%d ", face.depthMap.at<uint16_t>(x,y));
+        }
+         fprintf(f,"\n");
+    }
+
 
     return true;
 }
