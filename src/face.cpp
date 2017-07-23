@@ -45,10 +45,10 @@ float Face::getDepthImageRatio() const { return DEPTH_IMG_RATIO; }
 
 Mat Face::get3DImage(const Mat& intrinsicCameraMatrix) const
 {
-    float fx = intrinsicCameraMatrix.at<float>(0,0);
-    float fy = intrinsicCameraMatrix.at<float>(1,1);
-    float cx = intrinsicCameraMatrix.at<float>(0,2);
-    float cy = intrinsicCameraMatrix.at<float>(1,2);
+    float fx = float(intrinsicCameraMatrix.at<double>(0,0));
+    float fy = float(intrinsicCameraMatrix.at<double>(1,1));
+    float cx = float(intrinsicCameraMatrix.at<double>(0,2));
+    float cy = float(intrinsicCameraMatrix.at<double>(1,2));
 
     Mat image3D(HEIGHT, WIDTH, CV_32FC3);
     //std::vector<cv::Point3f> objectPoints;
@@ -101,8 +101,8 @@ void Face::crop(const cv::Rect &cropRegion) {
     WIDTH  = cropRegion.width;
     HEIGHT = cropRegion.height;
 
-    intrinsicMatrix.at<float>(0,2) -= cropRegion.x;
-    intrinsicMatrix.at<float>(1,2) -= cropRegion.y;
+    intrinsicMatrix.at<double>(0,2) -= cropRegion.x;
+    intrinsicMatrix.at<double>(1,2) -= cropRegion.y;
 }
 
 void Face::depthForEach(std::function<void(int, int, uint16_t&)> function, const cv::Rect& ROI) {
@@ -170,8 +170,8 @@ void Face::resizeImage()
     cv::Size newImageSize(IMG_WIDTH * DEPTH_IMG_RATIO, IMG_HEIGHT * DEPTH_IMG_RATIO);
     cv::resize(image, image, newImageSize, cv::INTER_AREA);
 
-    intrinsicMatrix.at<float>(0,2) *= DEPTH_IMG_RATIO;
-    intrinsicMatrix.at<float>(1,2) *= DEPTH_IMG_RATIO;
+    intrinsicMatrix.at<double>(0,2) *= DEPTH_IMG_RATIO;
+    intrinsicMatrix.at<double>(1,2) *= DEPTH_IMG_RATIO;
 
     return;
 }

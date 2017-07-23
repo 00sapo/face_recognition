@@ -155,7 +155,6 @@ void testDetectFacePose()
     }
 
     cout << "Face loaded!" << endl;
-    cout << "Size: (" << face.getWidth() << "," << face.getHeight() << ")" << endl;
 
     FaceSegmenter segmenter;
     cv::Rect detectedRegion;

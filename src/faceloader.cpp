@@ -76,12 +76,6 @@ bool FaceLoader::get(Face& face)
         }
     }
 
-    auto K = SingletonSettings::getInstance().getK();
-    for (int  i = 0; i < 3; ++i) {
-        for (int j = 0; j < 3; ++j) {
-            std::cout << K.at<float>(i,j) << std::endl;
-        }
-    }
     face = Face(image, depthMap, SingletonSettings::getInstance().getK());
 
     imageFileNames.pop_back();
