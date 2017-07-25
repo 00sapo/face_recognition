@@ -43,15 +43,14 @@ size_t Face::getHeight() const { return HEIGHT; }
 size_t Face::getArea() const {return WIDTH*HEIGHT;}
 float Face::getDepthImageRatio() const { return DEPTH_IMG_RATIO; }
 
-Mat Face::get3DImage(const Mat& intrinsicCameraMatrix) const
+Mat Face::get3DImage() const
 {
-    float fx = float(intrinsicCameraMatrix.at<double>(0,0));
-    float fy = float(intrinsicCameraMatrix.at<double>(1,1));
-    float cx = float(intrinsicCameraMatrix.at<double>(0,2));
-    float cy = float(intrinsicCameraMatrix.at<double>(1,2));
+    float fx = float(intrinsicMatrix.at<double>(0,0));
+    float fy = float(intrinsicMatrix.at<double>(1,1));
+    float cx = float(intrinsicMatrix.at<double>(0,2));
+    float cy = float(intrinsicMatrix.at<double>(1,2));
 
     Mat image3D(HEIGHT, WIDTH, CV_32FC3);
-    //std::vector<cv::Point3f> objectPoints;
 
     for (uint i = 0; i < HEIGHT; ++i) {
         for (uint j = 0; j < WIDTH; ++j) {
@@ -60,34 +59,8 @@ Mat Face::get3DImage(const Mat& intrinsicCameraMatrix) const
             vec[0] = d * (float(j) - cx)/fx;
             vec[1] = d * (float(i) - cy)/fy;
             vec[2] = d;
-
-            std::cout << "Point: (" << vec[0] << "," << vec[1] << "," << vec[2] << ")" << std::endl;
-           //objectPoints.emplace_back(vec[0], vec[1], vec[2]);
         }
     }
-/*
-    std::vector<float> rvec;
-    cv::Rodrigues(Mat::eye(3,3, CV_32FC1), rvec);
-
-    std::vector<float> tvec = {0,0,800};
-    std::vector<cv::Point2f> imagePoints;
-    projectPoints(objectPoints, rvec, tvec, intrinsicCameraMatrix, std::vector<float>(), imagePoints);
-
-    Mat image3D2(HEIGHT, WIDTH, CV_32FC3);
-    image3D2.setTo(0);
-    for (uint i = 0; i < HEIGHT; ++i) {
-        for (uint j = 0; j < WIDTH; ++j) {
-            auto& projPoint = imagePoints[i*WIDTH + j];
-            std::cout << "point: (" << projPoint.x << "," << projPoint.y << ")" << std::endl;
-            if (projPoint.x > 0 && projPoint.x < WIDTH && projPoint.y > 0 && projPoint.y < HEIGHT) {
-                auto& point = objectPoints[i*WIDTH +j];
-                image3D2.at<cv::Vec3f>(projPoint.y,projPoint.x) = {point.x, point.y, point.z};
-            }
-            else {
-                std::cout << "Skipping point" << std::endl;
-            }
-        }
-    }*/
 
     return image3D;
 }

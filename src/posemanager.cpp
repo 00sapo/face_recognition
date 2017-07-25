@@ -10,13 +10,6 @@ using std::vector;
 
 const string PoseManager::POSE_ESTIMATOR_PATH = "../trees/";
 
-/*
-PoseManager::PoseManager()
-    : PoseManager(POSE_ESTIMATOR_PATH)
-{
-}
-*/
-
 PoseManager::PoseManager(const string& poseEstimatorPath)
 {
     // load forest for face pose estimation
@@ -28,15 +21,14 @@ PoseManager::PoseManager(const string& poseEstimatorPath)
     poseEstimatorAvailable = true;
 }
 
-bool PoseManager::estimateFacePose(const Face& face, const Mat& calibration)
+bool PoseManager::estimateFacePose(const Face& face)
 {
     if (!poseEstimatorAvailable) {
         std::cout << "Error! Face pose estimator unavailable!" << std::endl;
         return false;
     }
 
-    SingletonSettings& settings = SingletonSettings::getInstance();
-    cv::Mat img3D = face.get3DImage(/*settings.getK()*/calibration);
+    cv::Mat img3D = face.get3DImage();
     std::cout << "IMage 3d" << std::endl;
 
     cv::imshow("IMage3D", img3D);
@@ -45,7 +37,7 @@ bool PoseManager::estimateFacePose(const Face& face, const Mat& calibration)
     vector<cv::Vec<float, POSE_SIZE>> means; // outputs, POSE_SIZE defined in CRTree.h
     vector<vector<Vote>> clusters; // full clusters of votes
     vector<Vote> votes; // all votes returned by the forest
-    int stride = 5;
+    int stride = 10;
     float maxVariance = 800;
     float probTH = 1.0;
     float largerRadiusRatio = 1.5;

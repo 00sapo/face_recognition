@@ -1,6 +1,5 @@
 #include "facesegmenter.h"
 
-#include <iostream>
 #include <opencv2/highgui.hpp>
 #include <opencv2/opencv.hpp>
 
@@ -29,8 +28,12 @@ FaceSegmenter::FaceSegmenter(const string& faceDetectorPath)
     faceDetectorAvailable = true;
 }
 
-bool FaceSegmenter::detectForegroundFace(const Face& face, cv::Rect& detectedFace)
+bool FaceSegmenter::detectForegroundFace(const Face& face, const Size& outputSize, cv::Rect& detectedRegion)
 {
+
+    assert (outputSize.width <= face.getWidth() && outputSize.height <= face.getHeight()
+            && "Output region can't be bigger than input face image!");
+
     if (!faceDetectorAvailable) {
         std::cout << "Error! Face detector unavailable!" << std::endl;
         return false;
@@ -40,24 +43,54 @@ bool FaceSegmenter::detectForegroundFace(const Face& face, cv::Rect& detectedFac
     vector<cv::Rect> faces;
     classifier.detectMultiScale(face.image, faces);
 
-    // choose foreground face if more than one detected
-    //float foregroundFaceDepth = FLT_MAX;
-    //for (cv::Rect f : faces) {
-    //    face.depthForEach([detectedFace, foregroundFaceDepth, f] (int x, int y, const float& depth) mutable {
-    //        if (depth < foregroundFaceDepth) {
-    //            foregroundFaceDepth = depth;
-    //            detectedFace = f;
-    //        }
-    //    }, f);
-    //}
+    // TODO: choose foreground face if more than one detected
+    /*
+    float foregroundFaceDepth = FLT_MAX;
+    cv::Rect detectedFace;
+    for (cv::Rect f : faces) {
+        float averageDepth = 0;
+        int count = 0;
+        face.depthForEach([&averageDepth, &count] (int x, int y, const float& depth) mutable {
+            if (depth != std::numeric_limits<float>::quiet_NaN()) {
+                count++;
+                averageDepth += depth;
+                std::cout << depth << std::endl;
+            }
+        }, f);
+        averageDepth /= count;
+        if (averageDepth < foregroundFaceDepth) {
+            foregroundFaceDepth = averageDepth;
+            detectedFace = f;
+        }
+    }
+    */
 
-    detectedFace = faces[0];
+    detectedRegion = faces[0];
 
-    // enlarge a bit the face region
-    detectedFace.x -= 20;
-    detectedFace.y -= 20;
-    detectedFace.height += 40;
-    detectedFace.width += 40;
+    if (detectedRegion.width >= outputSize.width && detectedRegion.height >= outputSize.height)
+        return !faces.empty();
+
+    // enlarge region to have desired aspect ratio
+    int widthEnlarge  = outputSize.width  - detectedRegion.width;
+    int heightEnlarge = outputSize.height - detectedRegion.height;
+
+    detectedRegion.x -= widthEnlarge/2;
+    if (detectedRegion.x < 0) {
+        widthEnlarge += -detectedRegion.x;
+        detectedRegion.x = 0;
+    }
+    detectedRegion.width += widthEnlarge;
+    detectedRegion.width  = detectedRegion.width + detectedRegion.x > face.getWidth() ?
+                face.getWidth() - detectedRegion.x :  detectedRegion.width;
+
+    detectedRegion.y -= heightEnlarge/2;
+    if (detectedRegion.y < 0) {
+        heightEnlarge += -detectedRegion.y;
+        detectedRegion.y = 0;
+    }
+    detectedRegion.height += heightEnlarge;
+    detectedRegion.height  = detectedRegion.height + detectedRegion.y > face.getHeight() ?
+                face.getHeight() - detectedRegion.y :  detectedRegion.height;
 
     return !faces.empty();
 }
@@ -104,7 +137,6 @@ bool FaceSegmenter::removeBackground(Face& face) const
 
     for (uint x = 0; x < HEIGHT; ++x) {
         for (uint y = 0; y < WIDTH; ++y) {
-/*
             if (!nanMask.at<bool>(x, y)) {
                 if (*iter != FACE_CLUSTER) {
                     face.depthMap.at<uint16_t>(x, y) = 0;
@@ -115,32 +147,8 @@ bool FaceSegmenter::removeBackground(Face& face) const
                 face.depthMap.at<uint16_t>(x, y) = 0;
                 face.image.at<uchar>(x, y) = 0;
             }
-            */
-            if (face.depthMap.at<uint16_t>(x,y) > static_cast<uint16_t>(2000)) {
-                face.depthMap.at<uint16_t>(x, y) = 0;
-                face.image.at<uchar>(x, y) = 0;
-            }
-            else if (face.depthMap.at<uint16_t>(x, y) != 0 && face.depthMap.at<uint16_t>(x, y) != std::numeric_limits<int16_t>::quiet_NaN()){
-                face.depthMap.at<uint16_t>(x, y) -= 700;
-            }
-            else {
-                face.depthMap.at<uint16_t>(x, y) = 0;
-                face.image.at<uchar>(x, y) = 0;
-            }
-
         }
     }
-
-
-    FILE* f = fopen("/home/alberto/Desktop/prova.txt","w");
-
-    for (uint x = 0; x < HEIGHT; ++x) {
-        for (uint y = 0; y < WIDTH; ++y) {
-            fprintf(f,"%d ", face.depthMap.at<uint16_t>(x,y));
-        }
-         fprintf(f,"\n");
-    }
-
 
     return true;
 }

@@ -37,7 +37,7 @@ public:
      * @brief get3DImage organizes the cloud in a Mat object with 3 channels (X, Y, Z)
      * @return 3D representation of the face
      */
-    cv::Mat get3DImage(const cv::Mat &intrinsicCameraMatrix) const ;//const;
+    cv::Mat get3DImage() const ;//const;
 
     /**
      * @brief getWidth gives the width (in pixels) of image and cloud

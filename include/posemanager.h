@@ -17,7 +17,7 @@ public:
      * @param face
      * @return True if pose estimation was successful and rotation matrix was added to posesData, false otherwise
      */
-    bool estimateFacePose(const Face& face, const cv::Mat &calibration);
+    bool estimateFacePose(const Face& face);
 
     /**
      * @brief eulerAnglesToRotationMatrix

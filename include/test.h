@@ -109,7 +109,7 @@ void testFindThreshold()
     }
     viewPointCloud(face.depthMap);
 
-    Mat depthMap = face.get3DImage(SingletonSettings::getInstance().getK());
+    Mat depthMap = face.get3DImage(/*SingletonSettings::getInstance().getK()*/);
     imshow("Depth Map", depthMap);
     waitKey(0);
     system("read -p 'Press [enter] to continue'");
@@ -132,7 +132,7 @@ void testGetDepthMap()
 
     cout << "Face loaded!" << endl;
 
-    cv::Mat depthMap = face.get3DImage(SingletonSettings::getInstance().getK());
+    cv::Mat depthMap = face.get3DImage(/*SingletonSettings::getInstance().getK()*/);
 
     imshow("Depth Map", depthMap);
     waitKey(0);
@@ -143,7 +143,7 @@ void testDetectFacePose()
 {
     cout << "\n\nDetect face pose..." << endl;
     string dirPath = "../RGBD_Face_dataset_training/";
-    FaceLoader loader(dirPath, "000_.*");
+    FaceLoader loader(dirPath, "001_.*");
 
     Face face;
 
@@ -156,27 +156,17 @@ void testDetectFacePose()
 
     cout << "Face loaded!" << endl;
 
+    cv::imshow("Face", face.image);
+    cv::waitKey(0);
+
     FaceSegmenter segmenter;
     cv::Rect detectedRegion;
-    if (segmenter.detectForegroundFace(face, detectedRegion)) {
+    if (segmenter.detectForegroundFace(face, cv::Size(640,480), detectedRegion)) {
 
-        // enlarge region to have 640x480 aspect ratio
-        int widthEnlarge  = 640 - detectedRegion.width;
-        int heightEnlarge = 480 - detectedRegion.height;
-
-        detectedRegion.x     -= widthEnlarge/2;
-        detectedRegion.x = detectedRegion.x < 0 ? 0 : detectedRegion.x;
-        detectedRegion.width += widthEnlarge;
-        detectedRegion.width = detectedRegion.width + detectedRegion.x > face.getWidth() ? face.getWidth() - detectedRegion.x :  detectedRegion.width;
-
-        detectedRegion.y -= heightEnlarge/2;
-        detectedRegion.y = detectedRegion.y < 0 ? 0 : detectedRegion.y;
-        detectedRegion.height += heightEnlarge;
-        detectedRegion.height = detectedRegion.height + detectedRegion.y > face.getHeight() ? face.getHeight() - detectedRegion.y :  detectedRegion.height;
 
         cv::rectangle(face.image, detectedRegion, Scalar(255, 255, 255), 5);
-        cv::imshow("Face detected", face.image);
-        cv::waitKey(0);
+        //cv::imshow("Face detected", face.image);
+        //cv::waitKey(0);
     } else {
         std::cout << "No face detected!" << std::endl;
     }
@@ -186,21 +176,13 @@ void testDetectFacePose()
     cout << "Size: (" << face.getWidth() << "," << face.getHeight() << ")" << endl;
 
     std::cout << "Removing background..." << std::endl;
-    viewPointCloud(face.depthMap);
-    imshow("Face", face.image);
-    waitKey(0);
     segmenter.removeBackground(face);
-    viewPointCloud(face.depthMap);
-    imshow("Face", face.image);
-    waitKey(0);
     std::cout << "Done!" << std::endl;
 
     PoseManager poseManager;
 
-    //Mat depthMap = face.get3DImage(SingletonSettings::getInstance().getK());
-
     std::cout << "Estimating face pose..." << std::endl;
-    poseManager.estimateFacePose(face, SingletonSettings::getInstance().getK());
+    poseManager.estimateFacePose(face/*, SingletonSettings::getInstance().getK()*/);
     system("read -p 'Press [enter] to continue'");
 }
 
@@ -254,6 +236,7 @@ bool loadDepthImageCompressed(Mat& depthImg, const char* fname ){
 }
 
 void testDetectFacePose2() {
+
     Mat depthImage;
     bool success = loadDepthImageCompressed(depthImage, "/home/alberto/Downloads/hpdb/01/frame_00003_depth.bin");
 
@@ -262,23 +245,23 @@ void testDetectFacePose2() {
         return;
     }
 
-    Mat color(depthImage.rows,depthImage.cols, CV_8UC3); // used only because needed by Face constructor
-    Face face(color,depthImage);
+    Mat intrinsics(3,3, CV_64FC1);
+    intrinsics.at<double>(0,0) = 575.816;
+    intrinsics.at<double>(0,1) = 0;
+    intrinsics.at<double>(0,2) = 320,
+    intrinsics.at<double>(1,0) = 0;
+    intrinsics.at<double>(1,1) = 575.816;
+    intrinsics.at<double>(1,2) = 240;
+    intrinsics.at<double>(2,0) = 0;
+    intrinsics.at<double>(2,1) = 0;
+    intrinsics.at<double>(2,2) = 1;
 
-    Mat intrinsics(3,3, CV_32FC1);
-    intrinsics.at<float>(0,0) = 575.816;
-    intrinsics.at<float>(0,1) = 0;
-    intrinsics.at<float>(0,2) = 320,
-    intrinsics.at<float>(1,0) = 0;
-    intrinsics.at<float>(1,1) = 575.816;
-    intrinsics.at<float>(1,2) = 240;
-    intrinsics.at<float>(2,0) = 0;
-    intrinsics.at<float>(2,1) = 0;
-    intrinsics.at<float>(2,2) = 1;
+    Mat color(depthImage.rows,depthImage.cols, CV_8UC3); // used only because needed by Face constructor
+    Face face(color, depthImage, intrinsics);
 
     std::cout << "Estimating face pose..." << std::endl;
     PoseManager poseManager;
-    poseManager.estimateFacePose(face, intrinsics);
+    poseManager.estimateFacePose(face/*, intrinsics*/);
 
 }
 
@@ -301,7 +284,7 @@ void testFaceDetection()
 
     FaceSegmenter segmenter;
     cv::Rect detectedRegion;
-    if (segmenter.detectForegroundFace(face, detectedRegion)) {
+    if (segmenter.detectForegroundFace(face, cv::Size(100,60), detectedRegion)) {
         cv::rectangle(face.image, detectedRegion, Scalar(255, 255, 255), 5);
 
         imshow("image", face.image);

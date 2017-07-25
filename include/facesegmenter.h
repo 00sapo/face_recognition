@@ -26,7 +26,7 @@ public:
      * @param detectedFace: ROI of the detected face
      * @return false if no face was detected, true otherwise
      */
-    bool detectForegroundFace(const Face& face, cv::Rect& detectedFace);
+    bool detectForegroundFace(const Face& face, const cv::Size &outputSize, cv::Rect& detectedRegion);
 
     /**
      * @brief removeBackground splits the face cloud in two clusters, discarding
