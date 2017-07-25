@@ -43,7 +43,7 @@ size_t Face::getHeight() const { return HEIGHT; }
 size_t Face::getArea() const {return WIDTH*HEIGHT;}
 float Face::getDepthImageRatio() const { return DEPTH_IMG_RATIO; }
 
-Mat Face::get3DImage() const
+Mat Face::get3DImage(const Mat& intrinsicCameraMatrix) const
 {
     float fx = float(intrinsicMatrix.at<double>(0,0));
     float fy = float(intrinsicMatrix.at<double>(1,1));
@@ -54,7 +54,7 @@ Mat Face::get3DImage() const
 
     for (uint i = 0; i < HEIGHT; ++i) {
         for (uint j = 0; j < WIDTH; ++j) {
-            float d = static_cast<float>(depthMap.at<uint16_t>(i,j));// - 600;
+            float d = static_cast<float>(depthMap.at<uint16_t>(i,j));
             auto& vec = image3D.at<cv::Vec3f>(i,j);
             vec[0] = d * (float(j) - cx)/fx;
             vec[1] = d * (float(i) - cy)/fy;

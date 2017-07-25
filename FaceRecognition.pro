@@ -1,5 +1,4 @@
 TEMPLATE = app
-QMAKE_CFLAGS += -Wcomment
 CONFIG += console c++14
 CONFIG -= app_bundle
 CONFIG -= qt
@@ -22,7 +21,9 @@ HEADERS += include/singletonsettings.h \
     include/test.h \
     include/utils.h \
     include/posemanager.h \
-    include/facesegmenter.h
+    include/facesegmenter.h \
+    include/covariance_test.h \
+    include/lbp.h
 
 DISTFILES += \
     camera_info.yaml

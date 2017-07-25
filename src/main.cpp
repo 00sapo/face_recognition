@@ -1,12 +1,13 @@
 #include <iostream>
 
+#include "covariance_test.h"
 #include "test.h"
 
 void testFunctions();
 
 int main()
 {
-
+    //    splitImage();
     testFunctions();
     /*
     string dirPath = "../RGBD_Face_dataset_training/";
@@ -70,11 +71,11 @@ void testFunctions()
     //
     //test::testFaceDetection();
     //
-    test::testDetectFacePose();
+    test::testDetectFacePose2();
     //
     //    test::testEulerAnglesToRotationMatrix();
     //
-    //    test::testPoseClustering();
+    test::testPoseClustering();
     //
     //test::testKmeans2();
 

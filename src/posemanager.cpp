@@ -65,7 +65,7 @@ bool PoseManager::estimateFacePose(const Face& face)
     return true;
 }
 
-Mat PoseManager::eulerAnglesToRotationMatrix(Vec3f& theta)
+Pose PoseManager::eulerAnglesToRotationMatrix(Vec3f theta)
 {
     // Calculate rotation about x axis
     float cosx = cos(theta[0]);
@@ -75,20 +75,20 @@ Mat PoseManager::eulerAnglesToRotationMatrix(Vec3f& theta)
     float cosz = cos(theta[2]);
     float senz = sin(theta[2]);
 
-    Mat R = (Mat_<float>(9, 1) << cosy * cosz, cosx * senz + senx * seny * cosz, senx * senz - cosx * seny * cosz,
+    Matx<float, 9, 1> R(cosy * cosz, cosx * senz + senx * seny * cosz, senx * senz - cosx * seny * cosz,
         -cosy * senz, cosx * cosz - senx * seny * senz, senx * cosz + cosx * seny * senz,
         seny, -senx * cosy, cosx * cosy);
 
     return R;
 }
 
-bool PoseManager::clusterizePoses(uint numCenters)
+bool PoseManager::clusterizePoses(int numCenters)
 {
     vector<int> bestLabels;
     cv::TermCriteria criteria(cv::TermCriteria::EPS, 10, 1.0);
     cv::kmeans(posesData, numCenters, bestLabels, criteria, 3, cv::KMEANS_PP_CENTERS, centers);
 
-    if (centers.size() != numCenters) {
+    if (centers.rows != numCenters) {
         std::cout << "Clustering poses failed!" << std::endl;
         return false;
     }
@@ -96,12 +96,12 @@ bool PoseManager::clusterizePoses(uint numCenters)
     return true;
 }
 
-uint PoseManager::getNearestCenterId(cv::Mat estimation)
+int PoseManager::getNearestCenterId(Pose poseEstimation)
 {
     float min = FLT_MAX;
-    uint index = 0;
-    for (uint i = 0; i < centers.size(); i++) {
-        float norm = cv::norm(centers.at(i), estimation, NORM_L2);
+    int index = 0;
+    for (int i = 0; i < centers.rows; i++) {
+        float norm = cv::norm(centers.row(i).t(), (Mat)poseEstimation, NORM_L2);
         if (norm < min) {
             min = norm;
             index = i;
@@ -110,7 +110,7 @@ uint PoseManager::getNearestCenterId(cv::Mat estimation)
     return index;
 }
 
-void PoseManager::addPoseData(cv::Mat pose)
+void PoseManager::addPoseData(Pose pose)
 {
     posesData.push_back(pose);
 }

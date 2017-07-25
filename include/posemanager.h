@@ -6,6 +6,10 @@
 #include "extern_libs/head_pose_estimation/CRForestEstimator.h"
 
 class Face;     // forward declaration
+typedef cv::Matx<float, 9, 1> Pose;
+
+using std::string;
+using std::vector;
 
 class PoseManager {
 public:
@@ -22,15 +26,29 @@ public:
     /**
      * @brief eulerAnglesToRotationMatrix
      * @param theta angles in radiant
-     * @return Matrix 1x9 containing rotation matrix in row-major order
+     * @return Matrix 9x1 containing rotation matrix in row-major order
      */
-    cv::Mat eulerAnglesToRotationMatrix(cv::Vec3f& theta);
+    Pose eulerAnglesToRotationMatrix(cv::Vec3f theta);
 
-    bool clusterizePoses(uint numCenters);
+    /**
+     * @brief clusterizePoses
+     * @param numCenters num of centers/clusters
+     * @return true if clusterization succeeded, false otherwise
+     */
+    bool clusterizePoses(int numCenters);
 
-    uint getNearestCenterId(cv::Mat estimation);
+    /**
+     * @brief getNearestCenterId
+     * @param poseEstimation
+     * @return id of the nearest center to the input pose estimation
+     */
+    int getNearestCenterId(Pose poseEstimation);
 
-    void addPoseData(cv::Mat pose);
+    /**
+     * @brief addPoseData add pose to the dataset on which perform clustering
+     * @param pose
+     */
+    void addPoseData(Pose pose);
 
 private:
     static const std::string POSE_ESTIMATOR_PATH;
@@ -39,9 +57,9 @@ private:
 
     CRForestEstimator estimator;
 
-    std::vector<cv::Mat> centers;
+    cv::Mat centers;
 
-    std::vector<cv::Mat> posesData;
+    vector<Pose> posesData;
 };
 
 #endif // POSEMANAGER_H
