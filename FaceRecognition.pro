@@ -11,7 +11,8 @@ SOURCES += src/main.cpp \
            extern_libs/head_pose_estimation/CRTree.cpp \
     src/utils.cpp \
     src/posemanager.cpp \
-    src/facesegmenter.cpp
+    src/facesegmenter.cpp \
+    src/steinkernel.cpp
 
 HEADERS += include/singletonsettings.h \
            include/face.h \
@@ -23,7 +24,8 @@ HEADERS += include/singletonsettings.h \
     include/posemanager.h \
     include/facesegmenter.h \
     include/covariance_test.h \
-    include/lbp.h
+    include/lbp.h \
+    include/steinkernel.h
 
 DISTFILES += \
     camera_info.yaml
