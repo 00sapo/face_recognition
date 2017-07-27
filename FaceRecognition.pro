@@ -23,9 +23,9 @@ HEADERS += include/singletonsettings.h \
     include/utils.h \
     include/posemanager.h \
     include/facesegmenter.h \
-    include/covariance_test.h \
     include/lbp.h \
-    include/steinkernel.h
+    include/steinkernel.h \
+    include/svmparams.h
 
 DISTFILES += \
     camera_info.yaml
