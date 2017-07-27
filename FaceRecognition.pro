@@ -12,6 +12,7 @@ SOURCES += src/main.cpp \
     src/posemanager.cpp \
     src/facesegmenter.cpp \
     src/image4d.cpp
+    src/steinkernel.cpp
 
 HEADERS += include/singletonsettings.h \
            include/faceloader.h \
@@ -21,9 +22,10 @@ HEADERS += include/singletonsettings.h \
     include/utils.h \
     include/posemanager.h \
     include/facesegmenter.h \
-    include/covariance_test.h \
     include/lbp.h \
-    include/image4d.h
+    include/image4d.h \
+    include/steinkernel.h \
+    include/svmparams.h
 
 DISTFILES += \
     camera_info.yaml

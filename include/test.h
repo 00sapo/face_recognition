@@ -12,6 +12,7 @@
 #include "image4d.h"
 #include "faceloader.h"
 #include "facesegmenter.h"
+#include "lbp.h"
 #include "posemanager.h"
 #include "singletonsettings.h"
 //#include "utils.h"
@@ -166,14 +167,12 @@ void testDetectFacePose()
     cout << "Face loaded!" << endl;
     cout << "Size: (" << face.getWidth() << "," << face.getHeight() << ")" << endl;
 
-
     cv::imshow("Face", face.image);
     cv::waitKey(0);
 
     FaceSegmenter segmenter;
     cv::Rect detectedRegion;
-    if (segmenter.detectForegroundFace(face, cv::Size(640,480), detectedRegion)) {
-
+    if (segmenter.detectForegroundFace(face, cv::Size(640, 480), detectedRegion)) {
 
         cv::rectangle(face.image, detectedRegion, Scalar(255, 255, 255), 5);
         //cv::imshow("Face detected", face.image);
@@ -201,15 +200,16 @@ void testDetectFacePose()
     PoseManager poseManager;
 
     std::cout << "Estimating face pose..." << std::endl;
-    poseManager.estimateFacePose(face/*, SingletonSettings::getInstance().getK()*/);
+    poseManager.estimateFacePose(face /*, SingletonSettings::getInstance().getK()*/);
     system("read -p 'Press [enter] to continue'");
 }
 
-bool loadDepthImageCompressed(Mat& depthImg, const char* fname ){
+bool loadDepthImageCompressed(Mat& depthImg, const char* fname)
+{
 
     //now read the depth image
     FILE* pFile = fopen(fname, "rb");
-    if(!pFile){
+    if (!pFile) {
         cerr << "could not open file " << fname << endl;
         return false;
     }
@@ -218,35 +218,32 @@ bool loadDepthImageCompressed(Mat& depthImg, const char* fname ){
     int im_height = 0;
     bool success = true;
 
-    success &= ( fread(&im_width,sizeof(int),1,pFile) == 1 ); // read width of depthmap
-    success &= ( fread(&im_height,sizeof(int),1,pFile) == 1 ); // read height of depthmap
+    success &= (fread(&im_width, sizeof(int), 1, pFile) == 1); // read width of depthmap
+    success &= (fread(&im_height, sizeof(int), 1, pFile) == 1); // read height of depthmap
 
-    depthImg.create( im_height, im_width, CV_16SC1 );
+    depthImg.create(im_height, im_width, CV_16SC1);
     depthImg.setTo(0);
-
 
     int numempty;
     int numfull;
     int p = 0;
 
-    if(!depthImg.isContinuous())
-    {
+    if (!depthImg.isContinuous()) {
         cerr << "Image has the wrong size! (should be 640x480)" << endl;
         return false;
     }
 
     int16_t* data = depthImg.ptr<int16_t>(0);
-    while(p < im_width*im_height ){
+    while (p < im_width * im_height) {
 
-        success &= ( fread( &numempty,sizeof(int),1,pFile) == 1 );
+        success &= (fread(&numempty, sizeof(int), 1, pFile) == 1);
 
-        for(int i = 0; i < numempty; i++)
-            data[ p + i ] = 0;
+        for (int i = 0; i < numempty; i++)
+            data[p + i] = 0;
 
-        success &= ( fread( &numfull,sizeof(int), 1, pFile) == 1 );
-        success &= ( fread( &data[ p + numempty ], sizeof(int16_t), numfull, pFile) == (unsigned int) numfull );
-        p += numempty+numfull;
-
+        success &= (fread(&numfull, sizeof(int), 1, pFile) == 1);
+        success &= (fread(&data[p + numempty], sizeof(int16_t), numfull, pFile) == (unsigned int)numfull);
+        p += numempty + numfull;
     }
 
     fclose(pFile);
@@ -254,7 +251,8 @@ bool loadDepthImageCompressed(Mat& depthImg, const char* fname ){
     return success;
 }
 
-void testDetectFacePose2() {
+void testDetectFacePose2()
+{
 
     Mat depthImage;
     bool success = loadDepthImageCompressed(depthImage, "/home/alberto/Downloads/hpdb/01/frame_00003_depth.bin");
@@ -264,24 +262,23 @@ void testDetectFacePose2() {
         return;
     }
 
-    Mat intrinsics(3,3, CV_64FC1);
-    intrinsics.at<double>(0,0) = 575.816;
-    intrinsics.at<double>(0,1) = 0;
-    intrinsics.at<double>(0,2) = 320,
-    intrinsics.at<double>(1,0) = 0;
-    intrinsics.at<double>(1,1) = 575.816;
-    intrinsics.at<double>(1,2) = 240;
-    intrinsics.at<double>(2,0) = 0;
-    intrinsics.at<double>(2,1) = 0;
-    intrinsics.at<double>(2,2) = 1;
+    Mat intrinsics(3, 3, CV_64FC1);
+    intrinsics.at<double>(0, 0) = 575.816;
+    intrinsics.at<double>(0, 1) = 0;
+    intrinsics.at<double>(0, 2) = 320,
+    intrinsics.at<double>(1, 0) = 0;
+    intrinsics.at<double>(1, 1) = 575.816;
+    intrinsics.at<double>(1, 2) = 240;
+    intrinsics.at<double>(2, 0) = 0;
+    intrinsics.at<double>(2, 1) = 0;
+    intrinsics.at<double>(2, 2) = 1;
 
     Mat color(depthImage.rows,depthImage.cols, CV_8UC3); // used only because needed by Face constructor
     Image4D face(color, depthImage, intrinsics);
 
     std::cout << "Estimating face pose..." << std::endl;
     PoseManager poseManager;
-    poseManager.estimateFacePose(face/*, intrinsics*/);
-
+    poseManager.estimateFacePose(face /*, intrinsics*/);
 }
 
 void testFaceDetection()
@@ -303,7 +300,7 @@ void testFaceDetection()
 
     FaceSegmenter segmenter;
     cv::Rect detectedRegion;
-    if (segmenter.detectForegroundFace(face, cv::Size(100,60), detectedRegion)) {
+    if (segmenter.detectForegroundFace(face, cv::Size(100, 60), detectedRegion)) {
         cv::rectangle(face.image, detectedRegion, Scalar(255, 255, 255), 5);
 
         imshow("image", face.image);
@@ -412,6 +409,47 @@ void testPoseClustering()
     Pose pose = pm.eulerAnglesToRotationMatrix(randomEulerAngle());
     std::cout << "Nearest Center: " << endl;
     std::cout << pm.getNearestCenterId(pose) << endl;
+}
+
+void covarianceTest()
+{
+    cout << "\n\nDetect faces test..." << endl;
+    string dirPath = "../RGBD_Face_dataset_training/";
+    FaceLoader loader(dirPath, "000_.*"); // example: loads only .png files starting with 014
+
+    Face face;
+
+    //    loader.setDownscalingRatio(0.5);
+
+    //    if (!loader.get(face)) {
+    //        cout << "Failed loading face" << endl;
+    //        return;
+    //    }
+
+    //    cout << "Face loaded!" << endl;
+
+    std::vector<Mat> faceSet = vector<Mat>();
+
+    while (loader.get(face)) {
+        cout << "Face loaded!" << endl;
+        int croppedWidth = face.getWidth() / 4;
+        int croppedHeight = face.getHeight() / 4;
+        for (uint y = 0; y < face.getHeight(); y += croppedHeight) {
+            for (uint x = 0; x < face.getWidth(); x += croppedWidth) {
+                Mat cropped = face.image(Rect(x, y, croppedWidth, croppedHeight));
+
+                faceSet.push_back(OLBPHist(cropped));
+            }
+        }
+    }
+
+    Mat covar, mean;
+    int flags = cv::COVAR_NORMAL;
+    cv::calcCovarMatrix(faceSet.data(), faceSet.size(), covar, mean, flags, 6);
+    cout << "COVAR" << endl
+         << covar << endl
+         << "MEAN" << endl
+         << mean << endl;
 }
 }
 #endif // TEST_H
