@@ -1,32 +1,26 @@
-#include "face.h"
+#include "image4d.h"
 
 #include <math.h>
 
-using std::cout;
-using std::endl;
-
-using std::isnan;
 using cv::Mat;
-using pcl::PointCloud;
-using pcl::PointXYZ;
 
 // ---------- constructors ----------
 
-Face::Face() : WIDTH(0), HEIGHT(0), DEPTH_IMG_RATIO(0)
+Image4D::Image4D() : WIDTH(0), HEIGHT(0), DEPTH_IMG_RATIO(0)
 {
     image = Mat::zeros(1,1,CV_16UC3);
     depthMap = Mat::zeros(1,1,CV_16SC1);
+
+    intrinsicMatrix = Mat::zeros(3, 3, CV_64FC1);
+    intrinsicMatrix.at<double>(0,0) = 1;
+    intrinsicMatrix.at<double>(1,1) = 1;
+    intrinsicMatrix.at<double>(2,2) = 1;
+    intrinsicMatrix.at<double>(0,2) = WIDTH/2;
+    intrinsicMatrix.at<double>(1,2) = HEIGHT/2;
 }
 
-Face::Face(cv::Mat &image, cv::Mat &depthMap) : image(image), depthMap(depthMap)
-{
-    WIDTH  = depthMap.cols;
-    HEIGHT = depthMap.rows;
 
-    resizeImage();
-}
-
-Face::Face(cv::Mat &image, cv::Mat &depthMap, const cv::Mat &intrinsicCameraMatrix)
+Image4D::Image4D(Mat &image, Mat &depthMap, const Mat &intrinsicCameraMatrix)
     : image(image), depthMap(depthMap), intrinsicMatrix(intrinsicCameraMatrix) {
 
     WIDTH  = depthMap.cols;
@@ -38,12 +32,12 @@ Face::Face(cv::Mat &image, cv::Mat &depthMap, const cv::Mat &intrinsicCameraMatr
 
 // ---------- public member functions ----------
 
-size_t Face::getWidth()  const { return WIDTH;  }
-size_t Face::getHeight() const { return HEIGHT; }
-size_t Face::getArea() const {return WIDTH*HEIGHT;}
-float Face::getDepthImageRatio() const { return DEPTH_IMG_RATIO; }
+size_t Image4D::getWidth()  const { return WIDTH;  }
+size_t Image4D::getHeight() const { return HEIGHT; }
+size_t Image4D::getArea()   const { return WIDTH*HEIGHT;}
+float Image4D::getDepthImageRatio() const { return DEPTH_IMG_RATIO; }
 
-Mat Face::get3DImage() const
+Mat Image4D::get3DImage() const
 {
     float fx = float(intrinsicMatrix.at<double>(0,0));
     float fy = float(intrinsicMatrix.at<double>(1,1));
@@ -66,10 +60,10 @@ Mat Face::get3DImage() const
 }
 
 
-void Face::crop(const cv::Rect &cropRegion) {
+void Image4D::crop(const cv::Rect &cropRegion) {
 
     image    = image(cropRegion);    // crop image
-    depthMap = depthMap(cropRegion); // crop cloud
+    depthMap = depthMap(cropRegion); // crop depthMap
 
     WIDTH  = cropRegion.width;
     HEIGHT = cropRegion.height;
@@ -78,7 +72,7 @@ void Face::crop(const cv::Rect &cropRegion) {
     intrinsicMatrix.at<double>(1,2) -= cropRegion.y;
 }
 
-void Face::depthForEach(std::function<void(int, int, uint16_t&)> function, const cv::Rect& ROI) {
+void Image4D::depthForEach(const std::function<void(int, int, uint16_t&)> &function, const cv::Rect& ROI) {
 
     const uint MAX_X = ROI.x + ROI.height;
     const uint MAX_Y = ROI.y + ROI.width;
@@ -90,7 +84,7 @@ void Face::depthForEach(std::function<void(int, int, uint16_t&)> function, const
     }
 }
 
-void Face::depthForEach(std::function<void(int, int, const uint16_t &)> function, const cv::Rect& ROI)  const {
+void Image4D::depthForEach(const std::function<void(int, int, const uint16_t &)> &function, const cv::Rect& ROI)  const {
 
     const uint MAX_X = ROI.x + ROI.height;
     const uint MAX_Y = ROI.y + ROI.width;
@@ -102,7 +96,7 @@ void Face::depthForEach(std::function<void(int, int, const uint16_t &)> function
     }
 }
 
-void Face::imageForEach(std::function<void(int, int, float&)> function, const cv::Rect& ROI) {
+void Image4D::imageForEach(const std::function<void(int, int, float&)> &function, const cv::Rect& ROI) {
     const uint MAX_X = ROI.x + ROI.height;
     const uint MAX_Y = ROI.y + ROI.width;
     for (uint x = ROI.x; x < MAX_X; ++x) {
@@ -112,7 +106,7 @@ void Face::imageForEach(std::function<void(int, int, float&)> function, const cv
     }
 }
 
-void Face::imageForEach(std::function<void(int, int, const float&)> function, const cv::Rect& ROI) const {
+void Image4D::imageForEach(const std::function<void(int, int, const float&)> &function, const cv::Rect& ROI) const {
     const uint MAX_X = ROI.x + ROI.height;
     const uint MAX_Y = ROI.y + ROI.width;
     for (uint x = ROI.x; x < MAX_X; ++x) {
@@ -125,7 +119,7 @@ void Face::imageForEach(std::function<void(int, int, const float&)> function, co
 
 // ---------- private member functions ----------
 
-void Face::resizeImage()
+void Image4D::resizeImage()
 {
     const int IMG_WIDTH  = image.cols;
     const int IMG_HEIGHT = image.rows;

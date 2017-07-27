@@ -1,7 +1,7 @@
 #ifndef COVARIANCE_TEST_H
 #define COVARIANCE_TEST_H
 
-#include "face.h"
+#include "image4d.h"
 #include "faceloader.h"
 #include "lbp.h"
 
@@ -14,7 +14,7 @@ void splitImage()
     string dirPath = "../RGBD_Face_dataset_training/";
     FaceLoader loader(dirPath, "000_.*"); // example: loads only .png files starting with 014
 
-    Face face;
+    Image4D face;
 
     //    loader.setDownscalingRatio(0.5);
 

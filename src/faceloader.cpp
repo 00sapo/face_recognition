@@ -1,26 +1,42 @@
 #include "faceloader.h"
 
-#include <iostream>
+//#include <iostream>
+
+#include <boost/filesystem/operations.hpp>
+#include <boost/filesystem/path.hpp>
+
+#include <opencv2/opencv.hpp>
 #include <opencv2/imgproc.hpp>
+
+#include <pcl/common/common.h>
+#include <pcl/point_types.h>
 #include <pcl/filters/filter.h>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/io/pcd_io.h>
 
 #include "singletonsettings.h"
 
-#include "face.h"
+#include "image4d.h"
 
-using namespace std;
-using namespace cv;
+using std::cout;
+using std::endl;
+using std::vector;
+using std::string;
+using cv::Mat;
 using pcl::PointCloud;
 using pcl::PointXYZ;
 
 namespace fs = boost::filesystem;
 
+
+
+const string FaceLoader::MATCH_ALL = ".*";
+
+
 FaceLoader::FaceLoader()
 {
     currentPath = fs::current_path().string();
-    fileTemplate = regex(".*(png|jpg|bmp)");
+    fileTemplate = std::regex(".*(png|jpg|bmp)");
     imageFileNames = vector<string>();
     cloudFileNames = vector<string>();
 }
@@ -30,7 +46,7 @@ FaceLoader::FaceLoader(const string& dirPath, const string& fileNameRegEx)
     imageFileNames = vector<string>();
     cloudFileNames = vector<string>();
     currentPath = dirPath;
-    fileTemplate = regex(fileNameRegEx);
+    fileTemplate = std::regex(fileNameRegEx);
 
     cout << "FaceLoader constructor: loading file names..." << endl;
     if (!loadFileNames(currentPath))
@@ -42,7 +58,7 @@ bool FaceLoader::hasNext() const
     return !imageFileNames.empty() && !cloudFileNames.empty();
 }
 
-bool FaceLoader::get(Face& face)
+bool FaceLoader::get(Image4D& face)
 {
 
     if (!hasNext())
@@ -65,7 +81,7 @@ bool FaceLoader::get(Face& face)
     }
 
     if(!cloud->isOrganized()) {
-        cerr << "ERROR: loading unorganized point cloud!" << endl;
+        std::cerr << "ERROR: loading unorganized point cloud!" << endl;
         return false;
     }
 
@@ -76,7 +92,7 @@ bool FaceLoader::get(Face& face)
         }
     }
 
-    face = Face(image, depthMap, SingletonSettings::getInstance().getK());
+    face = Image4D(image, depthMap, SingletonSettings::getInstance().getK());
 
     imageFileNames.pop_back();
     cloudFileNames.pop_back();
@@ -84,7 +100,7 @@ bool FaceLoader::get(Face& face)
     return true;
 }
 
-bool FaceLoader::get(vector<Face>& faceSequence)
+bool FaceLoader::get(vector<Image4D>& faceSequence)
 {
 
     faceSequence.clear();
@@ -100,7 +116,7 @@ bool FaceLoader::get(vector<Face>& faceSequence)
 
 void FaceLoader::setFileNameRegEx(const string& fileNameRegEx)
 {
-    fileTemplate = regex(fileNameRegEx);
+    fileTemplate = std::regex(fileNameRegEx);
     loadFileNames(currentPath);
 }
 
@@ -128,13 +144,13 @@ bool FaceLoader::loadFileNames(const string& dirPath)
 
     // check if exsists
     if (!fs::exists(full_path)) {
-        cerr << "\nNot found: " << full_path.filename() << endl;
+        std::cerr << "\nNot found: " << full_path.filename() << endl;
         return false;
     }
 
     // check if directory
     if (!fs::is_directory(full_path)) {
-        cerr << "\n"
+        std::cerr << "\n"
              << full_path.filename() << " is not a directory" << endl;
         return false;
     }
@@ -153,7 +169,7 @@ bool FaceLoader::loadFileNames(const string& dirPath)
                 }
             }
         } catch (const std::exception& ex) {
-            cerr << dir_entry.path().filename() << " " << ex.what() << endl;
+            std::cerr << dir_entry.path().filename() << " " << ex.what() << endl;
             return false;
         }
     }
@@ -166,5 +182,5 @@ bool FaceLoader::loadFileNames(const string& dirPath)
 
 bool FaceLoader::matchTemplate(const string& fileName)
 {
-    return regex_match(fileName, fileTemplate, regex_constants::match_any);
+    return std::regex_match(fileName, fileTemplate, std::regex_constants::match_any);
 }

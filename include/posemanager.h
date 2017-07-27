@@ -5,7 +5,7 @@
 
 #include "extern_libs/head_pose_estimation/CRForestEstimator.h"
 
-class Face;     // forward declaration
+class Image4D;     // forward declaration
 typedef cv::Matx<float, 9, 1> Pose;
 
 using std::string;
@@ -21,7 +21,7 @@ public:
      * @param face
      * @return True if pose estimation was successful and rotation matrix was added to posesData, false otherwise
      */
-    bool estimateFacePose(const Face& face);
+    bool estimateFacePose(const Image4D& face);
 
     /**
      * @brief eulerAnglesToRotationMatrix

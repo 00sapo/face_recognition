@@ -6,18 +6,18 @@
 #include <opencv2/highgui.hpp>
 #include <opencv2/opencv.hpp>
 
-#include <pcl/visualization/area_picking_event.h>
-#include <pcl/visualization/pcl_visualizer.h>
+//#include <pcl/visualization/area_picking_event.h>
+//#include <pcl/visualization/pcl_visualizer.h>
 
-#include "face.h"
+#include "image4d.h"
 #include "faceloader.h"
 #include "facesegmenter.h"
 #include "posemanager.h"
 #include "singletonsettings.h"
-#include "utils.h"
+//#include "utils.h"
 
-using namespace std;
-using namespace cv;
+//using namespace std;
+//using namespace cv;
 //using namespace pcl;
 
 namespace test {
@@ -48,7 +48,7 @@ void testFaceLoader()
     cout << "\n\nFace loader test..." << endl;
     string dirPath = "../RGBD_Face_dataset_training/";
     FaceLoader loader(dirPath, "014.*");
-    vector<Face> faceSequence(0);
+    vector<Image4D> faceSequence(0);
     if (!loader.get(faceSequence)) {
         cout << "Error loading face!" << endl;
         return;
@@ -61,7 +61,9 @@ void testFaceLoader()
         while (waitKey(0) != 'm') {
         }
 
-        viewPointCloud(face.depthMap);
+        //viewPointCloud(face.depthMap);
+        imshow("Depth map", face.depthMap);
+        waitKey(0);
     }
     system("read -p 'Press [enter] to continue'");
 }
@@ -88,7 +90,7 @@ void testFindThreshold()
     string dirPath = "../RGBD_Face_dataset_training/";
     FaceLoader loader(dirPath, "014.*"); // example: loads only .png files starting with 014
 
-    Face face;
+    Image4D face;
 
     //    loader.setDownscalingRatio(0.5);
 
@@ -112,7 +114,9 @@ void testFindThreshold()
     imshow("image", face.image);
     while (waitKey(0) != 'm') {
     }
-    viewPointCloud(face.depthMap);
+    //viewPointCloud(face.depthMap);
+    imshow("Depth map", face.depthMap);
+    waitKey(0);
 
     Mat depthMap = face.get3DImage(/*SingletonSettings::getInstance().getK()*/);
     imshow("Depth Map", depthMap);
@@ -126,7 +130,7 @@ void testGetDepthMap()
     string dirPath = "../RGBD_Face_dataset_training/";
     FaceLoader loader(dirPath, "014.*"); // example: loads only .png files starting with 014
 
-    Face face;
+    Image4D face;
 
     //    loader.setDownscalingRatio(0.5);
 
@@ -150,7 +154,7 @@ void testDetectFacePose()
     string dirPath = "../RGBD_Face_dataset_training/";
     FaceLoader loader(dirPath, "000_.*");
 
-    Face face;
+    Image4D face;
 
     //    loader.setDownscalingRatio(0.5);
 
@@ -183,11 +187,13 @@ void testDetectFacePose()
     cout << "Size: (" << face.getWidth() << "," << face.getHeight() << ")" << endl;
 
     std::cout << "Removing background..." << std::endl;
-    viewPointCloud(face.depthMap);
+    imshow("Depth Map", face.depthMap);
+    waitKey(0);
     imshow("Face", face.image);
     waitKey(0);
     segmenter.removeBackground(face);
-    viewPointCloud(face.depthMap);
+    imshow("Depth Map", face.depthMap);
+    waitKey(0);
     imshow("Face", face.image);
     waitKey(0);
     std::cout << "Done!" << std::endl;
@@ -270,7 +276,7 @@ void testDetectFacePose2() {
     intrinsics.at<double>(2,2) = 1;
 
     Mat color(depthImage.rows,depthImage.cols, CV_8UC3); // used only because needed by Face constructor
-    Face face(color, depthImage, intrinsics);
+    Image4D face(color, depthImage, intrinsics);
 
     std::cout << "Estimating face pose..." << std::endl;
     PoseManager poseManager;
@@ -284,7 +290,7 @@ void testFaceDetection()
     string dirPath = "../RGBD_Face_dataset_training/";
     FaceLoader loader(dirPath, "000_.*"); // example: loads only .png files starting with 014
 
-    Face face;
+    Image4D face;
 
     //    loader.setDownscalingRatio(0.5);
 
@@ -310,7 +316,8 @@ void testFaceDetection()
     imshow("image", face.image);
     waitKey(0);
 
-    viewPointCloud(face.depthMap);
+    imshow("Depth Map", face.depthMap);
+    waitKey(0);
     system("read -p 'Press [enter] to continue'");
 }
 

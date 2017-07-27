@@ -1,18 +1,9 @@
 #ifndef IMAGELOADER_HPP
 #define IMAGELOADER_HPP
 
-#include <boost/filesystem/operations.hpp>
-#include <boost/filesystem/path.hpp>
-#include <opencv2/opencv.hpp>
-#include <pcl/common/common.h>
-#include <pcl/point_types.h>
-#include <pcl/visualization/area_picking_event.h>
-#include <pcl/visualization/pcl_visualizer.h>
 #include <regex>
 
-class Face;
-
-#define MATCH_ALL ".*"
+class Image4D;
 
 /**
  * @brief The ImageLoader class loads a single image or
@@ -22,6 +13,9 @@ class Face;
  */
 class FaceLoader {
 public:
+
+    static const std::string MATCH_ALL;
+
     /**
      * @brief ImageLoader, basic constructor.
      *
@@ -42,29 +36,9 @@ public:
      */
     bool hasNext() const;
 
-    ///**
-    // * @brief get
-    // * @param image: Mat in which store the loaded image
-    // * @return false if there are no images to load
-    // */
-    //bool get(cv::Mat& image);
-    //
-    ///**
-    // * @brief get
-    // * @param imageSequence: vector in which store the loaded images
-    // * @return always true
-    // *
-    // * Loads from current directory all files matching the regular expression
-    // */
-    //bool get(std::vector<cv::Mat>& imageSequence);
-    //
-    //bool get(pcl::PointCloud<pcl::PointXYZ>::Ptr &cloud);
-    //
-    //bool get(std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr>& cloudSequence);
+    bool get(Image4D& face);
 
-    bool get(Face& face);
-
-    bool get(std::vector<Face>& face);
+    bool get(std::vector<Image4D>& face);
 
     /**
      * @brief setFileNameRegEx
@@ -97,14 +71,10 @@ private:
     std::vector<std::string> imageFileNames;
     std::vector<std::string> cloudFileNames;
 
-    //bool loadFileName(const std::string& path);
     bool loadFileNames(const std::string& dirPath);
 
     bool matchTemplate(const std::string& fileName);
 };
 
-void keyboardEventHandler(const pcl::visualization::KeyboardEvent& event, void* viewer_void);
-
-void viewPointCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud);
 
 #endif // IMAGELOADER_Hs

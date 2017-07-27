@@ -71,7 +71,7 @@ void testFunctions()
     //
     //test::testFaceDetection();
     //
-    test::testDetectFacePose2();
+    test::testDetectFacePose();
     //
     //    test::testEulerAnglesToRotationMatrix();
     //

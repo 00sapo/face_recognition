@@ -3,18 +3,16 @@
 
 #include <opencv2/core.hpp>
 
-using namespace cv;
-
 class SingletonSettings {
 public:
     static void setPath(const std::string &pathName);
     static SingletonSettings& getInstance();
     //    ~SingletonSettings();
 
-    const Mat getK();
-    const Mat getD();
-    const Mat getP();
-    const Mat getR();
+    const cv::Mat getK();
+    const cv::Mat getD();
+    const cv::Mat getP();
+    const cv::Mat getR();
     int getHeight();
     int getWidth();
 
@@ -35,10 +33,10 @@ protected:
     /*
      * Camera parameters
      */
-    Mat K;
-    Mat D;
-    Mat P;
-    Mat R;
+    cv::Mat K;
+    cv::Mat D;
+    cv::Mat P;
+    cv::Mat R;
     int height;
     int width;
 

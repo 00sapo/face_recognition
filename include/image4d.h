@@ -2,25 +2,24 @@
 #define FACE_H
 
 #include <opencv2/opencv.hpp>
-#include <pcl/common/common.h>
-#include <pcl/point_types.h>
 #include <functional>
 
 typedef unsigned int uint;
 
 
 /**
- * @brief The Face class represents a face with both color and 3D information
+ * @brief The Image4D class is a couple (grayscale image - depth map)
+ *        that represents both the visual and spatial information of a scene
  */
-class Face
+class Image4D
 {
 public:
 
-    cv::Mat image; // Color or grayscale representation of the face
-    cv::Mat depthMap; // Depth representation of the face
+    cv::Mat image;              // Color or grayscale representation of the face
+    cv::Mat depthMap;           // Depth representation of the face
     cv::Mat intrinsicMatrix;
 
-    Face();
+    Image4D();
 
     /**
      * @brief Face stores the two representations of the same face and shrinks
@@ -28,34 +27,34 @@ public:
      *        the same aspect ratio and image dimensions must be >= of depth map dimensions
      * @param image
      * @param depthMap
+     * @param intrinsicCameraMatrix
      */
-    Face(cv::Mat &image, cv::Mat &depthMap);
-
-    Face(cv::Mat &image, cv::Mat &depthMap, const cv::Mat &intrinsicCameraMatrix);
+    Image4D(cv::Mat &image, cv::Mat &depthMap, const cv::Mat &intrinsicCameraMatrix);
 
     /**
-     * @brief get3DImage organizes the cloud in a Mat object with 3 channels (X, Y, Z)
+     * @brief get3DImage organizes the depthmap in a Mat object
+     *        with 3 channels (X, Y, Z) using intrinsicMatrix.
      * @return 3D representation of the face
      */
-    cv::Mat get3DImage() const ;//const;
+    cv::Mat get3DImage() const;
 
     /**
-     * @brief getWidth gives the width (in pixels) of image and cloud
-     *        which have the same dimensions
+     * @brief getWidth gives the width (in pixels) of image and depthmap
+     *        (which have the same dimensions)
      * @return width of the face
      */
     size_t getWidth()  const;
 
     /**
      * @brief getHeight gives the height (in pixels) of image and cloud
-     *        which have the same dimensions
+     *        (which have the same dimensions)
      * @return height of the face
      */
     size_t getHeight() const;
 
     /**
      * @brief getArea gives the area (in pixel) of image and depthMap
-     *        which have the same dimensions
+     *        (which have the same dimensions)
      * @return area of the face
      */
     size_t getArea() const;
@@ -68,7 +67,8 @@ public:
 
     /**
      * @brief This function crops both the image and the cloud removing
-     *        every point outside the cropping region
+     *        every point outside the cropping region and adjusting
+     *        the intrinsicMatrix accordingly to take into account the resolution change
      * @param cropRegion region of interest
      */
     void crop(const cv::Rect &cropRegion);
@@ -80,9 +80,9 @@ public:
      * @param function function to be called on each pixel
      * @param ROI region of interest to which apply function
      */
-    void depthForEach(std::function<void(int, int, uint16_t &)> function, const cv::Rect& ROI);
+    void depthForEach(const std::function<void(int, int, uint16_t &)> &function, const cv::Rect& ROI);
 
-    void depthForEach(std::function<void(int, int, const uint16_t&)> function, const cv::Rect& ROI) const;
+    void depthForEach(const std::function<void(int, int, const uint16_t&)> &function, const cv::Rect& ROI) const;
 
     /**
      * @brief imageForEach applies the function function to every point
@@ -91,9 +91,9 @@ public:
      * @param function function to be called on each point
      * @param ROI region of interest to which apply function
      */
-    void imageForEach(std::function<void(int, int, float&)> function, const cv::Rect& ROI);
+    void imageForEach(const std::function<void(int, int, float&)> &function, const cv::Rect& ROI);
 
-    void imageForEach(std::function<void(int, int, const float&)> function, const cv::Rect& ROI) const ;
+    void imageForEach(const std::function<void(int, int, const float&)> &function, const cv::Rect& ROI) const ;
 
 private:
     uint WIDTH;             // width of the face

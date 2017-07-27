@@ -1,9 +1,9 @@
 #include "facesegmenter.h"
 
-#include <opencv2/highgui.hpp>
 #include <opencv2/opencv.hpp>
+#include <opencv2/highgui.hpp>
 
-#include "face.h"
+#include "image4d.h"
 #include "singletonsettings.h"
 
 using std::vector;
@@ -28,7 +28,7 @@ FaceSegmenter::FaceSegmenter(const string& faceDetectorPath)
     faceDetectorAvailable = true;
 }
 
-bool FaceSegmenter::detectForegroundFace(const Face& face, const Size& outputSize, cv::Rect& detectedRegion)
+bool FaceSegmenter::detectForegroundFace(const Image4D& face, const cv::Size& outputSize, cv::Rect& detectedRegion)
 {
 
     assert (outputSize.width <= face.getWidth() && outputSize.height <= face.getHeight()
@@ -95,17 +95,17 @@ bool FaceSegmenter::detectForegroundFace(const Face& face, const Size& outputSiz
     return !faces.empty();
 }
 
-void FaceSegmenter::removeBackground(std::vector<Face>& faces) const
+void FaceSegmenter::removeBackground(std::vector<Image4D>& faces) const
 {
     for (auto& face : faces)
         removeBackground(face);
 }
 
-bool FaceSegmenter::removeBackground(Face& face) const
+bool FaceSegmenter::removeBackground(Image4D& face) const
 {
     // build nan mask to skip nans
     vector<float> depth;
-    Mat nanMask = Mat::zeros(face.getHeight(), face.getWidth(), CV_8U); // true if nan
+    cv::Mat nanMask = cv::Mat::zeros(face.getHeight(), face.getWidth(), CV_8U); // true if nan
 
     const auto HEIGHT = face.getHeight();
     const auto WIDTH = face.getWidth();
