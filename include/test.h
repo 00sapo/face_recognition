@@ -6,35 +6,33 @@
 #include <opencv2/highgui.hpp>
 #include <opencv2/opencv.hpp>
 
-//#include <pcl/visualization/area_picking_event.h>
-//#include <pcl/visualization/pcl_visualizer.h>
-
 #include "image4d.h"
 #include "faceloader.h"
 #include "facesegmenter.h"
 #include "lbp.h"
 #include "posemanager.h"
 #include "singletonsettings.h"
-//#include "utils.h"
 
-//using namespace std;
-//using namespace cv;
-//using namespace pcl;
+using std::cout;
+using std::endl;
+using cv::Mat;
+using cv::waitKey;
+
 
 namespace test {
 
-Vec3f randomEulerAngle()
+cv::Vec3f randomEulerAngle()
 {
-    float r1 = static_cast<float>(rand()) / (static_cast<float>(RAND_MAX / (2 * M_PI)));
-    float r2 = static_cast<float>(rand()) / (static_cast<float>(RAND_MAX / (2 * M_PI)));
-    float r3 = static_cast<float>(rand()) / (static_cast<float>(RAND_MAX / (2 * M_PI)));
+    float r1 = float(rand()) / (float(RAND_MAX) / (2.0f * M_PI));
+    float r2 = float(rand()) / (float(RAND_MAX) / (2.0f * M_PI));
+    float r3 = float(rand()) / (float(RAND_MAX) / (2.0f * M_PI));
     return { r1, r2, r3 };
 }
 
 void testSingletonSettings()
 {
     cout << "SingletonSettings test..." << endl;
-    SingletonSettings& settings = SingletonSettings::getInstance();
+    auto& settings = SingletonSettings::getInstance();
     cout << settings.getD() << endl
          << settings.getK() << endl
          << settings.getP() << endl
@@ -56,7 +54,7 @@ void testFaceLoader()
     }
     cout << "\n\nFaces loaded!" << endl;
 
-    namedWindow("image", WINDOW_NORMAL);
+    cv::namedWindow("image", cv::WINDOW_NORMAL);
     for (const auto& face : faceSequence) {
         imshow("image", face.image);
         while (waitKey(0) != 'm') {
@@ -72,15 +70,15 @@ void testFaceLoader()
 Pose testEulerAnglesToRotationMatrix()
 {
     srand(time(NULL));
-    Vec3f euler = randomEulerAngle();
+    cv::Vec3f euler = randomEulerAngle();
     PoseManager pm;
 
     Pose rotation = pm.eulerAnglesToRotationMatrix(euler);
 
-    std::cout << "Euler Angles:" << std::endl;
-    std::cout << euler << std::endl;
-    std::cout << "Rotation Matrix:" << std::endl;
-    std::cout << rotation << std::endl;
+    cout << "Euler Angles:" << endl;
+    cout << euler << endl;
+    cout << "Rotation Matrix:" << endl;
+    cout << rotation << endl;
 
     return rotation;
 }
@@ -142,7 +140,7 @@ void testGetDepthMap()
 
     cout << "Face loaded!" << endl;
 
-    cv::Mat depthMap = face.get3DImage(/*SingletonSettings::getInstance().getK()*/);
+    Mat depthMap = face.get3DImage(/*SingletonSettings::getInstance().getK()*/);
 
     imshow("Depth Map", depthMap);
     waitKey(0);
@@ -168,24 +166,21 @@ void testDetectFacePose()
     cout << "Size: (" << face.getWidth() << "," << face.getHeight() << ")" << endl;
 
     cv::imshow("Face", face.image);
-    cv::waitKey(0);
+    waitKey(0);
 
     FaceSegmenter segmenter;
     cv::Rect detectedRegion;
     if (segmenter.detectForegroundFace(face, cv::Size(640, 480), detectedRegion)) {
-
-        cv::rectangle(face.image, detectedRegion, Scalar(255, 255, 255), 5);
-        //cv::imshow("Face detected", face.image);
-        //cv::waitKey(0);
+        cv::rectangle(face.image, detectedRegion, cv::Scalar(255, 255, 255), 5);
     } else {
-        std::cout << "No face detected!" << std::endl;
+        cout << "No face detected!" << endl;
     }
 
     face.crop(detectedRegion);
 
     cout << "Size: (" << face.getWidth() << "," << face.getHeight() << ")" << endl;
 
-    std::cout << "Removing background..." << std::endl;
+    cout << "Removing background..." << endl;
     imshow("Depth Map", face.depthMap);
     waitKey(0);
     imshow("Face", face.image);
@@ -195,12 +190,12 @@ void testDetectFacePose()
     waitKey(0);
     imshow("Face", face.image);
     waitKey(0);
-    std::cout << "Done!" << std::endl;
+    cout << "Done!" << endl;
 
     PoseManager poseManager;
 
-    std::cout << "Estimating face pose..." << std::endl;
-    poseManager.estimateFacePose(face /*, SingletonSettings::getInstance().getK()*/);
+    cout << "Estimating face pose..." << endl;
+    poseManager.estimateFacePose(face);
     system("read -p 'Press [enter] to continue'");
 }
 
@@ -210,7 +205,7 @@ bool loadDepthImageCompressed(Mat& depthImg, const char* fname)
     //now read the depth image
     FILE* pFile = fopen(fname, "rb");
     if (!pFile) {
-        cerr << "could not open file " << fname << endl;
+        std::cerr << "could not open file " << fname << endl;
         return false;
     }
 
@@ -229,7 +224,7 @@ bool loadDepthImageCompressed(Mat& depthImg, const char* fname)
     int p = 0;
 
     if (!depthImg.isContinuous()) {
-        cerr << "Image has the wrong size! (should be 640x480)" << endl;
+        std::cerr << "Image has the wrong size! (should be 640x480)" << endl;
         return false;
     }
 
@@ -301,7 +296,7 @@ void testFaceDetection()
     FaceSegmenter segmenter;
     cv::Rect detectedRegion;
     if (segmenter.detectForegroundFace(face, cv::Size(100, 60), detectedRegion)) {
-        cv::rectangle(face.image, detectedRegion, Scalar(255, 255, 255), 5);
+        cv::rectangle(face.image, detectedRegion, cv::Scalar(255, 255, 255), 5);
 
         imshow("image", face.image);
         waitKey(0);
@@ -336,21 +331,21 @@ void testKmeans()
     depth.push_back(6.542);
     depth.push_back(1.246);
 
-    cv::Mat centers(1, 2, CV_32F);
+    Mat centers(1, 2, CV_32F);
     std::vector<int> bestLabels;
-    std::cout << "Clustering..." << std::endl;
+    cout << "Clustering..." << endl;
     cv::TermCriteria criteria(cv::TermCriteria::EPS, 10, 1.0);
     cv::kmeans(depth, 2, bestLabels, criteria, 3, cv::KMEANS_PP_CENTERS, centers);
-    std::cout << "Done!" << std::endl;
+    cout << "Done!" << endl;
 
-    std::cout << "Size: " << centers.size() << std::endl;
+    cout << "Size: " << centers.size() << endl;
     //std::cout << "Cols: " << centers.cols << std::endl;
 
-    std::cout << "Labels for points..." << std::endl;
+    cout << "Labels for points..." << endl;
     for (uint i = 0; i < bestLabels.size(); ++i) {
-        std::cout << bestLabels.at(i) << std::endl;
+        cout << bestLabels.at(i) << endl;
     }
-    std::cout << "Done!" << std::endl;
+    cout << "Done!" << endl;
 
     system("read -p 'Press [enter] to continue'");
 }
@@ -407,8 +402,8 @@ void testPoseClustering()
     pm.clusterizePoses(4);
 
     Pose pose = pm.eulerAnglesToRotationMatrix(randomEulerAngle());
-    std::cout << "Nearest Center: " << endl;
-    std::cout << pm.getNearestCenterId(pose) << endl;
+    cout << "Nearest Center: " << endl;
+    cout << pm.getNearestCenterId(pose) << endl;
 }
 
 void covarianceTest()
@@ -417,7 +412,7 @@ void covarianceTest()
     string dirPath = "../RGBD_Face_dataset_training/";
     FaceLoader loader(dirPath, "000_.*"); // example: loads only .png files starting with 014
 
-    Face face;
+    Image4D face;
 
     //    loader.setDownscalingRatio(0.5);
 
@@ -428,7 +423,7 @@ void covarianceTest()
 
     //    cout << "Face loaded!" << endl;
 
-    std::vector<Mat> faceSet = vector<Mat>();
+    std::vector<Mat> faceSet;
 
     while (loader.get(face)) {
         cout << "Face loaded!" << endl;
@@ -436,7 +431,7 @@ void covarianceTest()
         int croppedHeight = face.getHeight() / 4;
         for (uint y = 0; y < face.getHeight(); y += croppedHeight) {
             for (uint x = 0; x < face.getWidth(); x += croppedWidth) {
-                Mat cropped = face.image(Rect(x, y, croppedWidth, croppedHeight));
+                Mat cropped = face.image(cv::Rect(x, y, croppedWidth, croppedHeight));
 
                 faceSet.push_back(OLBPHist(cropped));
             }
