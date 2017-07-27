@@ -5,17 +5,16 @@ CONFIG -= qt
 
 SOURCES += src/main.cpp \
            src/singletonsettings.cpp \
-           src/faceloader.cpp \
            extern_libs/head_pose_estimation/CRForestEstimator.cpp \
            extern_libs/head_pose_estimation/CRTree.cpp \
     src/utils.cpp \
     src/posemanager.cpp \
     src/facesegmenter.cpp \
-    src/image4d.cpp
-    src/steinkernel.cpp
+    src/image4d.cpp \
+    src/steinkernel.cpp \
+    src/image4dloader.cpp
 
 HEADERS += include/singletonsettings.h \
-           include/faceloader.h \
            extern_libs/head_pose_estimation/CRForestEstimator.h \
            extern_libs/head_pose_estimation/CRTree.h \
     include/test.h \
@@ -25,7 +24,8 @@ HEADERS += include/singletonsettings.h \
     include/lbp.h \
     include/image4d.h \
     include/steinkernel.h \
-    include/svmparams.h
+    include/svmparams.h \
+    include/image4dloader.h
 
 DISTFILES += \
     camera_info.yaml

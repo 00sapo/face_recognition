@@ -1,4 +1,4 @@
-#include "faceloader.h"
+#include "image4dloader.h"
 
 //#include <iostream>
 
@@ -30,10 +30,10 @@ namespace fs = boost::filesystem;
 
 
 
-const string FaceLoader::MATCH_ALL = ".*";
+const string Image4DLoader::MATCH_ALL = ".*";
 
 
-FaceLoader::FaceLoader()
+Image4DLoader::Image4DLoader()
 {
     currentPath = fs::current_path().string();
     fileTemplate = std::regex(".*(png|jpg|bmp)");
@@ -41,7 +41,7 @@ FaceLoader::FaceLoader()
     cloudFileNames = vector<string>();
 }
 
-FaceLoader::FaceLoader(const string& dirPath, const string& fileNameRegEx)
+Image4DLoader::Image4DLoader(const string& dirPath, const string& fileNameRegEx)
 {
     imageFileNames = vector<string>();
     cloudFileNames = vector<string>();
@@ -53,12 +53,12 @@ FaceLoader::FaceLoader(const string& dirPath, const string& fileNameRegEx)
         cout << "Failed!" << endl;
 }
 
-bool FaceLoader::hasNext() const
+bool Image4DLoader::hasNext() const
 {
     return !imageFileNames.empty() && !cloudFileNames.empty();
 }
 
-bool FaceLoader::get(Image4D& face)
+bool Image4DLoader::get(Image4D& face)
 {
 
     if (!hasNext())
@@ -100,7 +100,7 @@ bool FaceLoader::get(Image4D& face)
     return true;
 }
 
-bool FaceLoader::get(vector<Image4D>& faceSequence)
+bool Image4DLoader::get(vector<Image4D>& faceSequence)
 {
 
     faceSequence.clear();
@@ -114,13 +114,13 @@ bool FaceLoader::get(vector<Image4D>& faceSequence)
     return true;
 }
 
-void FaceLoader::setFileNameRegEx(const string& fileNameRegEx)
+void Image4DLoader::setFileNameRegEx(const string& fileNameRegEx)
 {
     fileTemplate = std::regex(fileNameRegEx);
     loadFileNames(currentPath);
 }
 
-void FaceLoader::setCurrentPath(const string& dirPath)
+void Image4DLoader::setCurrentPath(const string& dirPath)
 {
     imageFileNames.clear();
     cloudFileNames.clear();
@@ -128,17 +128,17 @@ void FaceLoader::setCurrentPath(const string& dirPath)
     loadFileNames(currentPath);
 }
 
-float FaceLoader::getLeafSize() const
+float Image4DLoader::getLeafSize() const
 {
     return leafSize;
 }
 
-void FaceLoader::setLeafSize(float value)
+void Image4DLoader::setLeafSize(float value)
 {
     leafSize = value;
 }
 
-bool FaceLoader::loadFileNames(const string& dirPath)
+bool Image4DLoader::loadFileNames(const string& dirPath)
 {
     fs::path full_path = fs::system_complete(fs::path(dirPath));
 
@@ -180,7 +180,7 @@ bool FaceLoader::loadFileNames(const string& dirPath)
     return true;
 }
 
-bool FaceLoader::matchTemplate(const string& fileName)
+bool Image4DLoader::matchTemplate(const string& fileName)
 {
     return std::regex_match(fileName, fileTemplate, std::regex_constants::match_any);
 }

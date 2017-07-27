@@ -11,7 +11,7 @@ class Image4D;
  *        the filename to load using regular expressions and a
  *        downscaling ratio to reduce image size.
  */
-class FaceLoader {
+class Image4DLoader {
 public:
 
     static const std::string MATCH_ALL;
@@ -21,14 +21,14 @@ public:
      *
      * Loads from current directory images with extension .png, .jpg or .bmp
      */
-    FaceLoader();
+    Image4DLoader();
 
     /**
      * @brief ImageLoader constructor
      * @param dirPath: absolute path to the directory from which load the files
      * @param fileNameTempl: regular expression for the file names to load
      */
-    FaceLoader(const std::string& dirPath, const std::string& fileNameRegEx = MATCH_ALL);
+    Image4DLoader(const std::string& dirPath, const std::string& fileNameRegEx = MATCH_ALL);
 
     /**
      * @brief hasNext
