@@ -28,11 +28,8 @@ FaceSegmenter::FaceSegmenter(const string& faceDetectorPath)
     faceDetectorAvailable = true;
 }
 
-bool FaceSegmenter::detectForegroundFace(const Image4D& face, const cv::Size& outputSize, cv::Rect& detectedRegion)
+bool FaceSegmenter::detectForegroundFace(const Image4D& face, cv::Rect& detectedRegion)
 {
-
-    assert (outputSize.width <= face.getWidth() && outputSize.height <= face.getHeight()
-            && "Output region can't be bigger than input face image!");
 
     if (!faceDetectorAvailable) {
         std::cout << "Error! Face detector unavailable!" << std::endl;
@@ -67,54 +64,36 @@ bool FaceSegmenter::detectForegroundFace(const Image4D& face, const cv::Size& ou
 
     detectedRegion = faces[0];
 
-    if (detectedRegion.width >= outputSize.width && detectedRegion.height >= outputSize.height)
-        return !faces.empty();
-
-    // enlarge region to have desired aspect ratio
-    int widthEnlarge  = outputSize.width  - detectedRegion.width;
-    int heightEnlarge = outputSize.height - detectedRegion.height;
-
-    detectedRegion.x -= widthEnlarge/2;
-    if (detectedRegion.x < 0) {
-        widthEnlarge += -detectedRegion.x;
-        detectedRegion.x = 0;
-    }
-    detectedRegion.width += widthEnlarge;
-    detectedRegion.width  = detectedRegion.width + detectedRegion.x > face.getWidth() ?
-                face.getWidth() - detectedRegion.x :  detectedRegion.width;
-
-    detectedRegion.y -= heightEnlarge/2;
-    if (detectedRegion.y < 0) {
-        heightEnlarge += -detectedRegion.y;
-        detectedRegion.y = 0;
-    }
-    detectedRegion.height += heightEnlarge;
-    detectedRegion.height  = detectedRegion.height + detectedRegion.y > face.getHeight() ?
-                face.getHeight() - detectedRegion.y :  detectedRegion.height;
-
     return !faces.empty();
 }
 
-void FaceSegmenter::removeBackground(std::vector<Image4D>& faces) const
+void FaceSegmenter::removeBackground(std::vector<Image4D>& faces, const cv::Rect &roi) const
 {
     for (auto& face : faces)
-        removeBackground(face);
+        removeBackground(face, roi);
 }
 
-bool FaceSegmenter::removeBackground(Image4D& face) const
+bool FaceSegmenter::removeBackground(Image4D& face, const cv::Rect& roi) const
 {
-    // build nan mask to skip nans
-    vector<float> depth;
-    cv::Mat nanMask = cv::Mat::zeros(face.getHeight(), face.getWidth(), CV_8U); // true if nan
 
     const auto HEIGHT = face.getHeight();
     const auto WIDTH = face.getWidth();
 
-    for (uint x = 0; x < HEIGHT; ++x) {
-        for (uint y = 0; y < WIDTH; ++y) {
-            float d = face.depthMap.at<uint16_t>(x, y);
+    const uint maxWidth  = roi.width  + roi.x;
+    const uint maxHeight = roi.height + roi.y;
+
+    assert (roi.x > 0 && roi.y > 0 && maxWidth <= WIDTH && maxHeight <= HEIGHT
+            && "ROI must be included in face.image");
+
+    // build nan mask to skip nans
+    vector<float> depth;
+    cv::Mat nanMask = cv::Mat::zeros(maxHeight, maxWidth, CV_8U); // true if nan
+
+    for (uint i = roi.y; i < maxHeight; ++i) {
+        for (uint j = roi.x; j < maxWidth; ++j) {
+            float d = face.depthMap.at<uint16_t>(i, j);
             if (std::isnan(d))
-                nanMask.at<bool>(x, y) = true;
+                nanMask.at<bool>(i - roi.y, j - roi.x) = true;
             else
                 depth.push_back(d);
         }
@@ -132,23 +111,26 @@ bool FaceSegmenter::removeBackground(Image4D& face) const
     }
 
     // remove background
-    const int FACE_CLUSTER = centers.at(0) < centers.at(1) ? 0 : 1;
-    auto iter = bestLabels.begin();
+    const int FACE_CLUSTER = centers[0] < centers[1] ? 0 : 1;
 
-    for (uint x = 0; x < HEIGHT; ++x) {
-        for (uint y = 0; y < WIDTH; ++y) {
-            if (!nanMask.at<bool>(x, y)) {
-                if (*iter != FACE_CLUSTER) {
-                    face.depthMap.at<uint16_t>(x, y) = 0;
-                    face.image.at<uchar>(x, y) = 0;
-                }
-                ++iter;
-            } else {
-                face.depthMap.at<uint16_t>(x, y) = 0;
-                face.image.at<uchar>(x, y) = 0;
-            }
+    float threshold = centers[FACE_CLUSTER];
+    threshold *= 1.2f;
+
+    std::cout << "Threshold: " << threshold << std::endl;
+
+    imshow("Depth map", face.depthMap);
+    cv::waitKey(0);
+
+    // using opencv's parallel foreach to take advantage of multithreading
+    face.depthMap.forEach<uint16_t>([threshold](uint16_t &p, const int *position) -> void {
+        float depth = p;
+        if (depth > threshold || depth == std::numeric_limits<float>::quiet_NaN()) {
+            p = 0;
         }
-    }
+    });
+
+    imshow("Depth map", face.depthMap);
+    cv::waitKey(0);
 
     return true;
 }

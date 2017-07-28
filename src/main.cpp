@@ -29,11 +29,11 @@ void testFunctions()
     //
     //test::testEulerAnglesToRotationMatrix();
     //
-    test::testPoseClustering();
+    //test::testPoseClustering();
     //
     //test::testKmeans2();
     //
-    test::covarianceTest();
+    //test::covarianceTest();
 
     cout << "\n\nTests finished!" << endl;
 }

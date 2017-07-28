@@ -17,11 +17,18 @@ public:
     explicit PoseManager(const std::string& poseEstimatorPath = POSE_ESTIMATOR_PATH);
 
     /**
+     * @brief cropFace: crops face region taking into account face orientation
+     * @param face: image containing face to crop
+     * @return false if no face was detected
+     */
+    bool cropFace(Image4D& face);
+
+    /**
      * @brief estimateFacePose
      * @param face
      * @return True if pose estimation was successful and rotation matrix was added to posesData, false otherwise
      */
-    bool estimateFacePose(const Image4D& face);
+    bool estimateFacePose(const Image4D& face, cv::Vec3f &eulerAngles);
 
     /**
      * @brief eulerAnglesToRotationMatrix
