@@ -17,7 +17,10 @@ public:
 
     cv::Mat image;              // Color or grayscale representation of the face
     cv::Mat depthMap;           // Depth representation of the face
-    cv::Mat intrinsicMatrix;
+
+    //cv::Rect faceRegion;        // bounding box of the face
+    //float   meanDepth;          // mean depth of the face computed on the faceRegion
+
 
     Image4D();
 
@@ -80,9 +83,12 @@ public:
      * @param function function to be called on each pixel
      * @param ROI region of interest to which apply function
      */
+    /*
     void depthForEach(const std::function<void(int, int, uint16_t &)> &function, const cv::Rect& ROI);
 
     void depthForEach(const std::function<void(int, int, const uint16_t&)> &function, const cv::Rect& ROI) const;
+    */
+
 
     /**
      * @brief imageForEach applies the function function to every point
@@ -91,14 +97,70 @@ public:
      * @param function function to be called on each point
      * @param ROI region of interest to which apply function
      */
+    /*
     void imageForEach(const std::function<void(int, int, float&)> &function, const cv::Rect& ROI);
 
     void imageForEach(const std::function<void(int, int, const float&)> &function, const cv::Rect& ROI) const ;
+    */
+
+
+    template<typename T>
+    void depthForEach(const std::function<void(int, int, T&)> &function, const cv::Rect& ROI) {
+
+        const uint MAX_X = ROI.x + ROI.width;
+        const uint MAX_Y = ROI.y + ROI.height;
+
+        for (uint y = ROI.y; y < MAX_Y; ++y) {
+            for (uint x = ROI.x; x < MAX_X; ++x) {
+                function(x,y,depthMap.at<T>(y,x));
+            }
+        }
+    }
+
+    template<typename T>
+    void depthForEach(const std::function<void(int, int, const T &)> &function, const cv::Rect& ROI)  const {
+
+        const uint MAX_X = ROI.x + ROI.width;
+        const uint MAX_Y = ROI.y + ROI.height;
+
+        for (uint y = ROI.y; y < MAX_Y; ++y) {
+            for (uint x = ROI.x; x < MAX_X; ++x) {
+                function(x,y,depthMap.at<T>(y,x));
+            }
+        }
+    }
+
+    template<typename T>
+    void imageForEach(const std::function<void(int, int, T&)> &function, const cv::Rect& ROI) {
+        const uint MAX_X = ROI.x + ROI.width;
+        const uint MAX_Y = ROI.y + ROI.height;
+
+        for (uint y = ROI.y; y < MAX_Y; ++y) {
+            for (uint x = ROI.x; x < MAX_X; ++x) {
+                function(x,y,image.at<T>(y,x));
+            }
+        }
+    }
+
+    template<typename T>
+    void imageForEach(const std::function<void(int, int, const T&)> &function, const cv::Rect& ROI) const {
+        const uint MAX_X = ROI.x + ROI.width;
+        const uint MAX_Y = ROI.y + ROI.height;
+
+        for (uint y = ROI.y; y < MAX_Y; ++y) {
+            for (uint x = ROI.x; x < MAX_X; ++x) {
+                function(x,y,image.at<T>(y,x));
+            }
+        }
+    }
+
 
 private:
     uint WIDTH;             // width of the face
     uint HEIGHT;            // height of the face
     float DEPTH_IMG_RATIO;  // downscaling ratio applied to image by the constructor
+
+     cv::Mat intrinsicMatrix;
 
     /**
      * @brief resizeImage dowscales the image to match depth map dimensions

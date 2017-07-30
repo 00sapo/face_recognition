@@ -17,6 +17,9 @@ Image4D::Image4D() : WIDTH(0), HEIGHT(0), DEPTH_IMG_RATIO(0)
     intrinsicMatrix.at<double>(2,2) = 1;
     intrinsicMatrix.at<double>(0,2) = WIDTH/2;
     intrinsicMatrix.at<double>(1,2) = HEIGHT/2;
+
+    //faceRegion = cv::Rect(0,0,1,1);
+    //meanDepth  = std::numeric_limits<float>::quiet_NaN();
 }
 
 
@@ -27,6 +30,9 @@ Image4D::Image4D(Mat &image, Mat &depthMap, const Mat &intrinsicCameraMatrix)
     HEIGHT = depthMap.rows;
 
     resizeImage();
+
+    //faceRegion = cv::Rect(0, 0, WIDTH, HEIGHT);
+    //meanDepth  = std::numeric_limits<float>::quiet_NaN();
 }
 
 
@@ -35,7 +41,7 @@ Image4D::Image4D(Mat &image, Mat &depthMap, const Mat &intrinsicCameraMatrix)
 size_t Image4D::getWidth()  const { return WIDTH;  }
 size_t Image4D::getHeight() const { return HEIGHT; }
 size_t Image4D::getArea()   const { return WIDTH*HEIGHT;}
-float Image4D::getDepthImageRatio() const { return DEPTH_IMG_RATIO; }
+float  Image4D::getDepthImageRatio() const { return DEPTH_IMG_RATIO; }
 
 Mat Image4D::get3DImage() const
 {
@@ -70,50 +76,6 @@ void Image4D::crop(const cv::Rect &cropRegion) {
 
     intrinsicMatrix.at<double>(0,2) -= cropRegion.x;
     intrinsicMatrix.at<double>(1,2) -= cropRegion.y;
-}
-
-void Image4D::depthForEach(const std::function<void(int, int, uint16_t&)> &function, const cv::Rect& ROI) {
-
-    const uint MAX_X = ROI.x + ROI.height;
-    const uint MAX_Y = ROI.y + ROI.width;
-
-    for (uint x = ROI.x; x < MAX_X; ++x) {
-        for (uint y = ROI.y; y < MAX_Y; ++y) {
-            function(x,y,depthMap.at<uint16_t>(x,y));
-        }
-    }
-}
-
-void Image4D::depthForEach(const std::function<void(int, int, const uint16_t &)> &function, const cv::Rect& ROI)  const {
-
-    const uint MAX_X = ROI.x + ROI.height;
-    const uint MAX_Y = ROI.y + ROI.width;
-
-    for (uint x = ROI.x; x < MAX_X; ++x) {
-        for (uint y = ROI.y; y < MAX_Y; ++y) {
-            function(x,y,depthMap.at<uint16_t>(x,y));
-        }
-    }
-}
-
-void Image4D::imageForEach(const std::function<void(int, int, float&)> &function, const cv::Rect& ROI) {
-    const uint MAX_X = ROI.x + ROI.height;
-    const uint MAX_Y = ROI.y + ROI.width;
-    for (uint x = ROI.x; x < MAX_X; ++x) {
-        for (uint y = ROI.y; y < MAX_Y; ++y) {
-            function(x,y,image.at<float>(x,y));
-        }
-    }
-}
-
-void Image4D::imageForEach(const std::function<void(int, int, const float&)> &function, const cv::Rect& ROI) const {
-    const uint MAX_X = ROI.x + ROI.height;
-    const uint MAX_Y = ROI.y + ROI.width;
-    for (uint x = ROI.x; x < MAX_X; ++x) {
-        for (uint y = ROI.y; y < MAX_Y; ++y) {
-            function(x,y,image.at<float>(x,y));
-        }
-    }
 }
 
 

@@ -46,7 +46,7 @@ void testImage4DLoader()
 {
     cout << "\n\nFace loader test..." << endl;
     string dirPath = "../RGBD_Face_dataset_training/";
-    Image4DLoader loader(dirPath, "014.*");
+    FaceLoader loader(dirPath, "014.*");
     vector<Image4D> faceSequence(0);
     if (!loader.get(faceSequence)) {
         cout << "Error loading face!" << endl;
@@ -83,13 +83,14 @@ Pose testEulerAnglesToRotationMatrix()
     return rotation;
 }
 
+/*
 void testFindThreshold()
 {
     cout << "\n\nFind threshold test..." << endl;
     string dirPath = "../RGBD_Face_dataset_training/";
-    Image4DLoader loader(dirPath, "014.*"); // example: loads only .png files starting with 014
+    FaceLoader loader(dirPath, "014.*"); // example: loads only .png files starting with 014
 
-    Image4D face;
+    Face face;
 
     //    loader.setDownscalingRatio(0.5);
 
@@ -108,7 +109,7 @@ void testFindThreshold()
     }
 
     cv::Rect roi(0,0,face.getWidth(), face.getHeight());
-    segmenter.removeBackground(face, roi);
+    segmenter.removeBackground(face);
 
     //cout << "Treshold found: " << segmenter.findTreshold() << endl;
     imshow("image", face.image);
@@ -118,21 +119,20 @@ void testFindThreshold()
     imshow("Depth map", face.depthMap);
     waitKey(0);
 
-    Mat depthMap = face.get3DImage(/*SingletonSettings::getInstance().getK()*/);
+    Mat depthMap = face.get3DImage();
     imshow("Depth Map", depthMap);
     waitKey(0);
     system("read -p 'Press [enter] to continue'");
 }
+*/
 
 void testGetDepthMap()
 {
     cout << "\n\nGet depth map test..." << endl;
     string dirPath = "../RGBD_Face_dataset_training/";
-    Image4DLoader loader(dirPath, "014.*"); // example: loads only .png files starting with 014
+    FaceLoader loader(dirPath, "014.*"); // example: loads only .png files starting with 014
 
     Image4D face;
-
-    //    loader.setDownscalingRatio(0.5);
 
     if (!loader.get(face)) {
         cout << "Failed loading face" << endl;
@@ -141,7 +141,7 @@ void testGetDepthMap()
 
     cout << "Face loaded!" << endl;
 
-    Mat depthMap = face.get3DImage(/*SingletonSettings::getInstance().getK()*/);
+    Mat depthMap = face.get3DImage();
 
     imshow("Depth Map", depthMap);
     waitKey(0);
@@ -151,47 +151,32 @@ void testGetDepthMap()
 void testDetectFacePose()
 {
     cout << "\n\nDetect face pose..." << endl;
-    string dirPath = "../RGBD_Face_dataset_training/";
-    Image4DLoader loader(dirPath, "000_.*");
+    FaceLoader loader("../RGBD_Face_dataset_training/", "000_.*");
 
     Image4D face;
-
     if (!loader.get(face)) {
         cout << "Failed loading face" << endl;
         return;
     }
 
     cout << "Face loaded!" << endl;
-    cout << "Size: (" << face.getWidth() << "," << face.getHeight() << ")" << endl;
 
     cv::imshow("Face", face.image);
     waitKey(0);
 
     FaceSegmenter segmenter;
-    cv::Rect detectedFaceRegion;
-    if (segmenter.detectForegroundFace(face, detectedFaceRegion)) {
-        cv::rectangle(face.image, detectedFaceRegion, cv::Scalar(255, 255, 255), 5);
-    } else {
-        cout << "No face detected!" << endl;
-    }
-
-    cout << "Size: (" << face.getWidth() << "," << face.getHeight() << ")" << endl;
-
-    cout << "Removing background..." << endl;
-    segmenter.removeBackground(face, detectedFaceRegion);
-    cout << "Done!" << endl;
-
-    PoseManager poseManager;
+    vector<Image4D> faces = {face};
+    segmenter.segment(faces);
 
     cout << "Estimating face pose..." << endl;
+    PoseManager poseManager;
     poseManager.cropFace(face);
     system("read -p 'Press [enter] to continue'");
 }
 
 bool loadDepthImageCompressed(Mat& depthImg, const char* fname)
 {
-
-    //now read the depth image
+    // read the depth image
     FILE* pFile = fopen(fname, "rb");
     if (!pFile) {
         std::cerr << "could not open file " << fname << endl;
@@ -266,13 +251,14 @@ void testDetectFacePose2()
     poseManager.estimateFacePose(face, eulerAngles);
 }
 
+/*
 void testFaceDetection()
 {
     cout << "\n\nDetect faces test..." << endl;
     string dirPath = "../RGBD_Face_dataset_training/";
-    Image4DLoader loader(dirPath, "000_.*"); // example: loads only .png files starting with 014
+    FaceLoader loader(dirPath, "000_.*"); // example: loads only .png files starting with 014
 
-    Image4D face;
+    Face face;
 
     //    loader.setDownscalingRatio(0.5);
 
@@ -285,8 +271,8 @@ void testFaceDetection()
 
     FaceSegmenter segmenter;
     cv::Rect detectedFaceRegion;
-    if (segmenter.detectForegroundFace(face, detectedFaceRegion)) {
-        cv::rectangle(face.image, detectedFaceRegion, cv::Scalar(255, 255, 255), 5);
+    if (segmenter.detectForegroundFace(face)) {
+        cv::rectangle(face.image, face.faceRegion, cv::Scalar(255, 255, 255), 5);
 
         imshow("image", face.image);
         waitKey(0);
@@ -302,6 +288,7 @@ void testFaceDetection()
     waitKey(0);
     system("read -p 'Press [enter] to continue'");
 }
+*/
 
 void testKmeans()
 {
@@ -396,11 +383,12 @@ void testPoseClustering()
     cout << pm.getNearestCenterId(pose) << endl;
 }
 
+
 void covarianceTest()
 {
     cout << "\n\nDetect faces test..." << endl;
     string dirPath = "../RGBD_Face_dataset_training/";
-    Image4DLoader loader(dirPath, "000_.*"); // example: loads only .png files starting with 014
+    FaceLoader loader(dirPath, "000_.*"); // example: loads only .png files starting with 014
 
     Image4D face;
 

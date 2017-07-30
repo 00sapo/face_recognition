@@ -10,36 +10,17 @@ class Image4D;
  */
 class FaceSegmenter {
 public:
-    /**
-     * @brief BackgroundSegmentation: constructor
-     */
-    FaceSegmenter();
 
     /**
      * @brief BackgroundSegmentation: constructor
      */
-    FaceSegmenter(const std::string& faceDetectorPath);
+    explicit FaceSegmenter(const std::string& faceDetectorPath = FACE_DETECTOR_PATH);
 
     /**
-     * @brief detectForegroundFace detects the nearest face in the image
-     * @param face: Face containing the image
-     * @param detectedFace: ROI of the detected face
-     * @return false if no face was detected, true otherwise
+     * @brief Preprocesses the image removing the backround
+     * @param faces: vector of faces to preprocess
      */
-    bool detectForegroundFace(const Image4D& face, cv::Rect& detectedRegion);
-
-    /**
-     * @brief removeBackground splits the face cloud in two clusters, discarding
-     *        furthest one
-     * @param face
-     */
-    bool removeBackground(Image4D& face, const cv::Rect& roi) const;
-
-    /**
-     * @brief removeBackground calls remove background on every Face
-     * @param faces: vector of faces
-     */
-    void removeBackground(std::vector<Image4D>& faces, const cv::Rect& roi) const;
+    bool segment(std::vector<Image4D>& faces);
 
 private:
     static const std::string FACE_DETECTOR_PATH;
@@ -47,6 +28,21 @@ private:
     bool faceDetectorAvailable = false;
 
     cv::CascadeClassifier classifier;
+
+    /**
+     * @brief detectForegroundFace detects the nearest face in the image
+     * @param face: Face containing the image
+     * @param detectedFace: ROI of the detected face
+     * @return false if no face was detected, true otherwise
+     */
+    bool detectForegroundFace(const Image4D& face, cv::Rect &boundingBox);
+
+    /**
+     * @brief removeBackground splits the face cloud in two clusters, discarding
+     *        furthest one
+     * @param face
+     */
+    bool removeBackground(Image4D& face, const cv::Rect &boundingBox) const;
 };
 
 

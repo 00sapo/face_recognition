@@ -10,8 +10,8 @@ SOURCES += src/main.cpp \
     src/utils.cpp \
     src/posemanager.cpp \
     src/facesegmenter.cpp \
-    src/image4d.cpp \
     src/steinkernel.cpp \
+    src/image4d.cpp \
     src/image4dloader.cpp
 
 HEADERS += include/singletonsettings.h \
@@ -22,9 +22,9 @@ HEADERS += include/singletonsettings.h \
     include/posemanager.h \
     include/facesegmenter.h \
     include/lbp.h \
-    include/image4d.h \
     include/steinkernel.h \
     include/svmparams.h \
+    include/image4d.h \
     include/image4dloader.h
 
 DISTFILES += \
