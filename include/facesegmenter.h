@@ -20,7 +20,7 @@ public:
      * @brief Preprocesses the image removing the backround
      * @param faces: vector of faces to preprocess
      */
-    bool segment(std::vector<Image4D>& faces);
+    bool segment(std::vector<Image4D>& faces, std::vector<cv::Rect> &faceRegions);
 
 private:
     static const std::string FACE_DETECTOR_PATH;

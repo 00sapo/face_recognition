@@ -24,28 +24,31 @@ FaceSegmenter::FaceSegmenter(const string& faceDetectorPath)
 }
 
 
- bool FaceSegmenter::segment(std::vector<Image4D>& faces)
+ bool FaceSegmenter::segment(vector<Image4D>& faces, vector<cv::Rect> &faceRegions)
  {
+     faceRegions.clear();
+
+     bool success = true;
      // for each image...
      for (auto& face : faces) {
          cv::Rect boundingBox;
 
          // ... detect foreground face...
-         if (detectForegroundFace(face, boundingBox)) {
-             cv::rectangle(face.image, boundingBox, cv::Scalar(255, 255, 255), 5);
-             imshow("Face detected", face.image);
-             cv::waitKey(0);
-         } else {
+         if (!detectForegroundFace(face, boundingBox)) {
              std::cout << "No face detected!" << std::endl;
+             success = false;
+             continue;
          }
 
-         std::cout << "Size: (" << face.getWidth() << "," << face.getHeight() << ")" << std::endl;
-
-         std::cout << "Removing background..." << std::endl;
          // ... and remove the background wrt it
+         std::cout << "Removing background..." << std::endl;
          removeBackground(face, boundingBox);
          std::cout << "Done!" << std::endl;
+
+         faceRegions.push_back(boundingBox);
      }
+
+     return success;
  }
 
 bool FaceSegmenter::detectForegroundFace(const Image4D &face, cv::Rect &boundingBox)
@@ -77,7 +80,7 @@ bool FaceSegmenter::removeBackground(Image4D& face, const cv::Rect &boundingBox)
             && boundingBox.y + boundingBox.height <= face.getHeight()
             && "boundingBox must be included in face.image");
 
-    // take non-nan points
+    // take non-nan, non-zero points
     vector<float> depth;
     auto lambda = [&depth] (int x, int y, const uint16_t& dpt) {
         if (!std::isnan(dpt) && dpt != 0)
@@ -101,19 +104,17 @@ bool FaceSegmenter::removeBackground(Image4D& face, const cv::Rect &boundingBox)
     const int FACE_CLUSTER = centers[0] < centers[1] ? 0 : 1;
     float threshold = centers[FACE_CLUSTER] * 1.2f;
 
-    imshow("Depth map", face.depthMap);
-    cv::waitKey(0);
+    const int MIN_X = boundingBox.x - boundingBox.width;
+    const int MAX_X = boundingBox.x + 2*boundingBox.width;
 
     // remove background using opencv's parallel foreach to take advantage of multithreading
-    face.depthMap.forEach<uint16_t>([threshold](uint16_t &p, const int *position) {
+    face.depthMap.forEach<uint16_t>([=](uint16_t &p, const int *position) {
         float d = p;
-        if (d > threshold || d == std::numeric_limits<float>::quiet_NaN()) {
+        if (d > threshold || d == std::numeric_limits<float>::quiet_NaN() ||
+            position[1] < MIN_X || position[1] > MAX_X) {
             p = 0;
         }
     });
-
-    imshow("Depth map", face.depthMap);
-    cv::waitKey(0);
 
     return true;
 }

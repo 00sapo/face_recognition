@@ -22,7 +22,21 @@ PoseManager::PoseManager(const string& poseEstimatorPath)
 }
 
 
-bool PoseManager::cropFace(Image4D& face)
+bool PoseManager::cropFaces(vector<Image4D>& faces, vector<cv::Rect> &approxFacesRegions)
+{
+    const auto SIZE = faces.size();
+    assert (SIZE == approxFacesRegions.size() &&
+            "Every Image4D should have a corresponding approximated face region");
+
+    bool success = true;
+    for (uint i = 0; i < SIZE; ++i) {
+        success &= cropFace(faces[i], approxFacesRegions[i]);
+    }
+
+    return success;
+}
+
+bool PoseManager::cropFace(Image4D& face, cv::Rect &approxFaceRegion)
 {
     cv::Vec3f eulerAngles;
     if (!estimateFacePose(face, eulerAngles)) {
@@ -32,11 +46,11 @@ bool PoseManager::cropFace(Image4D& face)
     const std::size_t HEIGHT = face.getHeight();
     const std::size_t WIDTH  = face.getWidth();
     int yTop = 0;
-    int nonzeroPixels = 0;
     const int NONZERO_PXL_THRESHOLD = 5;
     for (std::size_t i = 0; i < HEIGHT; ++i) {  // look for first non-empty row
+        int nonzeroPixels = 0;
         for (std::size_t j = 0; j < WIDTH; ++j) {
-            if (float(face.depthMap.at<uint16_t>(i,j)) != 0)
+            if (face.depthMap.at<uint16_t>(i,j) != 0)
                 ++nonzeroPixels;
         }
         if (nonzeroPixels >= NONZERO_PXL_THRESHOLD) {
@@ -45,29 +59,57 @@ bool PoseManager::cropFace(Image4D& face)
         }
     }
 
-    int count = 0;
-    float avgDist = 0;
-    for (std::size_t i = 0; i < HEIGHT; ++i) {  // compute average distance
-        for (std::size_t j = 0; j < WIDTH; ++j) {
-            float depth = float(face.depthMap.at<uint16_t>(i,j));
-            if (depth > 10E-3f) {
-                avgDist += depth;
-                ++count;
-            }
-        }
-    }
+    yTop += 5/8 * eulerAngles[0] + 5/8 * eulerAngles[2];
 
-    avgDist /= count;
-    int yBase = yTop + 100 / (avgDist/1000);
+    int count = 0;
+    float meanDist = 0;
+    auto lambda = [&] (int x, int y, const uint16_t &depth) {
+        if (depth != 0) {
+            count++;
+            meanDist += float(depth);
+        }
+    };
+
+    face.depthForEach<uint16_t>(lambda, approxFaceRegion);
+
+    meanDist /= count;
+    int yBase = yTop + (130 / (meanDist/1000.f));
 
     std::cout << "yTop: " << yTop << "\nyBase: " << yBase << std::endl;
 
-    cv::Rect cropRegion(0,yTop, WIDTH, yBase - yTop);
-    face.crop(cropRegion);
+    approxFaceRegion = cv::Rect(0,yTop, WIDTH, yBase - yTop);
 
-    imshow("Cropped image", face.image);
-    cv::waitKey(0);
+    int xTop = 0;
+    const int MAX_Y = approxFaceRegion.y + approxFaceRegion.height;
+    for (std::size_t i = 0; i < WIDTH; ++i) {  // look for first non-empty column
+        int nonzeroPixels = 0;
+        for (std::size_t j = approxFaceRegion.y; j < MAX_Y; ++j) {
+            if (face.depthMap.at<uint16_t>(j,i) != 0)
+                ++nonzeroPixels;
+        }
+        if (nonzeroPixels >= NONZERO_PXL_THRESHOLD) {
+            xTop = i;
+            break;
+        }
+    }
 
+    int xBase = 0;
+    for (std::size_t i = WIDTH; i >= 0; --i) {  // look for last non-empty column
+        int nonzeroPixels = 0;
+        for (std::size_t j = approxFaceRegion.y; j < MAX_Y; ++j) {
+            if (face.depthMap.at<uint16_t>(j,i) != 0)
+                ++nonzeroPixels;
+        }
+        if (nonzeroPixels >= NONZERO_PXL_THRESHOLD) {
+            xBase = i;
+            break;
+        }
+    }
+
+    approxFaceRegion.x = xTop;
+    approxFaceRegion.width = xBase - xTop;
+
+    face.crop(approxFaceRegion);
     return true;
 }
 
@@ -79,9 +121,9 @@ bool PoseManager::estimateFacePose(const Image4D& face, cv::Vec3f& eulerAngles)
     }
 
     cv::Mat img3D = face.get3DImage();
-    std::cout << "IMage 3d" << std::endl;
+    std::cout << "Image 3d" << std::endl;
 
-    cv::imshow("IMage3D", img3D);
+    cv::imshow("Image3D", img3D);
     cv::waitKey(0);
 
     vector<cv::Vec<float, POSE_SIZE>> means; // outputs, POSE_SIZE defined in CRTree.h

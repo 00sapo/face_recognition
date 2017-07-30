@@ -21,7 +21,10 @@ public:
      * @param face: image containing face to crop
      * @return false if no face was detected
      */
-    bool cropFace(Image4D& face);
+
+    bool cropFaces(std::vector<Image4D>& faces, std::vector<cv::Rect> &approxFacesRegions);
+
+    bool cropFace(Image4D& face, cv::Rect &approxFaceRegion);
 
     /**
      * @brief estimateFacePose
