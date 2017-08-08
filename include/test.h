@@ -2,6 +2,7 @@
 #define TEST_H
 
 #include <vector>
+#include <chrono>
 
 #include <opencv2/highgui.hpp>
 #include <opencv2/opencv.hpp>
@@ -46,13 +47,18 @@ void testImage4DLoader()
 {
     cout << "\n\nFace loader test..." << endl;
     string dirPath = "../RGBD_Face_dataset_training/";
-    FaceLoader loader(dirPath, "014.*");
+    Image4DLoader loader(dirPath, "014.*");
     vector<Image4D> faceSequence(0);
-    if (!loader.get(faceSequence)) {
+    auto begin = std::chrono::high_resolution_clock::now();
+    if (!loader.getMultiThreaded(faceSequence)) {
         cout << "Error loading face!" << endl;
         return;
     }
+    auto end = std::chrono::high_resolution_clock::now();
     cout << "\n\nFaces loaded!" << endl;
+    cout << "Time elapsed: " <<
+            std::chrono::duration_cast<std::chrono::milliseconds>(end-begin).count() <<
+            "ms" << endl;
 
     cv::namedWindow("image", cv::WINDOW_NORMAL);
     for (const auto& face : faceSequence) {
@@ -130,7 +136,7 @@ void testGetDepthMap()
 {
     cout << "\n\nGet depth map test..." << endl;
     string dirPath = "../RGBD_Face_dataset_training/";
-    FaceLoader loader(dirPath, "014.*"); // example: loads only .png files starting with 014
+    Image4DLoader loader(dirPath, "014.*"); // example: loads only .png files starting with 014
 
     Image4D face;
 
@@ -151,110 +157,37 @@ void testGetDepthMap()
 void testDetectFacePose()
 {
     cout << "\n\nDetect face pose..." << endl;
-    FaceLoader loader("../RGBD_Face_dataset_training/", "002_.*");
+    Image4DLoader loader("../RGBD_Face_dataset_training/", "002_.*");
 
-    Image4D face;
-    if (!loader.get(face)) {
-        cout << "Failed loading face" << endl;
+    vector<Image4D> faces;
+    if (!loader.getMultiThreaded(faces)) {
+        cout << "Failed loading faces" << endl;
         return;
     }
 
-    cout << "Face loaded!" << endl;
-
-    cv::imshow("Face", face.image);
-    waitKey(0);
+    cout << "Faces loaded!" << endl;
 
     FaceSegmenter segmenter;
-    vector<cv::Rect> faceRegions;
-    vector<Image4D> faces = {face};
-    segmenter.segment(faces, faceRegions);
-
-    cout << "Estimating face pose..." << endl;
     PoseManager poseManager;
-    poseManager.cropFace(faces[0], faceRegions[0]);
 
-    imshow("Cropped face", faces[0].image);
-    cv::waitKey(0);
+    for (auto& face : faces) {
+        cv::imshow("Face", face.image);
+        waitKey(0);
+
+        vector<cv::Rect> faceRegions;
+        vector<Image4D> faces = {face};
+        segmenter.segment(faces, faceRegions);
+
+        cout << "Estimating face pose..." << endl;
+        poseManager.cropFace(faces[0], faceRegions[0]);
+
+        imshow("Cropped face", faces[0].image);
+        cv::waitKey(0);
+    }
 
     system("read -p 'Press [enter] to continue'");
 }
 
-bool loadDepthImageCompressed(Mat& depthImg, const char* fname)
-{
-    // read the depth image
-    FILE* pFile = fopen(fname, "rb");
-    if (!pFile) {
-        std::cerr << "could not open file " << fname << endl;
-        return false;
-    }
-
-    int im_width = 0;
-    int im_height = 0;
-    bool success = true;
-
-    success &= (fread(&im_width, sizeof(int), 1, pFile) == 1); // read width of depthmap
-    success &= (fread(&im_height, sizeof(int), 1, pFile) == 1); // read height of depthmap
-
-    depthImg.create(im_height, im_width, CV_16SC1);
-    depthImg.setTo(0);
-
-    int numempty;
-    int numfull;
-    int p = 0;
-
-    if (!depthImg.isContinuous()) {
-        std::cerr << "Image has the wrong size! (should be 640x480)" << endl;
-        return false;
-    }
-
-    int16_t* data = depthImg.ptr<int16_t>(0);
-    while (p < im_width * im_height) {
-
-        success &= (fread(&numempty, sizeof(int), 1, pFile) == 1);
-
-        for (int i = 0; i < numempty; i++)
-            data[p + i] = 0;
-
-        success &= (fread(&numfull, sizeof(int), 1, pFile) == 1);
-        success &= (fread(&data[p + numempty], sizeof(int16_t), numfull, pFile) == (unsigned int)numfull);
-        p += numempty + numfull;
-    }
-
-    fclose(pFile);
-
-    return success;
-}
-
-void testDetectFacePose2()
-{
-
-    Mat depthImage;
-    bool success = loadDepthImageCompressed(depthImage, "/home/alberto/Downloads/hpdb/01/frame_00003_depth.bin");
-
-    if (!success) {
-        cout << "Failed loading image" << endl;
-        return;
-    }
-
-    Mat intrinsics(3, 3, CV_64FC1);
-    intrinsics.at<double>(0, 0) = 575.816;
-    intrinsics.at<double>(0, 1) = 0;
-    intrinsics.at<double>(0, 2) = 320,
-    intrinsics.at<double>(1, 0) = 0;
-    intrinsics.at<double>(1, 1) = 575.816;
-    intrinsics.at<double>(1, 2) = 240;
-    intrinsics.at<double>(2, 0) = 0;
-    intrinsics.at<double>(2, 1) = 0;
-    intrinsics.at<double>(2, 2) = 1;
-
-    Mat color(depthImage.rows,depthImage.cols, CV_8UC3); // used only because needed by Face constructor
-    Image4D face(color, depthImage, intrinsics);
-
-    std::cout << "Estimating face pose..." << std::endl;
-    PoseManager poseManager;
-    cv::Vec3f eulerAngles;
-    poseManager.estimateFacePose(face, eulerAngles);
-}
 
 /*
 void testFaceDetection()
@@ -393,7 +326,7 @@ void covarianceTest()
 {
     cout << "\n\nDetect faces test..." << endl;
     string dirPath = "../RGBD_Face_dataset_training/";
-    FaceLoader loader(dirPath, "000_.*"); // example: loads only .png files starting with 014
+    Image4DLoader loader(dirPath, "000_.*"); // example: loads only .png files starting with 014
 
     Image4D face;
 

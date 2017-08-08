@@ -15,7 +15,7 @@ void testFunctions()
 {
     //test::testSingletonSettings();
     //
-    //test::testFaceLoader();
+    //test::testImage4DLoader();
     //
     //test::testFindThreshold();
     //

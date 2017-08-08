@@ -5,6 +5,8 @@
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/path.hpp>
 
+#include <thread>
+
 #include <opencv2/opencv.hpp>
 #include <opencv2/imgproc.hpp>
 
@@ -30,21 +32,17 @@ namespace fs = boost::filesystem;
 
 
 
-const string FaceLoader::MATCH_ALL = ".*";
+const string Image4DLoader::MATCH_ALL = ".*";
 
 
-FaceLoader::FaceLoader()
+Image4DLoader::Image4DLoader()
 {
     currentPath = fs::current_path().string();
     fileTemplate = std::regex(".*(png|jpg|bmp)");
-    imageFileNames = vector<string>();
-    cloudFileNames = vector<string>();
 }
 
-FaceLoader::FaceLoader(const string& dirPath, const string& fileNameRegEx)
+Image4DLoader::Image4DLoader(const string& dirPath, const string& fileNameRegEx)
 {
-    imageFileNames = vector<string>();
-    cloudFileNames = vector<string>();
     currentPath = dirPath;
     fileTemplate = std::regex(fileNameRegEx);
 
@@ -53,12 +51,12 @@ FaceLoader::FaceLoader(const string& dirPath, const string& fileNameRegEx)
         cout << "Failed!" << endl;
 }
 
-bool FaceLoader::hasNext() const
+bool Image4DLoader::hasNext() const
 {
     return !imageFileNames.empty() && !cloudFileNames.empty();
 }
 
-bool FaceLoader::get(Image4D& face)
+bool Image4DLoader::get(Image4D& face)
 {
 
     if (!hasNext())
@@ -100,9 +98,8 @@ bool FaceLoader::get(Image4D& face)
     return true;
 }
 
-bool FaceLoader::get(vector<Image4D>& faceSequence)
+bool Image4DLoader::get(vector<Image4D>& faceSequence)
 {
-
     faceSequence.clear();
     faceSequence.reserve(imageFileNames.size());
     while (hasNext()) {
@@ -114,13 +111,78 @@ bool FaceLoader::get(vector<Image4D>& faceSequence)
     return true;
 }
 
-void FaceLoader::setFileNameRegEx(const string& fileNameRegEx)
+void getMultiThr(const vector<string> *imageFileNames, const vector<string> *cloudFileNames,
+                 vector<Image4D> *image4DSequence, int begin, int end)
+{
+    Mat K = SingletonSettings::getInstance().getK();
+
+    for (int i = begin; i < end; ++i) {
+        const string& imageFile = imageFileNames->at(i);
+        const string& cloudFile = cloudFileNames->at(i);
+
+        Mat image = cv::imread(imageFile, CV_LOAD_IMAGE_GRAYSCALE);
+        if (image.empty()) {
+            cout << "Unable to load file " << imageFile << endl;
+            return;
+        }
+
+        PointCloud<PointXYZ>::Ptr cloud(new PointCloud<PointXYZ>);
+        int result = pcl::io::loadPCDFile<PointXYZ>(cloudFile, *cloud);
+        if (result == -1) {
+            cout << "Unable to load file " << cloudFile << endl;
+            return;
+        }
+
+        if(!cloud->isOrganized()) {
+            std::cerr << "ERROR: loading unorganized point cloud!" << endl;
+            return;
+        }
+
+        Mat depthMap(cloud->height, cloud->width, CV_16SC1);
+        for (uint x = 0; x < cloud->height; ++x) {
+            for (uint y = 0; y < cloud->width; ++y) {
+                depthMap.at<uint16_t>(x,y) = cloud->at(y,x).z * 10E2;
+            }
+        }
+
+        image4DSequence->at(i) = Image4D(image, depthMap, K);
+    }
+
+}
+
+
+bool Image4DLoader::getMultiThreaded(vector<Image4D>& image4DSequence)
+{
+    image4DSequence.clear();
+    const auto SIZE = imageFileNames.size();
+    image4DSequence.resize(SIZE);
+
+    const int numOfThreads = std::thread::hardware_concurrency();
+    vector<std::thread> threads(numOfThreads);
+
+    const int blockSize = SIZE/numOfThreads;
+    for (int i = 0; i < numOfThreads; ++i) {
+        int begin = i*blockSize;
+        int end = begin + blockSize;
+        end = end > SIZE ? SIZE : end;
+        threads[i] = std::thread(getMultiThr, &imageFileNames, &cloudFileNames, &image4DSequence, begin, end);
+    }
+
+    for (auto& thread : threads) {
+        thread.join();
+    }
+
+    return true;
+}
+
+
+void Image4DLoader::setFileNameRegEx(const string& fileNameRegEx)
 {
     fileTemplate = std::regex(fileNameRegEx);
     loadFileNames(currentPath);
 }
 
-void FaceLoader::setCurrentPath(const string& dirPath)
+void Image4DLoader::setCurrentPath(const string& dirPath)
 {
     imageFileNames.clear();
     cloudFileNames.clear();
@@ -128,17 +190,17 @@ void FaceLoader::setCurrentPath(const string& dirPath)
     loadFileNames(currentPath);
 }
 
-float FaceLoader::getLeafSize() const
+float Image4DLoader::getLeafSize() const
 {
     return leafSize;
 }
 
-void FaceLoader::setLeafSize(float value)
+void Image4DLoader::setLeafSize(float value)
 {
     leafSize = value;
 }
 
-bool FaceLoader::loadFileNames(const string& dirPath)
+bool Image4DLoader::loadFileNames(const string& dirPath)
 {
     fs::path full_path = fs::system_complete(fs::path(dirPath));
 
@@ -180,7 +242,7 @@ bool FaceLoader::loadFileNames(const string& dirPath)
     return true;
 }
 
-bool FaceLoader::matchTemplate(const string& fileName)
+bool Image4DLoader::matchTemplate(const string& fileName)
 {
     return std::regex_match(fileName, fileTemplate, std::regex_constants::match_any);
 }

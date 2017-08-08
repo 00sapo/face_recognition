@@ -42,7 +42,9 @@ private:
      *        furthest one
      * @param face
      */
-    bool removeBackground(Image4D& face, const cv::Rect &boundingBox) const;
+    bool removeBackgroundDynamic(Image4D& face, const cv::Rect &boundingBox) const;
+
+    bool removeBackgroundFixed(Image4D& face, uint16_t threshold) const;
 };
 
 

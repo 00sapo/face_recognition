@@ -77,7 +77,7 @@ bool PoseManager::cropFace(Image4D& face, cv::Rect &approxFaceRegion)
 
     std::cout << "yTop: " << yTop << "\nyBase: " << yBase << std::endl;
 
-    approxFaceRegion = cv::Rect(0,yTop, WIDTH, yBase - yTop);
+    approxFaceRegion = cv::Rect(0, yTop, WIDTH, yBase - yTop);
 
     int xTop = 0;
     const int MAX_Y = approxFaceRegion.y + approxFaceRegion.height;
@@ -121,10 +121,6 @@ bool PoseManager::estimateFacePose(const Image4D& face, cv::Vec3f& eulerAngles)
     }
 
     cv::Mat img3D = face.get3DImage();
-    std::cout << "Image 3d" << std::endl;
-
-    cv::imshow("Image3D", img3D);
-    cv::waitKey(0);
 
     vector<cv::Vec<float, POSE_SIZE>> means; // outputs, POSE_SIZE defined in CRTree.h
     vector<vector<Vote>> clusters; // full clusters of votes
@@ -149,7 +145,7 @@ bool PoseManager::estimateFacePose(const Image4D& face, cv::Vec3f& eulerAngles)
     std::cout << "Face detected!" << std::endl;
     std::cout << pose[0] << ", " << pose[1] << ", " << pose[2] << ", "
               << pose[3] << ", " << pose[4] << ", " << pose[5] << std::endl;
-    eulerAngles = { /*pose[3]*/0, pose[4], pose[5] };
+    eulerAngles = { pose[3], pose[4], pose[5] };
 
     posesData.push_back(eulerAnglesToRotationMatrix(eulerAngles));
 

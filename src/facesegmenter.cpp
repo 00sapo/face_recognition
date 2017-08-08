@@ -36,14 +36,11 @@ FaceSegmenter::FaceSegmenter(const string& faceDetectorPath)
          // ... detect foreground face...
          if (!detectForegroundFace(face, boundingBox)) {
              std::cout << "No face detected!" << std::endl;
-             success = false;
-             continue;
+             removeBackgroundFixed(face, 1600);
          }
-
-         // ... and remove the background wrt it
-         std::cout << "Removing background..." << std::endl;
-         removeBackground(face, boundingBox);
-         std::cout << "Done!" << std::endl;
+         else {
+             removeBackgroundDynamic(face, boundingBox);
+         }
 
          faceRegions.push_back(boundingBox);
      }
@@ -73,7 +70,7 @@ bool FaceSegmenter::detectForegroundFace(const Image4D &face, cv::Rect &bounding
 }
 
 
-bool FaceSegmenter::removeBackground(Image4D& face, const cv::Rect &boundingBox) const
+bool FaceSegmenter::removeBackgroundDynamic(Image4D& face, const cv::Rect &boundingBox) const
 {
     assert (boundingBox.x > 0 && boundingBox.y > 0
             && boundingBox.x + boundingBox.width <= face.getWidth()
@@ -117,4 +114,16 @@ bool FaceSegmenter::removeBackground(Image4D& face, const cv::Rect &boundingBox)
     });
 
     return true;
+}
+
+bool FaceSegmenter::removeBackgroundFixed(Image4D& face, uint16_t threshold) const {
+
+    // remove background using opencv's parallel foreach to take advantage of multithreading
+    auto lambda = [threshold](uint16_t &p, const int *position) {
+        if (p > threshold || p == std::numeric_limits<uint16_t>::quiet_NaN()) {
+            p = 0;
+        }
+    };
+
+    face.depthMap.forEach<uint16_t>(lambda);
 }
