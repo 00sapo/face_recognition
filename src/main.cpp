@@ -23,9 +23,9 @@ void testFunctions()
     //
     //test::testKmeans();
     //
-    //test::testFaceDetection();
-    //
     test::testDetectFacePose();
+    //
+    //test::testLoadSpeed();
     //
     //test::testEulerAnglesToRotationMatrix();
     //

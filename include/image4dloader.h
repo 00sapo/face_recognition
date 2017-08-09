@@ -2,6 +2,7 @@
 #define IMAGELOADER_HPP
 
 #include <regex>
+#include <mutex>
 
 class Image4D;
 
@@ -36,11 +37,20 @@ public:
      */
     bool hasNext() const;
 
-    bool get(Image4D& face);
+    /**
+     * @brief get: loads the next image and cloud files available
+     * @param image4d: output image4d
+     * @return true if successfully loaded, false otherwise
+     */
+    bool get(Image4D& image4d);
 
-    bool get(std::vector<Image4D>& face);
-
-    bool getMultiThreaded(std::vector<Image4D>& image4DSequence);
+    /**
+     * @brief get: multithreaded version of get(Image4D& image4d).
+     *        Loads all files using a variable number of threads
+     *        depending on the number of available cores
+     * @return loaded files
+     */
+    std::vector<Image4D> get();
 
     /**
      * @brief setFileNameRegEx
@@ -76,6 +86,8 @@ private:
     bool loadFileNames(const std::string& dirPath);
 
     bool matchTemplate(const std::string& fileName);
+
+    void getMultiThr(std::vector<Image4D> &image4DSequence, int begin, int end, std::mutex &mutex) const;
 
     //static void getMultiThr(const std::vector<std::string>&, const std::vector<std::string>&, std::vector<Image4D> &image4DSequence, int begin, int end);
 };

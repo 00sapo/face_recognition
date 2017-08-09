@@ -1,7 +1,5 @@
 #include "image4dloader.h"
 
-//#include <iostream>
-
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/path.hpp>
 
@@ -36,17 +34,11 @@ const string Image4DLoader::MATCH_ALL = ".*";
 
 
 Image4DLoader::Image4DLoader()
-{
-    currentPath = fs::current_path().string();
-    fileTemplate = std::regex(".*(png|jpg|bmp)");
-}
+    : Image4DLoader(fs::current_path().string(), ".*(png|jpg|bmp)") { }
 
 Image4DLoader::Image4DLoader(const string& dirPath, const string& fileNameRegEx)
+    : currentPath(dirPath), fileTemplate(fileNameRegEx)
 {
-    currentPath = dirPath;
-    fileTemplate = std::regex(fileNameRegEx);
-
-    cout << "FaceLoader constructor: loading file names..." << endl;
     if (!loadFileNames(currentPath))
         cout << "Failed!" << endl;
 }
@@ -56,9 +48,8 @@ bool Image4DLoader::hasNext() const
     return !imageFileNames.empty() && !cloudFileNames.empty();
 }
 
-bool Image4DLoader::get(Image4D& face)
+bool Image4DLoader::get(Image4D& image4d)
 {
-
     if (!hasNext())
         return false;
 
@@ -90,7 +81,7 @@ bool Image4DLoader::get(Image4D& face)
         }
     }
 
-    face = Image4D(image, depthMap, SingletonSettings::getInstance().getK());
+    image4d = Image4D(image, depthMap, SingletonSettings::getInstance().getK());
 
     imageFileNames.pop_back();
     cloudFileNames.pop_back();
@@ -98,27 +89,15 @@ bool Image4DLoader::get(Image4D& face)
     return true;
 }
 
-bool Image4DLoader::get(vector<Image4D>& faceSequence)
-{
-    faceSequence.clear();
-    faceSequence.reserve(imageFileNames.size());
-    while (hasNext()) {
-        faceSequence.emplace_back();
-        if (!get(faceSequence.back()))
-            return false;
-    }
-
-    return true;
-}
-
-void getMultiThr(const vector<string> *imageFileNames, const vector<string> *cloudFileNames,
-                 vector<Image4D> *image4DSequence, int begin, int end)
+void Image4DLoader::getMultiThr(vector<Image4D> &image4DSequence, int begin, int end, std::mutex &mutex) const
 {
     Mat K = SingletonSettings::getInstance().getK();
 
     for (int i = begin; i < end; ++i) {
-        const string& imageFile = imageFileNames->at(i);
-        const string& cloudFile = cloudFileNames->at(i);
+
+        // no locks required since reading a const reference
+        const string& imageFile = imageFileNames[i];
+        const string& cloudFile = cloudFileNames[i];
 
         Mat image = cv::imread(imageFile, CV_LOAD_IMAGE_GRAYSCALE);
         if (image.empty()) {
@@ -145,34 +124,48 @@ void getMultiThr(const vector<string> *imageFileNames, const vector<string> *clo
             }
         }
 
-        image4DSequence->at(i) = Image4D(image, depthMap, K);
+        // lock needed to prevent concurrent writing
+        std::lock_guard<std::mutex> lock(mutex);
+        image4DSequence[i] = Image4D(image, depthMap, K);
     }
 
 }
 
 
-bool Image4DLoader::getMultiThreaded(vector<Image4D>& image4DSequence)
+vector<Image4D> Image4DLoader::get()
 {
-    image4DSequence.clear();
     const auto SIZE = imageFileNames.size();
-    image4DSequence.resize(SIZE);
+    vector<Image4D> image4DSequence(SIZE);
 
+    // get number of concurrently executable threads
     const int numOfThreads = std::thread::hardware_concurrency();
     vector<std::thread> threads(numOfThreads);
 
-    const int blockSize = SIZE/numOfThreads;
-    for (int i = 0; i < numOfThreads; ++i) {
+    // equally split number of images to load
+    int blockSize = SIZE/numOfThreads;
+    if (blockSize < 1)
+        blockSize = 1;
+
+    std::mutex imageSeqMutex;
+    for (int i = 0; i < numOfThreads && i < SIZE; ++i) {
         int begin = i*blockSize;
         int end = begin + blockSize;
-        end = end > SIZE ? SIZE : end;
-        threads[i] = std::thread(getMultiThr, &imageFileNames, &cloudFileNames, &image4DSequence, begin, end);
+        if (i == numOfThreads - 1)
+            end += SIZE%numOfThreads;
+
+        // start a thread executing getMultiThr function
+        threads[i] = std::thread(&Image4DLoader::getMultiThr, this, std::ref(image4DSequence), begin, end, std::ref(imageSeqMutex));
     }
 
+    // wait for threads to end (syncronization)
     for (auto& thread : threads) {
         thread.join();
     }
 
-    return true;
+    imageFileNames.clear();
+    cloudFileNames.clear();
+
+    return image4DSequence;
 }
 
 

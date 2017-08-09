@@ -48,9 +48,9 @@ void testImage4DLoader()
     cout << "\n\nFace loader test..." << endl;
     string dirPath = "../RGBD_Face_dataset_training/";
     Image4DLoader loader(dirPath, "014.*");
-    vector<Image4D> faceSequence(0);
     auto begin = std::chrono::high_resolution_clock::now();
-    if (!loader.getMultiThreaded(faceSequence)) {
+    auto faceSequence = loader.get();
+    if (faceSequence.empty()) {
         cout << "Error loading face!" << endl;
         return;
     }
@@ -157,10 +157,10 @@ void testGetDepthMap()
 void testDetectFacePose()
 {
     cout << "\n\nDetect face pose..." << endl;
-    Image4DLoader loader("../RGBD_Face_dataset_training/", "002_.*");
+    Image4DLoader loader("../RGBD_Face_dataset_training/", "002.*");
 
-    vector<Image4D> faces;
-    if (!loader.getMultiThreaded(faces)) {
+    auto faces = loader.get();
+    if (faces.empty()) {
         cout << "Failed loading faces" << endl;
         return;
     }
@@ -188,6 +188,27 @@ void testDetectFacePose()
     system("read -p 'Press [enter] to continue'");
 }
 
+void testLoadSpeed() {
+    cout << "\n\nTest load speed..." << endl;
+    Image4DLoader loader("../RGBD_Face_dataset_training/", ".*");
+
+    auto start = std::chrono::high_resolution_clock::now();
+    loader.get();
+    auto end   = std::chrono::high_resolution_clock::now();
+
+    cout << "Faces loaded in " << std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count()
+         << "ms" << endl;
+
+    loader = Image4DLoader("../RGBD_Face_dataset_training/", ".*");
+    start = std::chrono::high_resolution_clock::now();
+    Image4D image;
+    while(loader.hasNext())
+        loader.get(image);
+    end   = std::chrono::high_resolution_clock::now();
+
+    cout << "Faces loaded in " << std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count()
+         << "ms" << endl;
+}
 
 /*
 void testFaceDetection()
