@@ -36,17 +36,26 @@ bool PoseManager::cropFaces(vector<Image4D>& faces, vector<cv::Rect> &approxFace
     return success;
 }
 
-bool PoseManager::cropFace(Image4D& face, cv::Rect &approxFaceRegion)
+bool PoseManager::cropFace(Image4D& face, cv::Rect &faceROI)
 {
-    cv::Vec3f eulerAngles;
-    if (!estimateFacePose(face, eulerAngles)) {
+    cv::Vec3f position, eulerAngles;
+    if (!estimateFacePose(face, position, eulerAngles)) {
         return false;
     }
 
+    imshow("Depth map", face.depthMap);
+    cv::waitKey(0);
+
+    removeOutlierBlobs(face, position);
+
+    imshow("Outlier removed", face.depthMap);
+    cv::waitKey(0);
+
     const std::size_t HEIGHT = face.getHeight();
     const std::size_t WIDTH  = face.getWidth();
-    int yTop = 0;
     const int NONZERO_PXL_THRESHOLD = 5;
+
+    int yTop = 0;
     for (std::size_t i = 0; i < HEIGHT; ++i) {  // look for first non-empty row
         int nonzeroPixels = 0;
         for (std::size_t j = 0; j < WIDTH; ++j) {
@@ -59,31 +68,17 @@ bool PoseManager::cropFace(Image4D& face, cv::Rect &approxFaceRegion)
         }
     }
 
+    // necessary corrections to take into account head rotations
     yTop += 5/8 * eulerAngles[0] + 5/8 * eulerAngles[2];
+    int yBase = yTop + (145 / (position[2]/1000.f));
+    faceROI = cv::Rect(0, yTop, WIDTH, yBase - yTop);
 
-    int count = 0;
-    float meanDist = 0;
-    auto lambda = [&] (int x, int y, const uint16_t &depth) {
-        if (depth != 0) {
-            count++;
-            meanDist += float(depth);
-        }
-    };
-
-    face.depthForEach<uint16_t>(lambda, approxFaceRegion);
-
-    meanDist /= count;
-    int yBase = yTop + (130 / (meanDist/1000.f));
-
-    std::cout << "yTop: " << yTop << "\nyBase: " << yBase << std::endl;
-
-    approxFaceRegion = cv::Rect(0, yTop, WIDTH, yBase - yTop);
+    const int MAX_Y = faceROI.y + faceROI.height - 30; // stay 30px higher to avoid shoulders
 
     int xTop = 0;
-    const int MAX_Y = approxFaceRegion.y + approxFaceRegion.height;
     for (std::size_t i = 0; i < WIDTH; ++i) {  // look for first non-empty column
         int nonzeroPixels = 0;
-        for (std::size_t j = approxFaceRegion.y; j < MAX_Y; ++j) {
+        for (std::size_t j = faceROI.y; j < MAX_Y; ++j) {
             if (face.depthMap.at<uint16_t>(j,i) != 0)
                 ++nonzeroPixels;
         }
@@ -94,9 +89,9 @@ bool PoseManager::cropFace(Image4D& face, cv::Rect &approxFaceRegion)
     }
 
     int xBase = 0;
-    for (std::size_t i = WIDTH; i >= 0; --i) {  // look for last non-empty column
+    for (std::size_t i = WIDTH-1; i >= 0; --i) {  // look for last non-empty column
         int nonzeroPixels = 0;
-        for (std::size_t j = approxFaceRegion.y; j < MAX_Y; ++j) {
+        for (std::size_t j = faceROI.y; j < MAX_Y; ++j) {
             if (face.depthMap.at<uint16_t>(j,i) != 0)
                 ++nonzeroPixels;
         }
@@ -106,14 +101,14 @@ bool PoseManager::cropFace(Image4D& face, cv::Rect &approxFaceRegion)
         }
     }
 
-    approxFaceRegion.x = xTop;
-    approxFaceRegion.width = xBase - xTop;
+    faceROI.x = xTop;
+    faceROI.width = xBase - xTop;
 
-    face.crop(approxFaceRegion);
+    face.crop(faceROI);
     return true;
 }
 
-bool PoseManager::estimateFacePose(const Image4D& face, cv::Vec3f& eulerAngles)
+bool PoseManager::estimateFacePose(Image4D& face, cv::Vec3f &position, cv::Vec3f& eulerAngles)
 {
     if (!poseEstimatorAvailable) {
         std::cout << "Error! Face pose estimator unavailable!" << std::endl;
@@ -143,13 +138,49 @@ bool PoseManager::estimateFacePose(const Image4D& face, cv::Vec3f& eulerAngles)
 
     auto& pose = means[0];
     std::cout << "Face detected!" << std::endl;
-    std::cout << pose[0] << ", " << pose[1] << ", " << pose[2] << ", "
-              << pose[3] << ", " << pose[4] << ", " << pose[5] << std::endl;
+
+    position    = { -pose[1] + face.getHeight() / 2,
+                    pose[0] + face.getWidth()  / 2,
+                    pose[2] };
+
     eulerAngles = { pose[3], pose[4], pose[5] };
+
+    std::cout << "Position: " << position[0]
+              << ","          << position[1]
+              << ","          << position[2] << std::endl;
+
+    std::cout << "Position: " << pose[1]
+              << ","          << pose[0]
+              << ","          << pose[2] << std::endl;
+
+    std::cout << "Euler angles: " << eulerAngles[0]
+              << ","              << eulerAngles[1]
+              << ","              << eulerAngles[2] << std::endl;
 
     posesData.push_back(eulerAnglesToRotationMatrix(eulerAngles));
 
     return true;
+}
+
+
+void PoseManager::removeOutlierBlobs(Image4D &face, const cv::Vec3f &position) const {
+
+    int minY = position[1] - 100;
+    int maxY = position[1] + 100;
+
+    face.depthMap.forEach<uint16_t>([=](uint16_t &p, const int* pos) {
+        if (/*pos[0] < minX || pos[0] > maxX ||*/ pos[1] < minY || pos[1] > maxY) {
+            p = 0;
+        }
+    });
+
+/*
+    face.depthMap.forEach<uint16_t>([=](uint16_t &p, const int* pos) {
+        if (!(pos[0] < minX || pos[0] > maxX || pos[1] < minY || pos[1] > maxY)) {
+            p = 10000;
+        }
+    });
+    */
 }
 
 Pose PoseManager::eulerAnglesToRotationMatrix(cv::Vec3f theta)

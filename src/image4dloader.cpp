@@ -159,7 +159,8 @@ vector<Image4D> Image4DLoader::get()
 
     // wait for threads to end (syncronization)
     for (auto& thread : threads) {
-        thread.join();
+        if (thread.joinable())
+            thread.join();
     }
 
     imageFileNames.clear();

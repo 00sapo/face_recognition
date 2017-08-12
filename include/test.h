@@ -157,7 +157,7 @@ void testGetDepthMap()
 void testDetectFacePose()
 {
     cout << "\n\nDetect face pose..." << endl;
-    Image4DLoader loader("../RGBD_Face_dataset_training/", "002.*");
+    Image4DLoader loader("../RGBD_Face_dataset_training/", "001_01.*");
 
     auto faces = loader.get();
     if (faces.empty()) {

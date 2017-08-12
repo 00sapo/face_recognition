@@ -35,8 +35,11 @@ FaceSegmenter::FaceSegmenter(const string& faceDetectorPath)
 
          // ... detect foreground face...
          if (!detectForegroundFace(face, boundingBox)) {
-             std::cout << "No face detected!" << std::endl;
+             std::cout << "No face detected!"
+                       << " Applying fixed threshold." << std::endl;
              removeBackgroundFixed(face, 1600);
+             boundingBox.width  = face.getWidth();
+             boundingBox.height = face.getHeight();
          }
          else {
              removeBackgroundDynamic(face, boundingBox);
@@ -120,7 +123,7 @@ bool FaceSegmenter::removeBackgroundFixed(Image4D& face, uint16_t threshold) con
 
     // remove background using opencv's parallel foreach to take advantage of multithreading
     auto lambda = [threshold](uint16_t &p, const int *position) {
-        if (p > threshold || p == std::numeric_limits<uint16_t>::quiet_NaN()) {
+        if (p > threshold || std::isnan(p)) {
             p = 0;
         }
     };
