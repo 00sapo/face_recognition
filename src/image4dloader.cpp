@@ -48,13 +48,13 @@ bool Image4DLoader::hasNext() const
     return !imageFileNames.empty() && !cloudFileNames.empty();
 }
 
-bool Image4DLoader::get(Image4D& image4d)
+bool Image4DLoader::get(Image4D &image4d)
 {
     if (!hasNext())
         return false;
 
-    string& imageFile = imageFileNames.back();
-    string& cloudFile = cloudFileNames.back();
+    const string& imageFile = imageFileNames.back();
+    const string& cloudFile = cloudFileNames.back();
 
     Mat image = cv::imread(imageFile, CV_LOAD_IMAGE_GRAYSCALE);
     if (image.empty()) {
@@ -62,22 +62,22 @@ bool Image4DLoader::get(Image4D& image4d)
         return false;
     }
 
-    PointCloud<PointXYZ>::Ptr cloud(new PointCloud<PointXYZ>);
-    int result = pcl::io::loadPCDFile<PointXYZ>(cloudFile, *cloud);
+    PointCloud<PointXYZ> cloud;
+    int result = pcl::io::loadPCDFile<PointXYZ>(cloudFile, cloud);
     if (result == -1) {
         cout << "Unable to load file " << cloudFile << endl;
         return false;
     }
 
-    if(!cloud->isOrganized()) {
+    if(!cloud.isOrganized()) {
         std::cerr << "ERROR: loading unorganized point cloud!" << endl;
         return false;
     }
 
-    Mat depthMap(cloud->height, cloud->width, CV_16SC1);
-    for (uint x = 0; x < cloud->height; ++x) {
-        for (uint y = 0; y < cloud->width; ++y) {
-            depthMap.at<uint16_t>(x,y) = cloud->at(y,x).z * 10E2;
+    Mat depthMap(cloud.height, cloud.width, CV_16SC1);
+    for (uint x = 0; x < cloud.height; ++x) {
+        for (uint y = 0; y < cloud.width; ++y) {
+            depthMap.at<uint16_t>(x,y) = cloud.at(y,x).z * 10E2;
         }
     }
 
@@ -105,22 +105,22 @@ void Image4DLoader::getMultiThr(vector<Image4D> &image4DSequence, int begin, int
             return;
         }
 
-        PointCloud<PointXYZ>::Ptr cloud(new PointCloud<PointXYZ>);
-        int result = pcl::io::loadPCDFile<PointXYZ>(cloudFile, *cloud);
+        PointCloud<PointXYZ> cloud;
+        int result = pcl::io::loadPCDFile<PointXYZ>(cloudFile, cloud);
         if (result == -1) {
             cout << "Unable to load file " << cloudFile << endl;
             return;
         }
 
-        if(!cloud->isOrganized()) {
+        if(!cloud.isOrganized()) {
             std::cerr << "ERROR: loading unorganized point cloud!" << endl;
             return;
         }
 
-        Mat depthMap(cloud->height, cloud->width, CV_16SC1);
-        for (uint x = 0; x < cloud->height; ++x) {
-            for (uint y = 0; y < cloud->width; ++y) {
-                depthMap.at<uint16_t>(x,y) = cloud->at(y,x).z * 10E2;
+        Mat depthMap(cloud.height, cloud.width, CV_16SC1);
+        for (uint x = 0; x < cloud.height; ++x) {
+            for (uint y = 0; y < cloud.width; ++y) {
+                depthMap.at<uint16_t>(x,y) = cloud.at(y,x).z * 10E2;
             }
         }
 

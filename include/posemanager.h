@@ -31,7 +31,7 @@ public:
      * @param face
      * @return True if pose estimation was successful and rotation matrix was added to posesData, false otherwise
      */
-    bool estimateFacePose(Image4D &face, cv::Vec3f &position, cv::Vec3f &eulerAngles);
+    bool estimateFacePose(const Image4D &face, cv::Vec3f &position, cv::Vec3f &eulerAngles);
 
     /**
      * @brief eulerAnglesToRotationMatrix

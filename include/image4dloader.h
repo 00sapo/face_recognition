@@ -89,7 +89,6 @@ private:
 
     void getMultiThr(std::vector<Image4D> &image4DSequence, int begin, int end, std::mutex &mutex) const;
 
-    //static void getMultiThr(const std::vector<std::string>&, const std::vector<std::string>&, std::vector<Image4D> &image4DSequence, int begin, int end);
 };
 
 

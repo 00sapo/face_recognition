@@ -24,27 +24,33 @@ FaceSegmenter::FaceSegmenter(const string& faceDetectorPath)
 }
 
 
- bool FaceSegmenter::segment(vector<Image4D>& faces, vector<cv::Rect> &faceRegions)
- {
+bool FaceSegmenter::segment(Image4D &face, cv::Rect &faceRegion) {
+
+    bool success = false;
+    // ... detect foreground face...
+    if (!detectForegroundFace(face, faceRegion)) {
+        std::cout << "No face detected!"
+                  << " Applying fixed threshold." << std::endl;
+        success = removeBackgroundFixed(face, 1600);
+        faceRegion.width  = face.getWidth();
+        faceRegion.height = face.getHeight();
+    }
+    else {
+        success = removeBackgroundDynamic(face, faceRegion);
+    }
+
+    return success;
+}
+
+bool FaceSegmenter::segment(vector<Image4D>& faces, vector<cv::Rect> &faceRegions)
+{
      faceRegions.clear();
 
      bool success = true;
      // for each image...
      for (auto& face : faces) {
          cv::Rect boundingBox;
-
-         // ... detect foreground face...
-         if (!detectForegroundFace(face, boundingBox)) {
-             std::cout << "No face detected!"
-                       << " Applying fixed threshold." << std::endl;
-             removeBackgroundFixed(face, 1600);
-             boundingBox.width  = face.getWidth();
-             boundingBox.height = face.getHeight();
-         }
-         else {
-             removeBackgroundDynamic(face, boundingBox);
-         }
-
+         success &= segment(face, boundingBox);
          faceRegions.push_back(boundingBox);
      }
 
@@ -60,7 +66,7 @@ bool FaceSegmenter::detectForegroundFace(const Image4D &face, cv::Rect &bounding
 
     // face detection
     vector<cv::Rect> faces;
-    classifier.detectMultiScale(face.image, faces);
+    classifier.detectMultiScale(face.image, faces, 1.1, 2, 0|cv::CASCADE_SCALE_IMAGE, cv::Size(70, 70));
 
     if (faces.empty())
         return false;
@@ -93,7 +99,7 @@ bool FaceSegmenter::removeBackgroundDynamic(Image4D& face, const cv::Rect &bound
     vector<int> bestLabels;
     vector<float> centers;
     cv::TermCriteria criteria(cv::TermCriteria::EPS, 10, 1.0);
-    cv::kmeans(depth, 2, bestLabels, criteria, 1, cv::KMEANS_PP_CENTERS, centers);
+    cv::kmeans(depth, 2, bestLabels, criteria, 3, cv::KMEANS_PP_CENTERS, centers);
 
     if (centers.size() != 2) {
         std::cout << "Clustering on depth map for background removal failed!" << std::endl;

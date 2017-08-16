@@ -39,12 +39,13 @@ bool PoseManager::cropFaces(vector<Image4D>& faces, vector<cv::Rect> &approxFace
 bool PoseManager::cropFace(Image4D& face, cv::Rect &faceROI)
 {
     cv::Vec3f position, eulerAngles;
-    if (!estimateFacePose(face, position, eulerAngles)) {
-        return false;
-    }
 
     imshow("Depth map", face.depthMap);
     cv::waitKey(0);
+
+    if (!estimateFacePose(face, position, eulerAngles)) {
+        return false;
+    }
 
     removeOutlierBlobs(face, position);
 
@@ -69,7 +70,7 @@ bool PoseManager::cropFace(Image4D& face, cv::Rect &faceROI)
     }
 
     // necessary corrections to take into account head rotations
-    yTop += 5/8 * eulerAngles[0] + 5/8 * eulerAngles[2];
+    yTop += 10/8 * eulerAngles[0] + 5/8 * eulerAngles[2];
     int yBase = yTop + (145 / (position[2]/1000.f));
     faceROI = cv::Rect(0, yTop, WIDTH, yBase - yTop);
 
@@ -108,12 +109,22 @@ bool PoseManager::cropFace(Image4D& face, cv::Rect &faceROI)
     return true;
 }
 
-bool PoseManager::estimateFacePose(Image4D& face, cv::Vec3f &position, cv::Vec3f& eulerAngles)
+bool PoseManager::estimateFacePose(const Image4D &face, cv::Vec3f &position, cv::Vec3f &eulerAngles)
 {
     if (!poseEstimatorAvailable) {
         std::cout << "Error! Face pose estimator unavailable!" << std::endl;
         return false;
     }
+
+    std::ofstream file;
+    file.open("/home/alberto/Desktop/depthMap_multi.txt");
+    for (int i = 0; i < face.depthMap.rows; ++i) {
+        for (int j = 0; j < face.depthMap.cols; ++j) {
+            file << face.depthMap.at<uint16_t>(i,j) << " ";
+        }
+        file << std::endl;
+    }
+    file.close();
 
     cv::Mat img3D = face.get3DImage();
 
@@ -127,6 +138,16 @@ bool PoseManager::estimateFacePose(Image4D& face, cv::Vec3f &position, cv::Vec3f
     float smallerRadiusRatio = 5.0;
     bool verbose = false;
     int threshold = 500;
+
+    file.open("/home/alberto/Desktop/img3D_multi.txt");
+    for (int i = 0; i < img3D.rows; ++i) {
+        for (int j = 0; j < img3D.cols; ++j) {
+            const auto& vec = img3D.at<cv::Vec3f>(i,j);
+            file << vec[0] << " " << vec[1] << " " << vec[2] << " ";
+        }
+        file << std::endl;
+    }
+    file.close();
 
     estimator.estimate(img3D, means, clusters, votes, stride, maxVariance,
                        probTH, largerRadiusRatio, smallerRadiusRatio,verbose, threshold);
@@ -149,10 +170,6 @@ bool PoseManager::estimateFacePose(Image4D& face, cv::Vec3f &position, cv::Vec3f
               << ","          << position[1]
               << ","          << position[2] << std::endl;
 
-    std::cout << "Position: " << pose[1]
-              << ","          << pose[0]
-              << ","          << pose[2] << std::endl;
-
     std::cout << "Euler angles: " << eulerAngles[0]
               << ","              << eulerAngles[1]
               << ","              << eulerAngles[2] << std::endl;
@@ -165,6 +182,8 @@ bool PoseManager::estimateFacePose(Image4D& face, cv::Vec3f &position, cv::Vec3f
 
 void PoseManager::removeOutlierBlobs(Image4D &face, const cv::Vec3f &position) const {
 
+//  int minX = position[0] - 100;
+//  int maxX = position[0] + 100;
     int minY = position[1] - 100;
     int maxY = position[1] + 100;
 
@@ -180,7 +199,8 @@ void PoseManager::removeOutlierBlobs(Image4D &face, const cv::Vec3f &position) c
             p = 10000;
         }
     });
-    */
+*/
+
 }
 
 Pose PoseManager::eulerAnglesToRotationMatrix(cv::Vec3f theta)

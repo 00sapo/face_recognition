@@ -157,7 +157,7 @@ void testGetDepthMap()
 void testDetectFacePose()
 {
     cout << "\n\nDetect face pose..." << endl;
-    Image4DLoader loader("../RGBD_Face_dataset_training/", "001_01.*");
+    Image4DLoader loader("../RGBD_Face_dataset_training/", "000_12.*");
 
     auto faces = loader.get();
     if (faces.empty()) {
@@ -174,14 +174,13 @@ void testDetectFacePose()
         cv::imshow("Face", face.image);
         waitKey(0);
 
-        vector<cv::Rect> faceRegions;
-        vector<Image4D> faces = {face};
-        segmenter.segment(faces, faceRegions);
+        cv::Rect faceRegion;
+        segmenter.segment(face, faceRegion);
 
         cout << "Estimating face pose..." << endl;
-        poseManager.cropFace(faces[0], faceRegions[0]);
+        poseManager.cropFace(face, faceRegion);
 
-        imshow("Cropped face", faces[0].image);
+        imshow("Cropped face", face.image);
         cv::waitKey(0);
     }
 

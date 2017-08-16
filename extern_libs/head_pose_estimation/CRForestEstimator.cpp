@@ -23,7 +23,7 @@ bool CRForestEstimator::loadForest(const char* treespath, int ntrees){
 	return true;
 }
 
-Rect CRForestEstimator::getBoundingBox(const Mat& im3D){
+Rect CRForestEstimator::getBoundingBox(const Mat& im3D) const {
 
 	Rect bbox;
 	int min_x = im3D.cols;
@@ -69,7 +69,7 @@ void CRForestEstimator::estimate( const Mat & im3D,
                                    float prob_th,
                                    float larger_radius_ratio,
                                    float smaller_radius_ratio,
-                                   bool verbose , int threshold ){
+                                   bool verbose , int threshold ) const {
 
     unsigned int max_clusters = 20;
     int max_ms_iterations = 10;

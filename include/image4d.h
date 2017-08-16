@@ -18,10 +18,6 @@ public:
     cv::Mat image;              // Color or grayscale representation of the face
     cv::Mat depthMap;           // Depth representation of the face
 
-    //cv::Rect faceRegion;        // bounding box of the face
-    //float   meanDepth;          // mean depth of the face computed on the faceRegion
-
-
     Image4D();
 
     /**
@@ -44,14 +40,14 @@ public:
     /**
      * @brief getWidth gives the width (in pixels) of image and depthmap
      *        (which have the same dimensions)
-     * @return width of the face
+     * @return width of the 4D image
      */
     size_t getWidth()  const;
 
     /**
      * @brief getHeight gives the height (in pixels) of image and cloud
      *        (which have the same dimensions)
-     * @return height of the face
+     * @return height of the 4D image
      */
     size_t getHeight() const;
 
@@ -76,6 +72,7 @@ public:
      */
     void crop(const cv::Rect &cropRegion);
 
+
     /**
      * @brief depthForEach applies a function to every pixel
      *        in the ROI of the depth map. Function receives two coordinates (x,y) of
@@ -83,27 +80,6 @@ public:
      * @param function function to be called on each pixel
      * @param ROI region of interest to which apply function
      */
-    /*
-    void depthForEach(const std::function<void(int, int, uint16_t &)> &function, const cv::Rect& ROI);
-
-    void depthForEach(const std::function<void(int, int, const uint16_t&)> &function, const cv::Rect& ROI) const;
-    */
-
-
-    /**
-     * @brief imageForEach applies the function function to every point
-     *        in the ROI of the image. Function receives two coordinates (x,y) of
-     *        the point in the image and a reference to the point
-     * @param function function to be called on each point
-     * @param ROI region of interest to which apply function
-     */
-    /*
-    void imageForEach(const std::function<void(int, int, float&)> &function, const cv::Rect& ROI);
-
-    void imageForEach(const std::function<void(int, int, const float&)> &function, const cv::Rect& ROI) const ;
-    */
-
-
     template<typename T>
     void depthForEach(const std::function<void(int, int, T&)> &function, const cv::Rect& ROI) {
 
@@ -117,6 +93,9 @@ public:
         }
     }
 
+    /**
+     * @brief const version of depthForEach()
+     */
     template<typename T>
     void depthForEach(const std::function<void(int, int, const T &)> &function, const cv::Rect& ROI)  const {
 
@@ -130,6 +109,14 @@ public:
         }
     }
 
+
+    /**
+     * @brief imageForEach applies the function function to every point
+     *        in the ROI of the image. Function receives two coordinates (x,y) of
+     *        the point in the image and a reference to the point
+     * @param function function to be called on each point
+     * @param ROI region of interest to which apply function
+     */
     template<typename T>
     void imageForEach(const std::function<void(int, int, T&)> &function, const cv::Rect& ROI) {
         const uint MAX_X = ROI.x + ROI.width;
@@ -142,6 +129,9 @@ public:
         }
     }
 
+    /**
+     * @brief const version of imageForEach
+     */
     template<typename T>
     void imageForEach(const std::function<void(int, int, const T&)> &function, const cv::Rect& ROI) const {
         const uint MAX_X = ROI.x + ROI.width;
