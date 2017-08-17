@@ -8,6 +8,7 @@
 #include <opencv2/opencv.hpp>
 
 #include "image4d.h"
+#include "face.h"
 #include "image4dloader.h"
 #include "facesegmenter.h"
 #include "lbp.h"
@@ -16,9 +17,12 @@
 
 using std::cout;
 using std::endl;
+using std::string;
+using std::vector;
 using cv::Mat;
 using cv::waitKey;
 
+namespace face {
 
 namespace test {
 
@@ -157,29 +161,31 @@ void testGetDepthMap()
 void testDetectFacePose()
 {
     cout << "\n\nDetect face pose..." << endl;
-    Image4DLoader loader("../RGBD_Face_dataset_training/", "000_12.*");
+    Image4DLoader loader("../RGBD_Face_dataset_training/", "000_.*");
 
-    auto faces = loader.get();
-    if (faces.empty()) {
+    auto images = loader.get();
+    if (images.empty()) {
         cout << "Failed loading faces" << endl;
         return;
     }
 
     cout << "Faces loaded!" << endl;
 
+    for (auto &image4d : images) {
+        imshow("Original image", image4d.image);
+        cv::waitKey(0);
+    }
+
     FaceSegmenter segmenter;
     PoseManager poseManager;
 
-    for (auto& face : faces) {
-        cv::imshow("Face", face.image);
-        waitKey(0);
+    std::vector<cv::Rect> faceRegions;
+    segmenter.segment(images, faceRegions);
 
-        cv::Rect faceRegion;
-        segmenter.segment(face, faceRegion);
+    cout << "Estimating face pose..." << endl;
+    auto faces = poseManager.cropFaces(images/*, faceRegions*/);
 
-        cout << "Estimating face pose..." << endl;
-        poseManager.cropFace(face, faceRegion);
-
+    for (auto &face : faces) {
         imshow("Cropped face", face.image);
         cv::waitKey(0);
     }
@@ -382,5 +388,8 @@ void covarianceTest()
          << "MEAN" << endl
          << mean << endl;
 }
-}
+
+
+}   // test
+}   // face
 #endif // TEST_H

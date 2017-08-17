@@ -12,7 +12,8 @@ SOURCES += src/main.cpp \
     src/facesegmenter.cpp \
     src/steinkernel.cpp \
     src/image4d.cpp \
-    src/image4dloader.cpp
+    src/image4dloader.cpp \
+    src/face.cpp
 
 HEADERS += include/singletonsettings.h \
            extern_libs/head_pose_estimation/CRForestEstimator.h \
@@ -25,7 +26,8 @@ HEADERS += include/singletonsettings.h \
     include/steinkernel.h \
     include/svmparams.h \
     include/image4d.h \
-    include/image4dloader.h
+    include/image4dloader.h \
+    include/face.h
 
 DISTFILES += \
     camera_info.yaml

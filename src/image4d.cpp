@@ -4,6 +4,8 @@
 
 using cv::Mat;
 
+namespace face {
+
 // ---------- constructors ----------
 
 Image4D::Image4D() : WIDTH(0), HEIGHT(0), DEPTH_IMG_RATIO(0)
@@ -101,4 +103,6 @@ void Image4D::resizeImage()
     intrinsicMatrix.at<double>(1,2) *= DEPTH_IMG_RATIO;
 
     return;
+}
+
 }

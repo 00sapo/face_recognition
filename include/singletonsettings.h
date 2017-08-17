@@ -3,6 +3,8 @@
 
 #include <opencv2/core.hpp>
 
+namespace face {
+
 class SingletonSettings {
 public:
     static void setPath(const std::string &pathName);
@@ -43,5 +45,7 @@ protected:
     static std::string path;
     static bool pathHasChanged;
 };
+
+}   // face
 
 #endif // SINGLETONSETTINGS_H

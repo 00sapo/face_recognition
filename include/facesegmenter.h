@@ -3,6 +3,9 @@
 
 #include <opencv2/objdetect.hpp>
 
+namespace face {
+
+
 class Image4D;
 
 /**
@@ -49,5 +52,6 @@ private:
     bool removeBackgroundFixed(Image4D& face, uint16_t threshold) const;
 };
 
+}   // face
 
 #endif // BACKGROUNDSEGMENTATION_H

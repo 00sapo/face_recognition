@@ -5,16 +5,17 @@
 
 #include "extern_libs/head_pose_estimation/CRForestEstimator.h"
 
+
+namespace face {
+
 class Image4D;     // forward declaration
+class Face;
 typedef cv::Matx<float, 9, 1> Pose;
 
-using std::string;
-using std::vector;
 
 class PoseManager {
 public:
-    //PoseManager();
-    explicit PoseManager(const std::string& poseEstimatorPath = POSE_ESTIMATOR_PATH);
+    explicit PoseManager(const std::string &poseEstimatorPath = POSE_ESTIMATOR_PATH);
 
     /**
      * @brief cropFace: crops face region taking into account face orientation
@@ -22,23 +23,23 @@ public:
      * @return false if no face was detected
      */
 
-    bool cropFaces(std::vector<Image4D>& faces, std::vector<cv::Rect> &approxFacesRegions);
+    std::vector<face::Face> cropFaces(std::vector<face::Image4D> &faces);
 
-    bool cropFace(Image4D& face, cv::Rect &approxFaceRegion);
+    bool cropFace(face::Image4D &image4d, cv::Vec3f &position, cv::Vec3f &eulerAngles);
 
     /**
      * @brief estimateFacePose
      * @param face
      * @return True if pose estimation was successful and rotation matrix was added to posesData, false otherwise
      */
-    bool estimateFacePose(const Image4D &face, cv::Vec3f &position, cv::Vec3f &eulerAngles);
+    bool estimateFacePose(const face::Image4D &image4d, cv::Vec3f &position, cv::Vec3f &eulerAngles);
 
     /**
      * @brief eulerAnglesToRotationMatrix
      * @param theta angles in radiant
      * @return Matrix 9x1 containing rotation matrix in row-major order
      */
-    Pose eulerAnglesToRotationMatrix(cv::Vec3f theta);
+    face::Pose eulerAnglesToRotationMatrix(cv::Vec3f theta);
 
     /**
      * @brief clusterizePoses
@@ -52,13 +53,13 @@ public:
      * @param poseEstimation
      * @return id of the nearest center to the input pose estimation
      */
-    int getNearestCenterId(Pose poseEstimation);
+    int getNearestCenterId(face::Pose poseEstimation);
 
     /**
      * @brief addPoseData add pose to the dataset on which perform clustering
      * @param pose
      */
-    void addPoseData(Pose pose);
+    void addPoseData(face::Pose pose);
 
 private:
     static const std::string POSE_ESTIMATOR_PATH;
@@ -69,9 +70,10 @@ private:
 
     cv::Mat centers;
 
-    vector<Pose> posesData;
+    std::vector<face::Pose> posesData;
 
-    void removeOutlierBlobs(Image4D &face, const cv::Vec3f &position) const;
 };
+
+}   // face
 
 #endif // POSEMANAGER_H

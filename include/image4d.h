@@ -1,11 +1,12 @@
-#ifndef FACE_H
-#define FACE_H
+#ifndef IMAGE_4D_H_
+#define IMAGE_4D_H_
 
 #include <opencv2/opencv.hpp>
 #include <functional>
 
 typedef unsigned int uint;
 
+namespace face {
 
 /**
  * @brief The Image4D class is a couple (grayscale image - depth map)
@@ -145,7 +146,7 @@ public:
     }
 
 
-private:
+protected:
     uint WIDTH;             // width of the face
     uint HEIGHT;            // height of the face
     float DEPTH_IMG_RATIO;  // downscaling ratio applied to image by the constructor
@@ -158,4 +159,6 @@ private:
     void resizeImage();
 };
 
-#endif // FACE_H
+}   // face
+
+#endif // IMAGE_4D_H_

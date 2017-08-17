@@ -8,6 +8,9 @@ using std::endl;
 using cv::Mat;
 using cv::FileStorage;
 
+namespace face {
+
+
 std::string SingletonSettings::path = "camera_info.yaml";
 bool SingletonSettings::pathHasChanged = false;
 
@@ -59,3 +62,5 @@ bool SingletonSettings::read() {
 
     return true;
 }
+
+} // face

@@ -9,6 +9,8 @@
 using std::vector;
 using std::string;
 
+namespace face {
+
 const string FaceSegmenter::FACE_DETECTOR_PATH = "../haarcascade_frontalface_default.xml";
 
 FaceSegmenter::FaceSegmenter(const string& faceDetectorPath)
@@ -136,3 +138,5 @@ bool FaceSegmenter::removeBackgroundFixed(Image4D& face, uint16_t threshold) con
 
     face.depthMap.forEach<uint16_t>(lambda);
 }
+
+} // face

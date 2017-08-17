@@ -4,6 +4,8 @@
 #include <regex>
 #include <mutex>
 
+namespace face {
+
 class Image4D;
 
 /**
@@ -91,5 +93,6 @@ private:
 
 };
 
+}   // face
 
 #endif // IMAGELOADER_Hs

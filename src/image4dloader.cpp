@@ -28,7 +28,7 @@ using pcl::PointXYZ;
 
 namespace fs = boost::filesystem;
 
-
+namespace face {
 
 const string Image4DLoader::MATCH_ALL = ".*";
 
@@ -240,3 +240,6 @@ bool Image4DLoader::matchTemplate(const string& fileName)
 {
     return std::regex_match(fileName, fileTemplate, std::regex_constants::match_any);
 }
+
+
+} // face
