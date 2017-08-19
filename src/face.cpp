@@ -11,7 +11,7 @@ Face::Face() : Image4D() { }
 Face::Face(const Image4D &image, const cv::Vec3f &position, const cv::Vec3f &eulerAngles)
     : Image4D(image), position(position), eulerAngles(eulerAngles) { }
 
-Pose Face::getRotationMatrix()
+Pose Face::getRotationMatrix() const
 {
     // Calculate rotation around x axis
     float cosx = cos(eulerAngles[0]);
@@ -26,7 +26,7 @@ Pose Face::getRotationMatrix()
         seny, -senx * cosy, cosx * cosy);
 }
 
-cv::Vec3f Face::getEulerAngles() { return eulerAngles; }
-cv::Vec3f Face::getPosition()    { return position;    }
+cv::Vec3f Face::getEulerAngles() const { return eulerAngles; }
+cv::Vec3f Face::getPosition()    const { return position;    }
 
 }

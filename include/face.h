@@ -21,9 +21,9 @@ public:
     Face();
     Face(const Image4D &image, const cv::Vec3f &position, const cv::Vec3f &eulerAngles);
 
-    Pose getRotationMatrix();
-    cv::Vec3f getEulerAngles();
-    cv::Vec3f getPosition();
+    Pose getRotationMatrix()   const;
+    cv::Vec3f getEulerAngles() const;
+    cv::Vec3f getPosition()    const;
 
 private:
 

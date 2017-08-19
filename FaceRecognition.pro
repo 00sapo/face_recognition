@@ -7,27 +7,27 @@ SOURCES += src/main.cpp \
            src/singletonsettings.cpp \
            extern_libs/head_pose_estimation/CRForestEstimator.cpp \
            extern_libs/head_pose_estimation/CRTree.cpp \
-    src/utils.cpp \
-    src/posemanager.cpp \
-    src/facesegmenter.cpp \
-    src/steinkernel.cpp \
-    src/image4d.cpp \
-    src/image4dloader.cpp \
-    src/face.cpp
+           src/utils.cpp \
+           src/posemanager.cpp \
+           src/steinkernel.cpp \
+           src/image4d.cpp \
+           src/image4dloader.cpp \
+           src/face.cpp \
+           src/preprocessor.cpp
 
 HEADERS += include/singletonsettings.h \
            extern_libs/head_pose_estimation/CRForestEstimator.h \
            extern_libs/head_pose_estimation/CRTree.h \
-    include/test.h \
-    include/utils.h \
-    include/posemanager.h \
-    include/facesegmenter.h \
-    include/lbp.h \
-    include/steinkernel.h \
-    include/svmparams.h \
-    include/image4d.h \
-    include/image4dloader.h \
-    include/face.h
+           include/test.h \
+           include/utils.h \
+           include/posemanager.h \
+           include/lbp.h \
+           include/steinkernel.h \
+           include/svmparams.h \
+           include/image4d.h \
+           include/image4dloader.h \
+           include/face.h \
+           include/preprocessor.h
 
 DISTFILES += \
     camera_info.yaml

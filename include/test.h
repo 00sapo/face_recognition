@@ -10,10 +10,10 @@
 #include "image4d.h"
 #include "face.h"
 #include "image4dloader.h"
-#include "facesegmenter.h"
 #include "lbp.h"
 #include "posemanager.h"
 #include "singletonsettings.h"
+#include "preprocessor.h"
 
 using std::cout;
 using std::endl;
@@ -81,9 +81,8 @@ Pose testEulerAnglesToRotationMatrix()
 {
     srand(time(NULL));
     cv::Vec3f euler = randomEulerAngle();
-    PoseManager pm;
 
-    Pose rotation = pm.eulerAnglesToRotationMatrix(euler);
+    Pose rotation = PoseManager::eulerAnglesToRotationMatrix(euler);
 
     cout << "Euler Angles:" << endl;
     cout << euler << endl;
@@ -93,48 +92,6 @@ Pose testEulerAnglesToRotationMatrix()
     return rotation;
 }
 
-/*
-void testFindThreshold()
-{
-    cout << "\n\nFind threshold test..." << endl;
-    string dirPath = "../RGBD_Face_dataset_training/";
-    FaceLoader loader(dirPath, "014.*"); // example: loads only .png files starting with 014
-
-    Face face;
-
-    //    loader.setDownscalingRatio(0.5);
-
-    if (!loader.get(face)) {
-        cout << "Failed loading face" << endl;
-        return;
-    }
-
-    cout << "Face loaded!" << endl;
-
-    cout << "\nFiltering background..." << endl;
-
-    FaceSegmenter segmenter;
-    imshow("image", face.image);
-    while (waitKey(0) != 'm') {
-    }
-
-    cv::Rect roi(0,0,face.getWidth(), face.getHeight());
-    segmenter.removeBackground(face);
-
-    //cout << "Treshold found: " << segmenter.findTreshold() << endl;
-    imshow("image", face.image);
-    while (waitKey(0) != 'm') {
-    }
-    //viewPointCloud(face.depthMap);
-    imshow("Depth map", face.depthMap);
-    waitKey(0);
-
-    Mat depthMap = face.get3DImage();
-    imshow("Depth Map", depthMap);
-    waitKey(0);
-    system("read -p 'Press [enter] to continue'");
-}
-*/
 
 void testGetDepthMap()
 {
@@ -176,14 +133,8 @@ void testDetectFacePose()
         cv::waitKey(0);
     }
 
-    FaceSegmenter segmenter;
-    PoseManager poseManager;
-
-    std::vector<cv::Rect> faceRegions;
-    segmenter.segment(images, faceRegions);
-
-    cout << "Estimating face pose..." << endl;
-    auto faces = poseManager.cropFaces(images/*, faceRegions*/);
+    Preprocessor prep;
+    auto faces = prep.preprocess(images);
 
     for (auto &face : faces) {
         imshow("Cropped face", face.image);
@@ -214,45 +165,6 @@ void testLoadSpeed() {
     cout << "Faces loaded in " << std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count()
          << "ms" << endl;
 }
-
-/*
-void testFaceDetection()
-{
-    cout << "\n\nDetect faces test..." << endl;
-    string dirPath = "../RGBD_Face_dataset_training/";
-    FaceLoader loader(dirPath, "000_.*"); // example: loads only .png files starting with 014
-
-    Face face;
-
-    //    loader.setDownscalingRatio(0.5);
-
-    if (!loader.get(face)) {
-        cout << "Failed loading face" << endl;
-        return;
-    }
-
-    cout << "Face loaded!" << endl;
-
-    FaceSegmenter segmenter;
-    cv::Rect detectedFaceRegion;
-    if (segmenter.detectForegroundFace(face)) {
-        cv::rectangle(face.image, face.faceRegion, cv::Scalar(255, 255, 255), 5);
-
-        imshow("image", face.image);
-        waitKey(0);
-    } else {
-        std::cout << "No face detected!" << std::endl;
-    }
-
-    face.crop(detectedFaceRegion);
-    imshow("image", face.image);
-    waitKey(0);
-
-    imshow("Depth Map", face.depthMap);
-    waitKey(0);
-    system("read -p 'Press [enter] to continue'");
-}
-*/
 
 void testKmeans()
 {
@@ -334,15 +246,15 @@ void testKmeans2()
 void testPoseClustering()
 {
     srand(time(NULL));
-    PoseManager pm = PoseManager();
+    PoseManager pm;
     for (int i = 0; i < 40; i++) {
-        Pose pose = pm.eulerAnglesToRotationMatrix(randomEulerAngle());
+        Pose pose = PoseManager::eulerAnglesToRotationMatrix(randomEulerAngle());
         pm.addPoseData(pose);
     }
 
     pm.clusterizePoses(4);
 
-    Pose pose = pm.eulerAnglesToRotationMatrix(randomEulerAngle());
+    Pose pose = PoseManager::eulerAnglesToRotationMatrix(randomEulerAngle());
     cout << "Nearest Center: " << endl;
     cout << pm.getNearestCenterId(pose) << endl;
 }
@@ -390,6 +302,6 @@ void covarianceTest()
 }
 
 
-}   // test
-}   // face
+}   // namespace test
+}   // namespace face
 #endif // TEST_H
