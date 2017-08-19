@@ -1,5 +1,7 @@
 #include "preprocessor.h"
 
+#include <thread>
+
 #include "image4d.h"
 #include "face.h"
 
@@ -38,16 +40,45 @@ Preprocessor::Preprocessor(const string& faceDetectorPath, const std::string &po
 
 // ---------- public member functions ----------
 
-vector<Face> Preprocessor::preprocess(vector<Image4D> &images)
+vector<Face> Preprocessor::preprocess(const vector<Image4D> &images)
 {
-    if (!segment(images))
-        return vector<Face>();
-    return cropFaces(images);
+    const auto SIZE = images.size();
+    vector<Face> faces(SIZE);
+
+    // get number of concurrently executable threads
+    const int numOfThreads = std::thread::hardware_concurrency();
+    vector<std::thread> threads(numOfThreads);
+
+    // equally split number of images to load
+    int blockSize = SIZE/numOfThreads;
+    if (blockSize < 1)
+        blockSize = 1;
+
+    std::mutex facesMutex;
+    for (int i = 0; i < numOfThreads && i < SIZE; ++i) {
+        int begin = i*blockSize;
+        int end = begin + blockSize;
+        if (i == numOfThreads - 1)
+            end += SIZE%numOfThreads;
+
+        // start a thread executing getMultiThr function
+        threads[i] = std::thread(&Preprocessor::preprocessMultiThr, this, std::ref(images), std::ref(faces), begin, end, std::ref(facesMutex));
+    }
+
+    // wait for threads to end (syncronization)
+    for (auto& thread : threads) {
+        if (thread.joinable())
+            thread.join();
+    }
+
+    return faces;
 }
 
-bool Preprocessor::segment(vector<Image4D>& faces)
+vector<Image4D> Preprocessor::segment(const std::vector<Image4D> &faces)
 {
-     bool success = true;
+     vector<Image4D> segmentedImages;
+     segmentedImages.reserve(faces.size());
+
      // for each image...
      for (auto& face : faces) {
          cv::Rect boundingBox;
@@ -55,14 +86,14 @@ bool Preprocessor::segment(vector<Image4D>& faces)
          if (!detectForegroundFace(face, boundingBox)) {
              std::cout << "No face detected!"
                        << " Applying fixed threshold." << std::endl;
-             success = removeBackgroundFixed(face, 1600);
+             segmentedImages.push_back(removeBackgroundFixed(face, 1600));
          }
          else {
-             success = removeBackgroundDynamic(face, boundingBox);
+             segmentedImages.push_back(removeBackgroundDynamic(face, boundingBox));
          }
      }
 
-     return success;
+     return segmentedImages;
 }
 
 vector<Face> Preprocessor::cropFaces(vector<Image4D> &faces)
@@ -83,6 +114,30 @@ vector<Face> Preprocessor::cropFaces(vector<Image4D> &faces)
 
 
 // ---------- private member functions ----------
+
+
+void Preprocessor::preprocessMultiThr(const vector<Image4D> &images, vector<Face> &faces, int begin, int end, std::mutex &mutex) {
+    for (int i = begin; i < end; ++i) {
+        auto image = segment(images[i]);
+        Vec3f position, eulerAngles;
+        cropFace(image, position, eulerAngles);
+        std::lock_guard<std::mutex> lock(mutex);
+        faces.at(i) = Face(image, position, eulerAngles);
+    }
+}
+
+
+Image4D Preprocessor::segment(const Image4D &image4d) {
+    cv::Rect boundingBox;
+    // ... detect foreground face...
+    if (!detectForegroundFace(image4d, boundingBox)) {
+        std::cout << "No face detected!"
+                  << " Applying fixed threshold." << std::endl;
+        return removeBackgroundFixed(image4d, 1600);
+    }
+
+    return removeBackgroundDynamic(image4d, boundingBox);
+}
 
 bool Preprocessor::detectForegroundFace(const Image4D &face, cv::Rect &boundingBox)
 {
@@ -106,7 +161,7 @@ bool Preprocessor::detectForegroundFace(const Image4D &face, cv::Rect &boundingB
 }
 
 
-bool Preprocessor::removeBackgroundDynamic(Image4D& face, const cv::Rect &boundingBox) const
+Image4D Preprocessor::removeBackgroundDynamic(const Image4D& face, const cv::Rect &boundingBox) const
 {
     assert (boundingBox.x > 0 && boundingBox.y > 0
             && boundingBox.x + boundingBox.width <= face.getWidth()
@@ -130,7 +185,7 @@ bool Preprocessor::removeBackgroundDynamic(Image4D& face, const cv::Rect &boundi
 
     if (centers.size() != 2) {
         std::cout << "Clustering on depth map for background removal failed!" << std::endl;
-        return false;
+        return face;
     }
 
     // compute threshold based on clustering
@@ -140,28 +195,41 @@ bool Preprocessor::removeBackgroundDynamic(Image4D& face, const cv::Rect &boundi
     const int MIN_X = boundingBox.x - boundingBox.width;
     const int MAX_X = boundingBox.x + 2*boundingBox.width;
 
-    // remove background using opencv's parallel foreach to take advantage of multithreading
-    face.depthMap.forEach<uint16_t>([=](uint16_t &p, const int *position) {
-        float d = p;
-        if (d > threshold || d == std::numeric_limits<float>::quiet_NaN() ||
-            position[1] < MIN_X || position[1] > MAX_X) {
-            p = 0;
+    cv::Mat image;
+    face.image.copyTo(image);
+    cv::Mat depthMap(face.getHeight(), face.getWidth(), face.depthMap.type());
+
+    face.depthMap.forEach<uint16_t>([&](const uint16_t &p, const int *pos) {
+        if ( float(p) > threshold || std::isnan(p) || pos[1] < MIN_X || pos[1] > MAX_X) {
+            depthMap.at<uint16_t>(pos[0], pos[1]) = 0;
+        }
+        else {
+            depthMap.at<uint16_t>(pos[0], pos[1]) = p;
         }
     });
 
-    return true;
+    return Image4D(image, depthMap, face.getIntrinsicMatrix());
 }
 
-bool Preprocessor::removeBackgroundFixed(Image4D& face, uint16_t threshold) const {
+Image4D Preprocessor::removeBackgroundFixed(const Image4D &face, uint16_t threshold) const {
+
+    cv::Mat image;
+    face.image.copyTo(image);
+    cv::Mat depthMap(face.getHeight(), face.getWidth(), face.depthMap.type());
 
     // remove background using opencv's parallel foreach to take advantage of multithreading
-    auto lambda = [threshold](uint16_t &p, const int *position) {
+    auto lambda = [threshold, &depthMap](const uint16_t &p, const int *pos) {
         if (p > threshold || std::isnan(p)) {
-            p = 0;
+            depthMap.at<uint16_t>(pos[0], pos[1]) = 0;
+        }
+        else {
+            depthMap.at<uint16_t>(pos[0], pos[1]) = p;
         }
     };
 
     face.depthMap.forEach<uint16_t>(lambda);
+
+    return Image4D(image, depthMap, face.getIntrinsicMatrix());
 }
 
 bool Preprocessor::cropFace(Image4D &image4d, Vec3f &position, Vec3f &eulerAngles)

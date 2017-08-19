@@ -39,6 +39,12 @@ size_t Image4D::getWidth()  const { return WIDTH;  }
 size_t Image4D::getHeight() const { return HEIGHT; }
 size_t Image4D::getArea()   const { return WIDTH*HEIGHT;}
 float  Image4D::getDepthImageRatio() const { return DEPTH_IMG_RATIO; }
+Mat    Image4D::getIntrinsicMatrix() const
+{
+    Mat newIntrinsicMatrix;
+    intrinsicMatrix.copyTo(newIntrinsicMatrix);
+    return newIntrinsicMatrix;
+}
 
 Mat Image4D::get3DImage() const
 {

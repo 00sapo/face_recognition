@@ -2,6 +2,7 @@
 #define PREPROCESSOR_H
 
 #include <opencv2/objdetect.hpp>
+#include <mutex>
 
 #include "extern_libs/head_pose_estimation/CRForestEstimator.h"
 
@@ -22,7 +23,7 @@ public:
      * @param images
      * @return a vector of cropped faces
      */
-    std::vector<Face> preprocess(std::vector<Image4D> &images);
+    std::vector<Face> preprocess(const std::vector<Image4D> &images);
 
     /**
      * @brief segment is the first preprocessing step. Removes the background
@@ -30,7 +31,7 @@ public:
      * @param faces
      * @return true if all images background have been removed successfully
      */
-    bool segment(std::vector<Image4D> &faces);
+    std::vector<Image4D> segment(const std::vector<Image4D> &faces);
 
     /**
      * @brief cropFaces is the second preprocessing step. Precisely
@@ -52,7 +53,10 @@ private:
     CRForestEstimator estimator;
 
 
-    bool segment(Image4D &face);
+    void preprocessMultiThr(const std::vector<Image4D> &images, std::vector<Face> &faces,
+                               int begin, int end, std::mutex &mutex);
+
+    Image4D segment(const Image4D &face);
 
     /**
      * @brief detectForegroundFace detects the nearest face in the image
@@ -67,9 +71,9 @@ private:
      *        furthest one
      * @param face
      */
-    bool removeBackgroundDynamic(Image4D &face, const cv::Rect &boundingBox) const;
+    Image4D removeBackgroundDynamic(const Image4D &face, const cv::Rect &boundingBox) const;
 
-    bool removeBackgroundFixed(Image4D &face, uint16_t threshold) const;
+    Image4D removeBackgroundFixed(const Image4D &face, uint16_t threshold) const;
 
     /**
      * @brief cropFace: crops face region taking into account face orientation

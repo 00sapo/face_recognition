@@ -65,6 +65,8 @@ public:
      */
     float getDepthImageRatio() const;
 
+    cv::Mat getIntrinsicMatrix() const;
+
     /**
      * @brief This function crops both the image and the cloud removing
      *        every point outside the cropping region and adjusting
