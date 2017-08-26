@@ -62,7 +62,9 @@ vector<Face> Preprocessor::preprocess(const vector<Image4D> &images)
             end += SIZE%numOfThreads;
 
         // start a thread executing getMultiThr function
-        threads[i] = std::thread(&Preprocessor::preprocessMultiThr, this, std::ref(images), std::ref(faces), begin, end, std::ref(facesMutex));
+        threads[i] = std::thread(&Preprocessor::preprocessMultiThr, this,
+                                 std::ref(images), std::ref(faces), begin,
+                                 end, std::ref(facesMutex));
     }
 
     // wait for threads to end (syncronization)
@@ -74,36 +76,36 @@ vector<Face> Preprocessor::preprocess(const vector<Image4D> &images)
     return faces;
 }
 
-vector<Image4D> Preprocessor::segment(const std::vector<Image4D> &faces)
+vector<Image4D> Preprocessor::segment(const std::vector<Image4D> &images)
 {
      vector<Image4D> segmentedImages;
-     segmentedImages.reserve(faces.size());
+     segmentedImages.reserve(images.size());
 
      // for each image...
-     for (auto& face : faces) {
+     for (auto& image : images) {
          cv::Rect boundingBox;
          // ... detect foreground face...
-         if (!detectForegroundFace(face, boundingBox)) {
+         if (!detectForegroundFace(image, boundingBox)) {
              std::cout << "No face detected!"
                        << " Applying fixed threshold." << std::endl;
-             segmentedImages.push_back(removeBackgroundFixed(face, 1600));
+             segmentedImages.push_back(removeBackgroundFixed(image, 1600));
          }
          else {
-             segmentedImages.push_back(removeBackgroundDynamic(face, boundingBox));
+             segmentedImages.push_back(removeBackgroundDynamic(image, boundingBox));
          }
      }
 
      return segmentedImages;
 }
 
-vector<Face> Preprocessor::cropFaces(vector<Image4D> &faces)
+vector<Face> Preprocessor::cropFaces(vector<Image4D> &images)
 {
-    const auto SIZE = faces.size();
+    const auto SIZE = images.size();
 
     vector<Face> croppedFaces;
     croppedFaces.reserve(SIZE);
 
-    for (auto &face : faces) {
+    for (auto &face : images) {
         Vec3f position, eulerAngles;
         cropFace(face, position, eulerAngles);
         croppedFaces.emplace_back(face, position, eulerAngles);
@@ -118,11 +120,18 @@ vector<Face> Preprocessor::cropFaces(vector<Image4D> &faces)
 
 void Preprocessor::preprocessMultiThr(const vector<Image4D> &images, vector<Face> &faces, int begin, int end, std::mutex &mutex) {
     for (int i = begin; i < end; ++i) {
-        auto image = segment(images[i]);
-        Vec3f position, eulerAngles;
-        cropFace(image, position, eulerAngles);
-        std::lock_guard<std::mutex> lock(mutex);
-        faces.at(i) = Face(image, position, eulerAngles);
+        try {
+            auto image = segment(images[i]);
+            Vec3f position, eulerAngles;
+            cropFace(image, position, eulerAngles);
+            std::lock_guard<std::mutex> lock(mutex);
+            faces.at(i) = Face(image, position, eulerAngles);
+        }
+        catch (const cv::Exception &ex) {
+            std::cout << ex.what() << std::endl;
+            cv::imshow("Exception throwing image", images[i].image);
+            cv::waitKey(0);
+        }
     }
 }
 

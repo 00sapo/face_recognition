@@ -5,10 +5,10 @@
 
 namespace face {
 
-class SingletonSettings {
+class Settings {
 public:
     static void setPath(const std::string &pathName);
-    static SingletonSettings& getInstance();
+    static Settings& getInstance();
     //    ~SingletonSettings();
 
     const cv::Mat getK();
@@ -25,11 +25,11 @@ public:
     //void setP(Mat P);
     //void setR(Mat R);
 
-    SingletonSettings(SingletonSettings const&) = delete;
-    void operator=(SingletonSettings const&)    = delete;
+    Settings(Settings const&) = delete;
+    void operator=(Settings const&)    = delete;
 
 protected:
-    SingletonSettings();
+    Settings();
     bool read();
 
     /*

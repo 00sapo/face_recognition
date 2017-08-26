@@ -17,7 +17,9 @@ public:
 
     PoseManager();
 
-    explicit PoseManager(const std::vector<Face> &faces);
+    //explicit PoseManager(const std::vector<Face> &faces);
+
+    std::vector<cv::Mat> computeCovarianceRepresentation(const std::vector<Face> &faces, int subsets);
 
     /**
      * @brief eulerAnglesToRotationMatrix
@@ -27,20 +29,6 @@ public:
     static Pose eulerAnglesToRotationMatrix(const cv::Vec3f &theta);
 
     /**
-     * @brief clusterizePoses
-     * @param numCenters num of centers/clusters
-     * @return true if clusterization succeeded, false otherwise
-     */
-    bool clusterizePoses(int numCenters);
-
-    /**
-     * @brief getNearestCenterId
-     * @param poseEstimation
-     * @return id of the nearest center to the input pose estimation
-     */
-    int getNearestCenterId(Pose &poseEstimation);
-
-    /**
      * @brief addPoseData add pose to the dataset on which perform clustering
      * @param pose
      */
@@ -48,9 +36,41 @@ public:
 
 private:
 
-    cv::Mat centers;
+    /**
+     * @brief clusterizePoses
+     * @param numCenters num of centers/clusters
+     * @return true if clusterization succeeded, false otherwise
+     */
+    std::vector<Pose> clusterizePoses(const std::vector<Face> &faces, int numCenters) const;
 
-    std::vector<Pose> posesData;
+    /**
+     * @brief assignFacesToClusters assigns every face to the nearest cluster center (using L2 metric)
+     * @param faces: vector of faces to cluster
+     * @param centers: cluster centers
+     * @return vector
+     */
+    std::vector<std::vector<const Face*>> assignFacesToClusters(const std::vector<Face> &faces,
+                                                                const std::vector<Pose> &centers) const;
+
+    /**
+     * @brief getNearestCenterId
+     * @param poseEstimation
+     * @return id of the nearest center to the input pose estimation
+     */
+    int getNearestCenterId(const Pose &pose, const std::vector<Pose> &centers) const;
+
+    /**
+     * @brief setToCovariance: computes the covariance matrix representation of an image set
+     * @param set: image set
+     * @return covariance matrix
+     */
+    cv::Mat setToCovariance(const std::vector<const Face*> &set) const;
+
+
+
+    //cv::Mat centers;
+    //
+    //std::vector<Pose> posesData;
 
 };
 

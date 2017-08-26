@@ -14,7 +14,7 @@
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/io/pcd_io.h>
 
-#include "singletonsettings.h"
+#include "settings.h"
 
 #include "image4d.h"
 
@@ -81,7 +81,7 @@ bool Image4DLoader::get(Image4D &image4d)
         }
     }
 
-    image4d = Image4D(image, depthMap, SingletonSettings::getInstance().getK());
+    image4d = Image4D(image, depthMap, Settings::getInstance().getK());
 
     imageFileNames.pop_back();
     cloudFileNames.pop_back();
@@ -91,7 +91,7 @@ bool Image4DLoader::get(Image4D &image4d)
 
 void Image4DLoader::getMultiThr(vector<Image4D> &image4DSequence, int begin, int end, std::mutex &mutex) const
 {
-    Mat K = SingletonSettings::getInstance().getK();
+    Mat K = Settings::getInstance().getK();
 
     for (int i = begin; i < end; ++i) {
 

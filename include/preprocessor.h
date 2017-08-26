@@ -31,7 +31,7 @@ public:
      * @param faces
      * @return true if all images background have been removed successfully
      */
-    std::vector<Image4D> segment(const std::vector<Image4D> &faces);
+    std::vector<Image4D> segment(const std::vector<Image4D> &images);
 
     /**
      * @brief cropFaces is the second preprocessing step. Precisely
@@ -39,7 +39,7 @@ public:
      * @param faces
      * @return a vector containing the cropped faces
      */
-    std::vector<face::Face> cropFaces(std::vector<face::Image4D> &faces);
+    std::vector<face::Face> cropFaces(std::vector<face::Image4D> &images);
 
 private:
 
@@ -53,6 +53,15 @@ private:
     CRForestEstimator estimator;
 
 
+    /**
+     * @brief preprocessMultiThr: function executed by a single thread
+     *        in a multithreded context. Equivalent to Preprocessor::preprocess
+     * @param images: shared vector of input images
+     * @param faces: shared vector of output faces
+     * @param begin: inclusive start index of images to process
+     * @param end: exclusive last index of images to process
+     * @param mutex: thread synchronization mutex for write accesses to output faces vector
+     */
     void preprocessMultiThr(const std::vector<Image4D> &images, std::vector<Face> &faces,
                                int begin, int end, std::mutex &mutex);
 

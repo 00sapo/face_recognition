@@ -1,4 +1,4 @@
-#include "singletonsettings.h"
+#include "settings.h"
 
 #include <iostream>
 
@@ -11,18 +11,18 @@ using cv::FileStorage;
 namespace face {
 
 
-std::string SingletonSettings::path = "camera_info.yaml";
-bool SingletonSettings::pathHasChanged = false;
+std::string Settings::path = "camera_info.yaml";
+bool Settings::pathHasChanged = false;
 
-void SingletonSettings::setPath(const std::string &pathName)
+void Settings::setPath(const std::string &pathName)
 {
     path = pathName;
     pathHasChanged = true;
 }
 
-SingletonSettings& SingletonSettings::getInstance()
+Settings& Settings::getInstance()
 {
-    static SingletonSettings instance;
+    static Settings instance;
     if(pathHasChanged) {
         instance.read();
         pathHasChanged = false;
@@ -30,19 +30,19 @@ SingletonSettings& SingletonSettings::getInstance()
     return instance;
 }
 
-const Mat SingletonSettings::getK() { return K; }
-const Mat SingletonSettings::getD() { return D; }
-const Mat SingletonSettings::getP() { return P; }
-const Mat SingletonSettings::getR() { return R; }
-int SingletonSettings::getHeight()  { return height; }
-int SingletonSettings::getWidth()   { return width;  }
+const Mat Settings::getK() { return K; }
+const Mat Settings::getD() { return D; }
+const Mat Settings::getP() { return P; }
+const Mat Settings::getR() { return R; }
+int Settings::getHeight()  { return height; }
+int Settings::getWidth()   { return width;  }
 
-SingletonSettings::SingletonSettings()
+Settings::Settings()
 {
     read();
 }
 
-bool SingletonSettings::read() {
+bool Settings::read() {
     // Opening file
     cout << "\nReading: " << endl;
     FileStorage fs(path, FileStorage::READ);    // FileStorage destructor is going to close the file.

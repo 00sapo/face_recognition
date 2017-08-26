@@ -12,7 +12,7 @@
 #include "image4dloader.h"
 #include "lbp.h"
 #include "posemanager.h"
-#include "singletonsettings.h"
+#include "settings.h"
 #include "preprocessor.h"
 
 using std::cout;
@@ -34,10 +34,10 @@ cv::Vec3f randomEulerAngle()
     return { r1, r2, r3 };
 }
 
-void testSingletonSettings()
+void testSettings()
 {
     cout << "SingletonSettings test..." << endl;
-    auto& settings = SingletonSettings::getInstance();
+    auto& settings = Settings::getInstance();
     cout << settings.getD() << endl
          << settings.getK() << endl
          << settings.getP() << endl
@@ -118,7 +118,7 @@ void testGetDepthMap()
 void testDetectFacePose()
 {
     cout << "\n\nDetect face pose..." << endl;
-    Image4DLoader loader("../RGBD_Face_dataset_training/", "000_.*");
+    Image4DLoader loader("../RGBD_Face_dataset_training/", ".*");
 
     auto images = loader.get();
     if (images.empty()) {
@@ -243,6 +243,7 @@ void testKmeans2()
     cout << "\n\nTests finished!" << endl;
 }
 
+/*
 void testPoseClustering()
 {
     srand(time(NULL));
@@ -258,6 +259,7 @@ void testPoseClustering()
     cout << "Nearest Center: " << endl;
     cout << pm.getNearestCenterId(pose) << endl;
 }
+*/
 
 
 void covarianceTest()

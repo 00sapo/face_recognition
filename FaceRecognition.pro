@@ -4,7 +4,6 @@ CONFIG -= app_bundle
 CONFIG -= qt
 
 SOURCES += src/main.cpp \
-           src/singletonsettings.cpp \
            extern_libs/head_pose_estimation/CRForestEstimator.cpp \
            extern_libs/head_pose_estimation/CRTree.cpp \
            src/utils.cpp \
@@ -13,9 +12,10 @@ SOURCES += src/main.cpp \
            src/image4d.cpp \
            src/image4dloader.cpp \
            src/face.cpp \
-           src/preprocessor.cpp
+           src/preprocessor.cpp \
+           src/settings.cpp
 
-HEADERS += include/singletonsettings.h \
+HEADERS += \
            extern_libs/head_pose_estimation/CRForestEstimator.h \
            extern_libs/head_pose_estimation/CRTree.h \
            include/test.h \
@@ -27,7 +27,8 @@ HEADERS += include/singletonsettings.h \
            include/image4d.h \
            include/image4dloader.h \
            include/face.h \
-           include/preprocessor.h
+           include/preprocessor.h \
+           include/settings.h
 
 DISTFILES += \
     camera_info.yaml
