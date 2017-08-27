@@ -7,20 +7,19 @@ SOURCES += src/main.cpp \
            extern_libs/head_pose_estimation/CRForestEstimator.cpp \
            extern_libs/head_pose_estimation/CRTree.cpp \
            src/utils.cpp \
-           src/posemanager.cpp \
            src/steinkernel.cpp \
            src/image4d.cpp \
            src/image4dloader.cpp \
            src/face.cpp \
            src/preprocessor.cpp \
-           src/settings.cpp
+           src/settings.cpp \
+    src/covariancecomputer.cpp
 
 HEADERS += \
            extern_libs/head_pose_estimation/CRForestEstimator.h \
            extern_libs/head_pose_estimation/CRTree.h \
            include/test.h \
            include/utils.h \
-           include/posemanager.h \
            include/lbp.h \
            include/steinkernel.h \
            include/svmparams.h \
@@ -28,7 +27,8 @@ HEADERS += \
            include/image4dloader.h \
            include/face.h \
            include/preprocessor.h \
-           include/settings.h
+           include/settings.h \
+    include/covariancecomputer.h
 
 DISTFILES += \
     camera_info.yaml

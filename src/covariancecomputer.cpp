@@ -1,6 +1,7 @@
-#include "posemanager.h"
+#include "covariancecomputer.h"
 
 #include "face.h"
+#include "lbp.h"
 
 
 using std::string;
@@ -10,7 +11,7 @@ using cv::Vec3f;
 
 namespace face {
 
-PoseManager::PoseManager() { }
+CovarianceComputer::CovarianceComputer() { }
 
 /*
 PoseManager::PoseManager(const std::vector<Face> &faces)
@@ -21,9 +22,9 @@ PoseManager::PoseManager(const std::vector<Face> &faces)
 }
 */
 
-vector<Mat> PoseManager::computeCovarianceRepresentation(const vector<Face> &faces, int subsets)
+vector<Mat> CovarianceComputer::computeCovarianceRepresentation(const vector<Face> &faces, int subsets)
 {
-    auto centers = clusterizePoses(faces, subsets);
+    auto centers  = clusterizePoses(faces, subsets);
     auto clusters = assignFacesToClusters(faces, centers);
 
     vector<Mat> covariances;
@@ -35,7 +36,7 @@ vector<Mat> PoseManager::computeCovarianceRepresentation(const vector<Face> &fac
 }
 
 
-Pose PoseManager::eulerAnglesToRotationMatrix(const cv::Vec3f &theta)
+Pose CovarianceComputer::eulerAnglesToRotationMatrix(const cv::Vec3f &theta)
 {
     // Calculate rotation about x axis
     float cosx = cos(theta[0]);
@@ -53,7 +54,7 @@ Pose PoseManager::eulerAnglesToRotationMatrix(const cv::Vec3f &theta)
 }
 
 
-vector<Pose> PoseManager::clusterizePoses(const vector<Face> &faces, int numCenters) const
+vector<Pose> CovarianceComputer::clusterizePoses(const vector<Face> &faces, int numCenters) const
 {
     if (faces.size() < numCenters)
         return vector<Pose>(0);
@@ -83,7 +84,7 @@ vector<Pose> PoseManager::clusterizePoses(const vector<Face> &faces, int numCent
     return centers;
 }
 
-vector<vector<const Face*>> PoseManager::assignFacesToClusters(const vector<Face> &faces, const vector<Pose> &centers) const
+vector<vector<const Face*>> CovarianceComputer::assignFacesToClusters(const vector<Face> &faces, const vector<Pose> &centers) const
 {
    vector<vector<const Face*>> clusters(centers.size());
    for (const auto &face : faces) {
@@ -93,7 +94,7 @@ vector<vector<const Face*>> PoseManager::assignFacesToClusters(const vector<Face
    return clusters;
 }
 
-int PoseManager::getNearestCenterId(const Pose &pose, const vector<Pose> &centers) const
+int CovarianceComputer::getNearestCenterId(const Pose &pose, const vector<Pose> &centers) const
 {
     float min = FLT_MAX;
     int index = 0;
@@ -107,29 +108,51 @@ int PoseManager::getNearestCenterId(const Pose &pose, const vector<Pose> &center
     return index;
 }
 
-Mat PoseManager::setToCovariance(const vector<const Face*> &set) const
+Mat CovarianceComputer::setToCovariance(const vector<const Face*> &set) const
 {
     const int SET_SIZE = set.size();
     if (SET_SIZE == 0)
-        return Mat::zeros(16,16, CV_32SC1);
+        return Mat::zeros(16,16, CV_32FC1);
 
     const auto HEIGHT = set[0]->getHeight();
     const auto WIDTH  = set[0]->getWidth();
 
     const int BLOCK_H = HEIGHT/4;
-    const int BLOCK_W  = WIDTH /4;
+    const int BLOCK_W = WIDTH /4;
 
     vector<vector<Mat>> blocks(SET_SIZE);
+    vector<vector<float>> means(SET_SIZE);
     for (int  i = 0; i < SET_SIZE; ++i) {
         for (int x = 0; x < HEIGHT - BLOCK_H; x += BLOCK_H) {
             for (int y = 0; y < WIDTH - BLOCK_W; y += BLOCK_W) {
                 cv::Rect roi(x, y, x + BLOCK_W, y + BLOCK_W);
-                blocks[i].emplace_back(set[i]->image,roi);
+                auto image = set[i]->image(roi);
+                auto lbp = OLBPHist(image);
+                blocks[i].push_back(lbp);
+                means[i].push_back(HistMean(lbp));
             }
         }
     }
 
-    return Mat::zeros(16,16, CV_32SC1);
+    Mat covariance(16, 16, CV_32FC1);
+    for (int p = 0; p < 16; ++p) {
+        for (int q = 0; q < 16; ++q) {
+            float sum = 0;
+            for (int i = 0; i < SET_SIZE; ++i) {
+                auto &x_p = blocks[i][p];
+                auto &x_q = blocks[i][q];
+
+                auto x_pNorm = x_p - means[i][p];
+                auto x_qNorm = x_q - means[i][q];
+
+                sum += x_pNorm.dot(x_qNorm);
+            }
+
+            covariance.at<float>(p,q) = sum / SET_SIZE;
+        }
+    }
+
+    return covariance;
 }
 
 /*

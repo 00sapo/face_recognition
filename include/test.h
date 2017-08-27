@@ -11,7 +11,7 @@
 #include "face.h"
 #include "image4dloader.h"
 #include "lbp.h"
-#include "posemanager.h"
+#include "covariancecomputer.h"
 #include "settings.h"
 #include "preprocessor.h"
 
@@ -82,7 +82,7 @@ Pose testEulerAnglesToRotationMatrix()
     srand(time(NULL));
     cv::Vec3f euler = randomEulerAngle();
 
-    Pose rotation = PoseManager::eulerAnglesToRotationMatrix(euler);
+    Pose rotation = CovarianceComputer::eulerAnglesToRotationMatrix(euler);
 
     cout << "Euler Angles:" << endl;
     cout << euler << endl;

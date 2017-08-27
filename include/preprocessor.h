@@ -1,5 +1,5 @@
-#ifndef PREPROCESSOR_H
-#define PREPROCESSOR_H
+#ifndef FACE_PREPROCESSOR_H
+#define FACE_PREPROCESSOR_H
 
 #include <opencv2/objdetect.hpp>
 #include <mutex>
@@ -101,4 +101,4 @@ private:
 
 }   // namespace face
 
-#endif // PREPROCESSOR_H
+#endif // FACE_PREPROCESSOR_H

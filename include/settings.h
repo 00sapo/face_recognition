@@ -1,5 +1,5 @@
-#ifndef SINGLETONSETTINGS_H
-#define SINGLETONSETTINGS_H
+#ifndef FACE_SETTINGS_H
+#define FACE_SETTINGS_H
 
 #include <opencv2/core.hpp>
 
@@ -48,4 +48,4 @@ protected:
 
 }   // face
 
-#endif // SINGLETONSETTINGS_H
+#endif // FACE_SETTINGS_H

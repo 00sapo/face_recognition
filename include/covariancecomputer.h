@@ -1,5 +1,5 @@
-#ifndef POSEMANAGER_H
-#define POSEMANAGER_H
+#ifndef FACE_COVARIANCE_COMPUTER_H
+#define FACE_COVARIANCE_COMPUTER_H
 
 #include <iostream>
 
@@ -9,13 +9,14 @@
 namespace face {
 
 class Face;
-typedef cv::Matx<float, 9, 1> Pose;
+
+using Pose = cv::Matx<float, 9, 1>;
 
 
-class PoseManager {
+class CovarianceComputer {
 public:
 
-    PoseManager();
+    CovarianceComputer();
 
     //explicit PoseManager(const std::vector<Face> &faces);
 
@@ -76,4 +77,4 @@ private:
 
 }   // face
 
-#endif // POSEMANAGER_H
+#endif // FACE_COVARIANCE_COMPUTER_H
