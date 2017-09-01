@@ -17,7 +17,7 @@ const string Preprocessor::POSE_ESTIMATOR_PATH = "../trees/";
 
 // ---------- constructors ----------
 
-Preprocessor::Preprocessor(const string& faceDetectorPath, const std::string &poseEstimatorPath)
+Preprocessor::Preprocessor(const string &faceDetectorPath, const string &poseEstimatorPath)
 {
     // load the pretrained face detection model
     classifier = cv::CascadeClassifier(faceDetectorPath);
@@ -61,14 +61,14 @@ vector<Face> Preprocessor::preprocess(const vector<Image4D> &images)
         if (i == numOfThreads - 1)
             end += SIZE%numOfThreads;
 
-        // start a thread executing getMultiThr function
+        // start a thread executing preprocessMultiThr function
         threads[i] = std::thread(&Preprocessor::preprocessMultiThr, this,
                                  std::ref(images), std::ref(faces), begin,
                                  end, std::ref(facesMutex));
     }
 
     // wait for threads to end (syncronization)
-    for (auto& thread : threads) {
+    for (auto &thread : threads) {
         if (thread.joinable())
             thread.join();
     }
@@ -82,7 +82,7 @@ vector<Image4D> Preprocessor::segment(const std::vector<Image4D> &images)
      segmentedImages.reserve(images.size());
 
      // for each image...
-     for (auto& image : images) {
+     for (auto &image : images) {
          cv::Rect boundingBox;
          // ... detect foreground face...
          if (!detectForegroundFace(image, boundingBox)) {
@@ -170,7 +170,7 @@ bool Preprocessor::detectForegroundFace(const Image4D &face, cv::Rect &boundingB
 }
 
 
-Image4D Preprocessor::removeBackgroundDynamic(const Image4D& face, const cv::Rect &boundingBox) const
+Image4D Preprocessor::removeBackgroundDynamic(const Image4D &face, const cv::Rect &boundingBox) const
 {
     assert (boundingBox.x > 0 && boundingBox.y > 0
             && boundingBox.x + boundingBox.width <= face.getWidth()
@@ -241,7 +241,7 @@ Image4D Preprocessor::removeBackgroundFixed(const Image4D &face, uint16_t thresh
     return Image4D(image, depthMap, face.getIntrinsicMatrix());
 }
 
-bool Preprocessor::cropFace(Image4D &image4d, Vec3f &position, Vec3f &eulerAngles)
+bool Preprocessor::cropFace(Image4D &image4d, Vec3f &position, Vec3f &eulerAngles) const
 {
     if (!estimateFacePose(image4d, position, eulerAngles)) {
         return false;
@@ -249,8 +249,8 @@ bool Preprocessor::cropFace(Image4D &image4d, Vec3f &position, Vec3f &eulerAngle
 
     std::cout << "Face detected!" << std::endl;
 
-    const std::size_t HEIGHT = image4d.getHeight();
-    const std::size_t WIDTH  = image4d.getWidth();
+    const auto HEIGHT = image4d.getHeight();
+    const auto WIDTH  = image4d.getWidth();
     const int NONZERO_PXL_THRESHOLD = 5;
 
     int yTop = 0;
@@ -306,7 +306,7 @@ bool Preprocessor::cropFace(Image4D &image4d, Vec3f &position, Vec3f &eulerAngle
     return true;
 }
 
-bool Preprocessor::estimateFacePose(const Image4D &image4d, cv::Vec3f &position, cv::Vec3f &eulerAngles)
+bool Preprocessor::estimateFacePose(const Image4D &image4d, cv::Vec3f &position, cv::Vec3f &eulerAngles) const
 {
     if (!poseEstimatorAvailable) {
         std::cout << "Error! Face pose estimator unavailable!" << std::endl;
@@ -334,7 +334,7 @@ bool Preprocessor::estimateFacePose(const Image4D &image4d, cv::Vec3f &position,
         return false;
     }
 
-    auto& pose = means[0];
+    auto &pose = means[0];
 
     position    = { -pose[1] + image4d.getHeight() / 2,
                      pose[0] + image4d.getWidth()  / 2,

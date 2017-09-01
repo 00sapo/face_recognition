@@ -18,9 +18,15 @@ public:
 
     CovarianceComputer();
 
-    //explicit PoseManager(const std::vector<Face> &faces);
-
-    std::vector<cv::Mat> computeCovarianceRepresentation(const std::vector<Face> &faces, int subsets);
+    /**
+     * @brief computeCovarianceRepresentation: extracts a covariance matrix based representation
+     *        of an input Face set. Input faces are clusterized in subsets based on their pose
+     *        and then for each subset a covariance matrix representative of the set is computed
+     * @param faces: input face set
+     * @param subsets: number of desired clusters
+     * @return a covariance matrix for each cluster
+     */
+    std::vector<std::pair<cv::Mat, cv::Mat>> computeCovarianceRepresentation(const std::vector<Face> &faces, int subsets) const;
 
     /**
      * @brief eulerAnglesToRotationMatrix
@@ -38,9 +44,10 @@ public:
 private:
 
     /**
-     * @brief clusterizePoses
-     * @param numCenters num of centers/clusters
-     * @return true if clusterization succeeded, false otherwise
+     * @brief clusterizePoses: computes the centers of the clusters using an L2
+     *        metric over the poses of input faces
+     * @param numCenters: num of centers/clusters
+     * @return a vector containing clusters centers
      */
     std::vector<Pose> clusterizePoses(const std::vector<Face> &faces, int numCenters) const;
 
@@ -65,7 +72,9 @@ private:
      * @param set: image set
      * @return covariance matrix
      */
-    cv::Mat setToCovariance(const std::vector<const Face*> &set) const;
+    void setToCovariance(const std::vector<const Face*> &set,
+                            cv::Mat &imageCovariance,
+                            cv::Mat &depthCovariance) const;
 
 
 

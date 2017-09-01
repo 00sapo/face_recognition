@@ -7,29 +7,22 @@
 using std::string;
 using std::vector;
 using cv::Mat;
-using cv::Vec3f;
 
 namespace face {
 
 CovarianceComputer::CovarianceComputer() { }
 
-/*
-PoseManager::PoseManager(const std::vector<Face> &faces)
-{
-    for (const auto &face : faces) {
-        addPoseData(face.getRotationMatrix());
-    }
-}
-*/
 
-vector<Mat> CovarianceComputer::computeCovarianceRepresentation(const vector<Face> &faces, int subsets)
+vector<std::pair<Mat,Mat>> CovarianceComputer::computeCovarianceRepresentation(const vector<Face> &faces, int subsets) const
 {
     auto centers  = clusterizePoses(faces, subsets);
     auto clusters = assignFacesToClusters(faces, centers);
 
-    vector<Mat> covariances;
+    vector<std::pair<Mat,Mat>> covariances;
     for (const auto &cluster : clusters) {
-        covariances.push_back(setToCovariance(cluster));
+        Mat imgCovariance, depthCovariance;
+        setToCovariance(cluster, imgCovariance, depthCovariance);
+        covariances.emplace_back(imgCovariance, depthCovariance);
     }
 
     return covariances;
@@ -46,11 +39,9 @@ Pose CovarianceComputer::eulerAnglesToRotationMatrix(const cv::Vec3f &theta)
     float cosz = cos(theta[2]);
     float senz = sin(theta[2]);
 
-    cv::Matx<float, 9, 1> R(cosy * cosz, cosx * senz + senx * seny * cosz, senx * senz - cosx * seny * cosz,
-        -cosy * senz, cosx * cosz - senx * seny * senz, senx * cosz + cosx * seny * senz,
-        seny, -senx * cosy, cosx * cosy);
-
-    return R;
+    return Pose( cosy * cosz, cosx * senz + senx * seny * cosz, senx * senz - cosx * seny * cosz,
+                -cosy * senz, cosx * cosz - senx * seny * senz, senx * cosz + cosx * seny * senz,
+                 seny, -senx * cosy, cosx * cosy);
 }
 
 
@@ -96,10 +87,11 @@ vector<vector<const Face*>> CovarianceComputer::assignFacesToClusters(const vect
 
 int CovarianceComputer::getNearestCenterId(const Pose &pose, const vector<Pose> &centers) const
 {
-    float min = FLT_MAX;
+    cv::Mat poseMat(pose);
+    float min = std::numeric_limits<float>::max();
     int index = 0;
-    for (int i = 0; i < centers.size(); i++) {
-        float norm = cv::norm(centers[i].t(), cv::Mat(pose), cv::NORM_L2);
+    for (int i = 0; i < centers.size(); ++i) {
+        float norm = cv::norm(centers[i].t(), poseMat, cv::NORM_L2);
         if (norm < min) {
             min = norm;
             index = i;
@@ -108,11 +100,14 @@ int CovarianceComputer::getNearestCenterId(const Pose &pose, const vector<Pose> 
     return index;
 }
 
-Mat CovarianceComputer::setToCovariance(const vector<const Face*> &set) const
+void CovarianceComputer::setToCovariance(const vector<const Face*> &set, Mat &imageCovariance, Mat &depthCovariance) const
 {
     const int SET_SIZE = set.size();
-    if (SET_SIZE == 0)
-        return Mat::zeros(16,16, CV_32FC1);
+    if (SET_SIZE == 0) {
+        imageCovariance = Mat::zeros(16,16, CV_32FC1);
+        depthCovariance = Mat::zeros(16,16, CV_32FC1);
+        return;
+    }
 
     const auto HEIGHT = set[0]->getHeight();
     const auto WIDTH  = set[0]->getWidth();
@@ -120,39 +115,55 @@ Mat CovarianceComputer::setToCovariance(const vector<const Face*> &set) const
     const int BLOCK_H = HEIGHT/4;
     const int BLOCK_W = WIDTH /4;
 
-    vector<vector<Mat>> blocks(SET_SIZE);
-    vector<vector<float>> means(SET_SIZE);
+    vector<vector<Mat>> imageBlocks(SET_SIZE);
+    vector<vector<Mat>> depthBlocks(SET_SIZE);
+    vector<vector<float>> imageMeans(SET_SIZE);
+    vector<vector<float>> depthMeans(SET_SIZE);
     for (int  i = 0; i < SET_SIZE; ++i) {
         for (int x = 0; x < HEIGHT - BLOCK_H; x += BLOCK_H) {
             for (int y = 0; y < WIDTH - BLOCK_W; y += BLOCK_W) {
                 cv::Rect roi(x, y, x + BLOCK_W, y + BLOCK_W);
                 auto image = set[i]->image(roi);
-                auto lbp = OLBPHist(image);
-                blocks[i].push_back(lbp);
-                means[i].push_back(HistMean(lbp));
+                auto depth = set[i]->depthMap(roi);
+                auto imageLBP = OLBPHist(image);
+                auto depthLBP = OLBPHist(depth);
+                imageBlocks[i].push_back(imageLBP);
+                depthBlocks[i].push_back(depthLBP);
+                imageMeans[i].push_back(HistMean(imageLBP));
+                depthMeans[i].push_back(HistMean(depthLBP));
             }
         }
     }
 
-    Mat covariance(16, 16, CV_32FC1);
+    imageCovariance = Mat(16, 16, CV_32FC1);
+    depthCovariance = Mat(16, 16, CV_32FC1);
     for (int p = 0; p < 16; ++p) {
         for (int q = 0; q < 16; ++q) {
-            float sum = 0;
+            float img_sum = 0, dpt_sum = 0;
             for (int i = 0; i < SET_SIZE; ++i) {
-                auto &x_p = blocks[i][p];
-                auto &x_q = blocks[i][q];
+                auto &img_x_p = imageBlocks[i][p];
+                auto &img_x_q = imageBlocks[i][q];
 
-                auto x_pNorm = x_p - means[i][p];
-                auto x_qNorm = x_q - means[i][q];
+                auto x_pNorm = img_x_p - imageMeans[i][p];
+                auto x_qNorm = img_x_q - imageMeans[i][q];
 
-                sum += x_pNorm.dot(x_qNorm);
+                img_sum += x_pNorm.dot(x_qNorm);
+
+                auto &dpt_x_p = depthBlocks[i][p];
+                auto &dpt_x_q = depthBlocks[i][q];
+
+                x_pNorm = dpt_x_p - depthMeans[i][p];
+                x_qNorm = dpt_x_q - depthMeans[i][q];
+
+                dpt_sum += x_pNorm.dot(x_qNorm);
             }
 
-            covariance.at<float>(p,q) = sum / SET_SIZE;
+            imageCovariance.at<float>(p,q) = img_sum / SET_SIZE;
+            depthCovariance.at<float>(p,q) = dpt_sum / SET_SIZE;
         }
     }
 
-    return covariance;
+    return;
 }
 
 /*
