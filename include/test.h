@@ -266,41 +266,26 @@ void covarianceTest()
 {
     cout << "\n\nDetect faces test..." << endl;
     string dirPath = "../RGBD_Face_dataset_training/";
-    Image4DLoader loader(dirPath, "000_.*"); // example: loads only .png files starting with 014
+    Image4DLoader loader(dirPath, "000_.*");
+    Preprocessor preproc;
+    CovarianceComputer covComp;
 
-    Image4D face;
+    cout << "Loading images..." << endl;
+    auto images4d   = loader.get();
+    cout << "Loaded " << images4d.size() << " images" << endl;
 
-    //    loader.setDownscalingRatio(0.5);
+    cout << "Preprocessing 4D images..." << endl;
+    auto faces      = preproc.preprocess(images4d);
+    cout << "Extracted " << faces.size() << " faces from 4D images" << endl;
 
-    //    if (!loader.get(face)) {
-    //        cout << "Failed loading face" << endl;
-    //        return;
-    //    }
+    cout << "Computing covariances..." << endl;
+    auto covariance = covComp.computeCovarianceRepresentation(faces, 3);
 
-    //    cout << "Face loaded!" << endl;
-
-    std::vector<Mat> faceSet;
-
-    while (loader.get(face)) {
-        cout << "Face loaded!" << endl;
-        int croppedWidth = face.getWidth() / 4;
-        int croppedHeight = face.getHeight() / 4;
-        for (uint y = 0; y < face.getHeight(); y += croppedHeight) {
-            for (uint x = 0; x < face.getWidth(); x += croppedWidth) {
-                Mat cropped = face.image(cv::Rect(x, y, croppedWidth, croppedHeight));
-
-                faceSet.push_back(OLBPHist(cropped));
-            }
-        }
+    for (auto &cov : covariance) {
+        cv::imshow("Image", cov.first);
+        cv::imshow("Depth", cov.second);
+        cv::waitKey(0);
     }
-
-    Mat covar, mean;
-    int flags = cv::COVAR_NORMAL;
-    cv::calcCovarMatrix(faceSet.data(), faceSet.size(), covar, mean, flags, 6);
-    cout << "COVAR" << endl
-         << covar << endl
-         << "MEAN" << endl
-         << mean << endl;
 }
 
 

@@ -23,7 +23,7 @@ void testFunctions()
     //
     //test::testKmeans();
     //
-    face::test::testDetectFacePose();
+    //face::test::testDetectFacePose();
     //
     //test::testLoadSpeed();
     //
@@ -33,7 +33,7 @@ void testFunctions()
     //
     //test::testKmeans2();
     //
-    //test::covarianceTest();
+    face::test::covarianceTest();
 
     cout << "\n\nTests finished!" << endl;
 }

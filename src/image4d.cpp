@@ -53,9 +53,6 @@ Mat Image4D::get3DImage() const
     float cx = float(intrinsicMatrix.at<double>(0,2));
     float cy = float(intrinsicMatrix.at<double>(1,2));
 
-    std::cout << "Intrinsic coeffs:" << std::endl;
-    std::cout << fx << " " << fy << " " << cx << " " << cy << std::endl;
-
     Mat image3D(HEIGHT, WIDTH, CV_32FC3);
 
     for (uint i = 0; i < HEIGHT; ++i) {
