@@ -1,5 +1,5 @@
-#ifndef IMAGE_4D_H_
-#define IMAGE_4D_H_
+#ifndef FACE_IMAGE_4D_H
+#define FACE_IMAGE_4D_H
 
 #include <opencv2/opencv.hpp>
 #include <functional>

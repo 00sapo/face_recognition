@@ -1,5 +1,5 @@
-#ifndef TEST_H
-#define TEST_H
+#ifndef FACE_TEST_TEST_H
+#define FACE_TEST_TEST_H
 
 #include <vector>
 #include <chrono>

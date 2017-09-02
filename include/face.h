@@ -1,5 +1,5 @@
-#ifndef FACE_H_
-#define FACE_H_
+#ifndef FACE_FACE_H
+#define FACE_FACE_H
 
 #include "image4d.h"
 

@@ -1,5 +1,5 @@
-#ifndef IMAGELOADER_HPP
-#define IMAGELOADER_HPP
+#ifndef FACE_IMAGELOADER_HPP
+#define FACE_IMAGELOADER_HPP
 
 #include <regex>
 #include <mutex>

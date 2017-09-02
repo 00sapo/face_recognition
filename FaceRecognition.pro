@@ -6,7 +6,6 @@ CONFIG -= qt
 SOURCES += src/main.cpp \
            extern_libs/head_pose_estimation/CRForestEstimator.cpp \
            extern_libs/head_pose_estimation/CRTree.cpp \
-           src/utils.cpp \
            src/steinkernel.cpp \
            src/image4d.cpp \
            src/image4dloader.cpp \
@@ -19,7 +18,6 @@ HEADERS += \
            extern_libs/head_pose_estimation/CRForestEstimator.h \
            extern_libs/head_pose_estimation/CRTree.h \
            include/test.h \
-           include/utils.h \
            include/lbp.h \
            include/steinkernel.h \
            include/svmparams.h \

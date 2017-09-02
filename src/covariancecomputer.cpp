@@ -21,6 +21,8 @@ vector<std::pair<Mat,Mat>> CovarianceComputer::computeCovarianceRepresentation(c
     vector<std::pair<Mat,Mat>> covariances;
     for (const auto &cluster : clusters) {
         Mat imgCovariance, depthCovariance;
+
+        // compute covariance representation of the set
         setToCovariance(cluster, imgCovariance, depthCovariance);
         covariances.emplace_back(imgCovariance, depthCovariance);
     }
@@ -50,12 +52,14 @@ vector<Pose> CovarianceComputer::clusterizePoses(const vector<Face> &faces, int 
     if (faces.size() < numCenters)
         return vector<Pose>(0);
 
+    // retrieve faces' poses
     vector<Pose> poses;
     poses.reserve(faces.size());
     for (const auto &face : faces) {
         poses.push_back(face.getRotationMatrix());
     }
 
+    // clusterize poses
     vector<int> bestLabels;
     cv::Mat centers;
     cv::TermCriteria criteria(cv::TermCriteria::EPS, 10, 1.0);
@@ -66,6 +70,7 @@ vector<Pose> CovarianceComputer::clusterizePoses(const vector<Face> &faces, int 
         return vector<Pose>(numCenters);        // TODO: check default Pose value
     }
 
+    // convert from Mat to vector<Pose>
     vector<Pose> ctrs;
     for (int  i = 0; i < centers.rows; ++i) {
         ctrs.emplace_back(centers.at<float>(i,0), centers.at<float>(i,1), centers.at<float>(i,2),
@@ -109,6 +114,7 @@ void CovarianceComputer::setToCovariance(const vector<const Face*> &set, Mat &im
         return;
     }
 
+    // compute 4x4 blocks size
     const auto HEIGHT = set[0]->getHeight();
     const auto WIDTH  = set[0]->getWidth();
 
@@ -119,14 +125,23 @@ void CovarianceComputer::setToCovariance(const vector<const Face*> &set, Mat &im
     vector<vector<Mat>> depthBlocks(SET_SIZE);
     vector<vector<float>> imageMeans(SET_SIZE);
     vector<vector<float>> depthMeans(SET_SIZE);
+
+    // for each face in the set...
     for (int  i = 0; i < SET_SIZE; ++i) {
+
+        // ... for each of the 16 blocks of the face...
         for (int x = 0; x < HEIGHT - BLOCK_H; x += BLOCK_H) {
             for (int y = 0; y < WIDTH - BLOCK_W; y += BLOCK_W) {
+
+                // crop block region
                 cv::Rect roi(x, y, x + BLOCK_W, y + BLOCK_W);
                 auto image = set[i]->image(roi);
                 auto depth = set[i]->depthMap(roi);
+
+                // compute LBP of the block
                 auto imageLBP = OLBPHist(image);
                 auto depthLBP = OLBPHist(depth);
+
                 imageBlocks[i].push_back(imageLBP);
                 depthBlocks[i].push_back(depthLBP);
                 imageMeans[i].push_back(HistMean(imageLBP));
@@ -137,6 +152,8 @@ void CovarianceComputer::setToCovariance(const vector<const Face*> &set, Mat &im
 
     imageCovariance = Mat(16, 16, CV_32FC1);
     depthCovariance = Mat(16, 16, CV_32FC1);
+
+    // compute equation (1) of the paper for both images and depth maps
     for (int p = 0; p < 16; ++p) {
         for (int q = 0; q < 16; ++q) {
             float img_sum = 0, dpt_sum = 0;
@@ -173,4 +190,4 @@ void PoseManager::addPoseData(const Pose &pose)
 }
 */
 
-}   // face
+}   // namespace face
