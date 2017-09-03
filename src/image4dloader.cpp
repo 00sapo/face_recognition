@@ -157,6 +157,9 @@ vector<Image4D> Image4DLoader::get()
         threads[i] = std::thread(&Image4DLoader::getMultiThr, this, std::ref(image4DSequence), begin, end, std::ref(imageSeqMutex));
     }
 
+    // wait for threads to start
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));    // FIXME: this is not a safe way to do it
+
     // wait for threads to end (syncronization)
     for (auto& thread : threads) {
         if (thread.joinable())
