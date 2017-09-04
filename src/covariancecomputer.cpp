@@ -153,35 +153,8 @@ void CovarianceComputer::setToCovariance(const vector<const Face*>& set, Mat& im
     //depthCovariance = Mat(16, 16, CV_32FC1);
 
     Mat imageMean, depthMean;
-    cv::calcCovarMatrix(imageBlocks.data(), imageBlocks.size(), imageCovariance, imageMean, cv::COVAR_NORMAL, 6);
-    cv::calcCovarMatrix(depthBlocks, depthCovariance, depthMean, cv::COVAR_NORMAL, CV_32FC1);
-
-    //// compute equation (1) of the paper for both images and depth maps
-    //for (int p = 0; p < 16; ++p) {
-    //    for (int q = 0; q < 16; ++q) {
-    //        float img_sum = 0, dpt_sum = 0;
-    //        for (int i = 0; i < SET_SIZE; ++i) {
-    //            auto &img_x_p = imageBlocks[i][p];
-    //            auto &img_x_q = imageBlocks[i][q];
-    //
-    //            auto x_pNorm = img_x_p - imageMeans[i][p];
-    //            auto x_qNorm = img_x_q - imageMeans[i][q];
-    //
-    //            img_sum += x_pNorm.dot(x_qNorm);
-    //
-    //            auto &dpt_x_p = depthBlocks[i][p];
-    //            auto &dpt_x_q = depthBlocks[i][q];
-    //
-    //            x_pNorm = dpt_x_p - depthMeans[i][p];
-    //            x_qNorm = dpt_x_q - depthMeans[i][q];
-    //
-    //            dpt_sum += x_pNorm.dot(x_qNorm);
-    //        }
-    //
-    //        imageCovariance.at<float>(p,q) = img_sum / SET_SIZE;
-    //        depthCovariance.at<float>(p,q) = dpt_sum / SET_SIZE;
-    //    }
-    //}
+    cv::calcCovarMatrix(imageBlocks.data(), imageBlocks.size(), imageCovariance, imageMean, cv::COVAR_NORMAL, CV_32FC1);
+    cv::calcCovarMatrix(depthBlocks.data(), depthBlocks.size(), depthCovariance, depthMean, cv::COVAR_NORMAL, CV_32FC1);
 
     return;
 }
