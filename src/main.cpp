@@ -34,6 +34,7 @@ void testFunctions()
     //test::testKmeans2();
     //
     face::test::covarianceTest();
+    //face::test::testSVM();
 
     cout << "\n\nTests finished!" << endl;
 }

@@ -6,6 +6,7 @@
 
 #include <opencv2/highgui.hpp>
 #include <opencv2/opencv.hpp>
+#include <opencv2/ml.hpp>
 
 #include "covariancecomputer.h"
 #include "face.h"
@@ -14,6 +15,7 @@
 #include "lbp.h"
 #include "preprocessor.h"
 #include "settings.h"
+#include "svmmodel.h"
 
 using std::cout;
 using std::endl;
@@ -25,6 +27,12 @@ using cv::waitKey;
 namespace face {
 
 namespace test {
+
+    void testSVM() {
+        SVMmodel model;
+        //svm->setCustomKernel();
+
+    }
 
     cv::Vec3f randomEulerAngle()
     {
