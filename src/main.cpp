@@ -23,7 +23,7 @@ void testFunctions()
     //
     //test::testKmeans();
     //
-    //face::test::testDetectFacePose();
+    face::test::testDetectFacePose();
     //
     //test::testLoadSpeed();
     //
@@ -35,6 +35,9 @@ void testFunctions()
     //
     face::test::covarianceTest();
     //face::test::testSVM();
+    //        face::test::covarianceTest();
+    //
+    //    face::test::testBackgroundRemoval();
 
     cout << "\n\nTests finished!" << endl;
 }

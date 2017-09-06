@@ -123,7 +123,7 @@ namespace test {
     void testDetectFacePose()
     {
         cout << "\n\nDetect face pose..." << endl;
-        Image4DLoader loader("../RGBD_Face_dataset_training/", ".*");
+        Image4DLoader loader("../RGBD_Face_dataset_training/", "000.*");
 
         auto images = loader.get();
         if (images.empty()) {
@@ -133,16 +133,45 @@ namespace test {
 
         cout << "Faces loaded!" << endl;
 
-        for (auto& image4d : images) {
-            imshow("Original image", image4d.image);
-            cv::waitKey(0);
-        }
+        //        for (auto& image4d : images) {
+        //            imshow("Original image", image4d.image);
+        //            cv::waitKey(0);
+        //        }
 
         Preprocessor prep;
         auto faces = prep.preprocess(images);
 
         for (auto& face : faces) {
             imshow("Cropped face", face.image);
+            cv::waitKey(0);
+        }
+
+        system("read -p 'Press [enter] to continue'");
+    }
+
+    void testBackgroundRemoval()
+    {
+        cout << "\n\nDetect face pose..." << endl;
+        Image4DLoader loader("../RGBD_Face_dataset_training/", "000.*");
+
+        auto images = loader.get();
+        if (images.empty()) {
+            cout << "Failed loading faces" << endl;
+            return;
+        }
+
+        cout << "Faces loaded!" << endl;
+
+        //        for (auto& image4d : images) {
+        //            imshow("Original image", image4d.depthMap);
+        //            cv::waitKey(0);
+        //        }
+
+        Preprocessor prep;
+        prep.segment(images);
+
+        for (auto& image4d : images) {
+            imshow("Original image", image4d.depthMap);
             cv::waitKey(0);
         }
 
