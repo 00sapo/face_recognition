@@ -11,13 +11,16 @@ class SVMmodel
 {
 public:
     SVMmodel();
-    SVMmodel(const std::string &filePath);
+    SVMmodel(const std::string &filename);
 
     float predict(cv::InputArray samples,
                   cv::OutputArray results = cv::noArray(), int flags = 0) const;
 
-    bool trainAuto(const cv::Ptr<cv::ml::TrainData>& data, int kFold=10,
-                   cv::ml::ParamGrid gammaGrid=cv::ml::SVM::getDefaultGrid(cv::ml::SVM::GAMMA));
+    bool trainAuto(const std::vector<cv::Mat> &targetPerson, const std::vector<cv::Mat> &otherPeople,
+                   int kFold, cv::ml::ParamGrid gammaGrid = cv::ml::SVM::getDefaultGrid(cv::ml::SVM::GAMMA));
+
+    bool load(const std::string &filename);
+    void save(const std::string &filename);
 
 private:
     cv::Ptr<cv::ml::SVM> svm;

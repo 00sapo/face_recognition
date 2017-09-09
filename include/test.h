@@ -308,10 +308,23 @@ void testPoseClustering()
         auto images4d = loader.get();
         cout << "Loaded " << images4d.size() << " images" << endl;
 
+        for (const auto &image4d : images4d) {
+            cv::imshow("Image", image4d.image);
+            cv::imshow("Depth map", image4d.depthMap);
+            cv::waitKey(0);
+        }
+
         cout << "Preprocessing 4D images..." << endl;
         auto faces = preproc.preprocess(images4d);
         cout << "Extracted " << faces.size() << " faces from 4D images" << endl;
 
+        for (const auto &face : faces) {
+            cv::imshow("Image", face.image);
+            cv::imshow("Depth map", face.depthMap);
+            cv::waitKey(0);
+        }
+
+/*
         cout << "Computing covariances..." << endl;
         auto covariance = covComp.computeCovarianceRepresentation(faces, 3);
 
@@ -320,6 +333,7 @@ void testPoseClustering()
             cv::imshow("Depth", cov.second);
             cv::waitKey(0);
         }
+        */
     }
 
 } // namespace test

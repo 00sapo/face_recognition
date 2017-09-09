@@ -78,14 +78,15 @@ void Preprocessor::segment(Image4D& image4d)
 {
     cv::Rect boundingBox;
     // ... detect foreground face...
-    //    if (!detectForegroundFace(image4d, boundingBox)) {
-    //        std::cout << "No face detected!"
-    //                  << " Applying fixed threshold." << std::endl;
-    //        removeBackgroundFixed(image4d, 1600);
-    //    } else {
+    if (!detectForegroundFace(image4d, boundingBox)) {
+        std::cout << "No face detected!"
+                  << " Applying fixed threshold." << std::endl;
+        removeBackgroundFixed(image4d, 1600);
+    } else {
 
-    //        removeBackgroundDynamic(image4d, boundingBox);
-    //    }
+        removeBackgroundDynamic(image4d, boundingBox);
+    }
+/*
     uint16_t MIN = 0;
     uint16_t MAX = INT16_MAX;
     float threshold = (MAX + MIN) / 4.5;
@@ -95,7 +96,7 @@ void Preprocessor::segment(Image4D& image4d)
         if (p > threshold || std::isnan(p))
             p = 0;
     });
-
+*/
     return;
 }
 
@@ -200,7 +201,9 @@ bool Preprocessor::cropFace(Image4D& image4d, Vec3f& position, Vec3f& eulerAngle
 
     // necessary corrections to take into account head rotations
     yTop += 10 / 8 * eulerAngles[0] + 5 / 8 * eulerAngles[2];
+    std::cout << "yTop: " << yTop << std::endl;
     int yBase = yTop + (145 / (position[2] / 1000.f));
+    std::cout << "yBase: " << yBase << std::endl;
     cv::Rect faceROI(0, yTop, WIDTH, yBase - yTop);
 
     const int MAX_Y = faceROI.y + faceROI.height - 30; // stay 30px higher to avoid shoulders
