@@ -164,33 +164,19 @@ namespace test {
         system("read -p 'Press [enter] to continue'");
     }
 
-    void testDetectFacePose()
+    void testPreprocessing()
     {
         cout << "\n\nDetect face pose..." << endl;
-        Image4DLoader loader("../RGBD_Face_dataset_training/", "000.*");
-
-        auto images = loader.get();
-        if (images.empty()) {
-            cout << "Failed loading faces" << endl;
-            return;
-        }
-
-        cout << "Faces loaded!" << endl;
-
-        //        for (auto& image4d : images) {
-        //            imshow("Original image", image4d.image);
-        //            cv::waitKey(0);
-        //        }
+        Image4DLoader loader("../RGBD_Face_dataset_training/", ".*");
+        auto image4d = loader.get();
 
         Preprocessor prep;
-        auto faces = prep.preprocess(images);
+        auto faces = prep.preprocess(image4d);
 
         for (auto& face : faces) {
             imshow("Cropped face", face.image);
             cv::waitKey(0);
         }
-
-        system("read -p 'Press [enter] to continue'");
     }
 
     void testBackgroundRemoval()

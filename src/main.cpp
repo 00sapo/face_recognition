@@ -23,7 +23,7 @@ void testFunctions()
     //
     //test::testKmeans();
     //
-    //face::test::testDetectFacePose();
+    //face::test::testPreprocessing();
     //
     //test::testLoadSpeed();
     //

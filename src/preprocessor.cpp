@@ -1,5 +1,6 @@
 #include "preprocessor.h"
 
+#include <cmath>
 #include <thread>
 
 #include "face.h"
@@ -100,7 +101,7 @@ void Preprocessor::segment(Image4D& image4d)
     return;
 }
 
-bool Preprocessor::detectForegroundFace(const Image4D& face, cv::Rect& boundingBox)
+bool Preprocessor::detectForegroundFace(const Image4D &face, cv::Rect &boundingBox)
 {
     if (!faceDetectorAvailable) {
         std::cout << "Error! Face detector unavailable!" << std::endl;
@@ -121,7 +122,7 @@ bool Preprocessor::detectForegroundFace(const Image4D& face, cv::Rect& boundingB
     return true;
 }
 
-void Preprocessor::removeBackgroundDynamic(Image4D& face, const cv::Rect& boundingBox) const
+void Preprocessor::removeBackgroundDynamic(Image4D &face, const cv::Rect &boundingBox) const
 {
     assert(boundingBox.x > 0 && boundingBox.y > 0
         && boundingBox.x + boundingBox.width <= face.getWidth()
@@ -163,7 +164,7 @@ void Preprocessor::removeBackgroundDynamic(Image4D& face, const cv::Rect& boundi
     return;
 }
 
-void Preprocessor::removeBackgroundFixed(Image4D& face, uint16_t threshold) const
+void Preprocessor::removeBackgroundFixed(Image4D &face, uint16_t threshold) const
 {
 
     face.depthMap.forEach<uint16_t>([threshold](uint16_t& p, const int* pos) {
@@ -174,7 +175,7 @@ void Preprocessor::removeBackgroundFixed(Image4D& face, uint16_t threshold) cons
     return;
 }
 
-bool Preprocessor::cropFace(Image4D& image4d, Vec3f& position, Vec3f& eulerAngles) const
+bool Preprocessor::cropFace(Image4D &image4d, Vec3f &position, Vec3f &eulerAngles) const
 {
     if (!estimateFacePose(image4d, position, eulerAngles)) {
         return false;
@@ -199,11 +200,12 @@ bool Preprocessor::cropFace(Image4D& image4d, Vec3f& position, Vec3f& eulerAngle
         }
     }
 
+    if (std::abs(eulerAngles[0]) > 35)
+        eulerAngles[0] = 0;
+
     // necessary corrections to take into account head rotations
     yTop += 10 / 8 * eulerAngles[0] + 5 / 8 * eulerAngles[2];
-    std::cout << "yTop: " << yTop << std::endl;
     int yBase = yTop + (145 / (position[2] / 1000.f));
-    std::cout << "yBase: " << yBase << std::endl;
     cv::Rect faceROI(0, yTop, WIDTH, yBase - yTop);
 
     const int MAX_Y = faceROI.y + faceROI.height - 30; // stay 30px higher to avoid shoulders
@@ -275,6 +277,7 @@ bool Preprocessor::estimateFacePose(const Image4D& image4d, cv::Vec3f& position,
         pose[0] + image4d.getWidth() / 2,
         pose[2] };
 
+    std::cout << "Angles: " << pose[3] << "," << pose[4] << "," << pose[5] << std::endl;
     eulerAngles = { pose[3], pose[4], pose[5] };
 
     return true;
