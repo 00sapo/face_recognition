@@ -66,6 +66,8 @@ vector<Face> Preprocessor::cropFaces(vector<Image4D>& images)
     for (auto& face : images) {
         Vec3f position, eulerAngles;
         cropFace(face, position, eulerAngles);
+        cv::imshow("face", face.image);
+        cv::waitKey(0);
         croppedFaces.emplace_back(face, position, eulerAngles);
     }
 
@@ -76,6 +78,7 @@ vector<Face> Preprocessor::cropFaces(vector<Image4D>& images)
 
 void Preprocessor::segment(Image4D& image4d)
 {
+    /*
     cv::Rect boundingBox;
     // ... detect foreground face...
     if (!detectForegroundFace(image4d, boundingBox)) {
@@ -86,17 +89,111 @@ void Preprocessor::segment(Image4D& image4d)
 
         removeBackgroundDynamic(image4d, boundingBox);
     }
-/*
-    uint16_t MIN = 0;
-    uint16_t MAX = INT16_MAX;
-    float threshold = (MAX + MIN) / 4.5;
-    cv::normalize(image4d.depthMap, image4d.depthMap, MIN, MAX, cv::NORM_MINMAX);
 
-    image4d.depthMap.forEach<uint16_t>([threshold, MAX](uint16_t& p, const int* pos) {
-        if (p > threshold || std::isnan(p))
-            p = 0;
-    });
-*/
+   */
+
+    /*
+     * This is first reimplementation*/
+    double max, min;
+
+    cv::minMaxLoc(image4d.depthMap, &min, &max, NULL, NULL);
+    uint16_t MIN = min;
+    uint16_t MAX = max;
+    int dimension = image4d.getWidth() * image4d.getHeight();
+    float fgMin = 0;
+    float fgMax = 2.5;
+    int countDeleted;
+    //    cv::normalize(image4d.depthMap, image4d.depthMap, MIN, MAX, cv::NORM_MINMAX);
+
+    do {
+        //        fgMin -= 0.5;
+        fgMax += 0.5;
+        float threshold1 = (MAX + MIN) / fgMax;
+        float threshold2 = 0;
+
+        image4d.depthMap.forEach<uint16_t>([threshold1, threshold2](uint16_t& p, const int* pos) {
+            if (p > threshold1 || p < threshold2 || std::isnan(p)) {
+                p = 0;
+            }
+        });
+        countDeleted = countNonZero(image4d.depthMap);
+
+    } while ((float)countDeleted / dimension > 0.2);
+    /**/
+
+    // second algorithm
+
+    //    double max;
+
+    //    cv::minMaxLoc(image4d.depthMap, NULL, &max, NULL, NULL);
+
+    //    cv::Mat depthCopy = image4d.depthMap.clone();
+
+    //    std::sort(depthCopy.begin<uint16_t>(), depthCopy.end<uint16_t>());
+
+    //    int count = 1, prevCount = 1, maxFrequency = 0, __maxFrequency__ = 0;
+    //    int prevDiff = 0;
+    //    float minTh = 0.0, maxTh = 0.0, __minTh__ = 0.0, __maxTh__ = 0;
+
+    //    for (uint16_t* p = (uint16_t*)depthCopy.data + 1; p != (uint16_t*)depthCopy.dataend; p++) {
+    //        uint16_t value = *p;
+    //        if (value >= max / 2 || isnan(value) || value <= 5) {
+    //            *p = 0;
+    //            continue;
+    //        }
+
+    //        if (value == *(p - 1)) {
+    //            count++;
+    //        } else {
+
+    //            //            int diff = count - prevCount;
+    //            //            prevCount = count;
+    //            //            if (diff > prevDiff && prevDiff >= 0) {
+    //            //                /* histogram is growing a lot */
+    //            //                __minTh__ = value;
+    //            //            }
+
+    //            //            if (diff < prevDiff && prevDiff <= 0) {
+    //            //                /* histogram is decreasing a lot */
+    //            //                __maxTh__ = value;
+    //            //            }
+
+    //            //            if (diff >= 0 && prevDiff < 0) {
+    //            //                /* we are in a saddle point (punto di sella) */
+    //            //                if (__maxFrequency__ > maxFrequency) {
+    //            //                    maxFrequency = __maxFrequency__;
+    //            //                    maxTh = __maxTh__;
+    //            //                    minTh = __minTh__;
+    //            //                    __maxFrequency__ = 0;
+    //            //                }
+    //            //            }
+
+    //            if (count > __maxFrequency__) {
+    //                __maxFrequency__ = count;
+    //                max = value;
+    //            }
+    //            //            prevDiff = diff;
+    //            count = 1;
+    //        }
+    //    }
+    //    //    if (__maxFrequency__ > maxFrequency) {
+    //    //        maxTh = __maxTh__;
+    //    //        minTh = __minTh__;
+    //    //    }
+
+    //    minTh = max - 1000;
+    //    maxTh = max + 1000;
+
+    //    image4d.depthMap.forEach<uint16_t>([minTh, maxTh](uint16_t& p, const int* pos) {
+    //        if (float(p) > maxTh || float(p) < minTh || std::isnan(p))
+    //            p = 0;
+    //        return pos;
+    //    });
+
+    //    cv::normalize(image4d.depthMap, image4d.depthMap, 0, UINT16_MAX, cv::NORM_MINMAX);
+    //    cv::imshow("depth map", image4d.depthMap);
+    //    cv::waitKey(0);
+
     return;
 }
 
@@ -199,11 +296,12 @@ bool Preprocessor::cropFace(Image4D& image4d, Vec3f& position, Vec3f& eulerAngle
         }
     }
 
+    if (std::abs(eulerAngles[0]) > 35)
+        eulerAngles[0] = 0;
+
     // necessary corrections to take into account head rotations
     yTop += 10 / 8 * eulerAngles[0] + 5 / 8 * eulerAngles[2];
-    std::cout << "yTop: " << yTop << std::endl;
     int yBase = yTop + (145 / (position[2] / 1000.f));
-    std::cout << "yBase: " << yBase << std::endl;
     cv::Rect faceROI(0, yTop, WIDTH, yBase - yTop);
 
     const int MAX_Y = faceROI.y + faceROI.height - 30; // stay 30px higher to avoid shoulders
@@ -259,7 +357,7 @@ bool Preprocessor::estimateFacePose(const Image4D& image4d, cv::Vec3f& position,
     float largerRadiusRatio = 1.5;
     float smallerRadiusRatio = 5.0;
     bool verbose = false;
-    int threshold = 500;
+    int threshold = 13;
 
     estimator.estimate(img3D, means, clusters, votes, stride, maxVariance,
         probTH, largerRadiusRatio, smallerRadiusRatio, verbose, threshold);
