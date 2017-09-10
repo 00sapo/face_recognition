@@ -33,8 +33,8 @@ void testFunctions()
     //
     //test::testKmeans2();
     //
-    face::test::covarianceTest();
-    //face::test::testSVM();
+    //face::test::covarianceTest();
+    face::test::testSVM();
     //        face::test::covarianceTest();
     //
     //    face::test::testBackgroundRemoval();

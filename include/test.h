@@ -29,8 +29,52 @@ namespace face {
 namespace test {
 
     void testSVM() {
+        string dirPath = "../RGBD_Face_dataset_training/";
+        Image4DLoader loader(dirPath, "000_.*");
+
+        cout << "Loading first identity 4D images..." << endl;
+        auto images4d_000 = loader.get();
+
+        loader.setFileNameRegEx("00[1-9]_.*");
+        cout << "Loading other identity 4D images..." << endl;
+        auto images4d_others = loader.get();
+
+        Preprocessor preproc;
+        cout << "Preprocessing 000..." << endl;
+        auto faces_000    = preproc.preprocess(images4d_000);
+        cout << "Preprocessing others..." << endl;
+        auto faces_others = preproc.preprocess(images4d_others);
+
+        CovarianceComputer covar;
+        cout << "Computing covariances for 000..." << endl;
+        auto facesCovar_000    = covar.computeCovarianceRepresentation(faces_000, 3);
+        cout << "Computing covariances for others..." << endl;
+        auto facesCovar_others = covar.computeCovarianceRepresentation(faces_others, 3);
+
+        vector<Mat> imageCovar_000, imageCovar_others;
+        vector<Mat> depthCovar_000, depthCovar_others;
+        for (auto &pair : facesCovar_000) {
+            imageCovar_000.push_back(pair.first);
+            depthCovar_000.push_back(pair.second);
+        }
+
+        for (auto &pair : facesCovar_others) {
+            imageCovar_others.push_back(pair.first);
+            depthCovar_others.push_back(pair.second);
+        }
+
+        cout << "Creating SVM model..." << endl;
         SVMmodel model;
-        //svm->setCustomKernel();
+        cout << "Training model..." << endl;
+        model.trainAuto(imageCovar_000, imageCovar_others, 3);
+        cout << "Done!" << endl;
+        /*
+        loader.setCurrentPath("../RGBD_Face_dataset_testing/Test1");
+        loader.setFileNameRegEx("004_00_.*");
+        auto test4dImage = loader.get();
+        auto testFace  = preproc.preprocess(test4dImage);
+        auto testCovar = covar.computeCovarianceRepresentation(testFace);
+        */
 
     }
 

@@ -105,8 +105,6 @@ bool SVMmodel::trainAuto(const vector<Mat> &targetPerson, const vector<Mat> &oth
     const auto trainDataWidth  = targetPerson[0].rows * targetPerson[0].cols;
 
     Mat data(trainDataHeight, trainDataWidth, CV_32F);
-
-
     Mat labels(trainDataHeight, 1, CV_32F);
 
     // fill data rows with targetPerson

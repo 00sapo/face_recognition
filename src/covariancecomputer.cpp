@@ -105,7 +105,7 @@ int CovarianceComputer::getNearestCenterId(const Pose& pose, const vector<Pose>&
     return index;
 }
 
-void CovarianceComputer::setToCovariance(const vector<const Face*>& set, Mat& imageCovariance, Mat& depthCovariance) const
+void CovarianceComputer::setToCovariance(const vector<const Face*>& set, Mat &imageCovariance, Mat &depthCovariance) const
 {
     const int SET_SIZE = set.size();
     if (SET_SIZE == 0) {
@@ -116,11 +116,13 @@ void CovarianceComputer::setToCovariance(const vector<const Face*>& set, Mat& im
 
     vector<Mat> imageBlocks(SET_SIZE);
     vector<Mat> depthBlocks(SET_SIZE);
-    //vector<vector<float>> imageMeans(SET_SIZE);
-    //vector<vector<float>> depthMeans(SET_SIZE);
 
     // for each face in the set...
     for (int i = 0; i < SET_SIZE; ++i) {
+
+        if (set[i]->image.empty() || set[i]->depthMap.empty())
+            std::cout << "ERROR! Empty image!!" << std::endl;
+
         // compute 4x4 blocks size
         const auto HEIGHT = set[i]->getHeight();
         const auto WIDTH = set[i]->getWidth();
@@ -138,23 +140,19 @@ void CovarianceComputer::setToCovariance(const vector<const Face*>& set, Mat& im
                 Mat depth = set[i]->depthMap(roi);
 
                 // compute LBP of the block
-                Mat imageLBP = OLBPHist(image);
-                Mat depthLBP = OLBPHist(depth);
-
-                imageBlocks[i].push_back(imageLBP);
-                depthBlocks[i].push_back(depthLBP);
-                //imageMeans[i].push_back(HistMean(imageLBP));
-                //depthMeans[i].push_back(HistMean(depthLBP));
+                imageBlocks[i].push_back( OLBPHist(image) );
+                depthBlocks[i].push_back( OLBPHist(depth) );
             }
         }
     }
 
-    //imageCovariance = Mat(16, 16, CV_32FC1);
-    //depthCovariance = Mat(16, 16, CV_32FC1);
-
     Mat imageMean, depthMean;
-    cv::calcCovarMatrix(imageBlocks.data(), imageBlocks.size(), imageCovariance, imageMean, cv::COVAR_NORMAL, CV_32FC1);
-    cv::calcCovarMatrix(depthBlocks.data(), depthBlocks.size(), depthCovariance, depthMean, cv::COVAR_NORMAL, CV_32FC1);
+
+    std::cout << "Image block size: " << imageBlocks.size() << std::endl;
+    std::cout << "Depth block size: " << depthBlocks.size() << std::endl;
+
+    cv::calcCovarMatrix(imageBlocks, imageCovariance, imageMean, cv::COVAR_NORMAL, CV_32FC1);
+    cv::calcCovarMatrix(depthBlocks, depthCovariance, depthMean, cv::COVAR_NORMAL, CV_32FC1);
 
     return;
 }
