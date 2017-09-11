@@ -47,27 +47,39 @@ vector<Face> Preprocessor::preprocess(vector<Image4D>& images)
 
     for (auto& face : images) {
         uint16_t* th = findDepthThresholds(face);
-        cv::Mat copyDepth = face.depthMap.clone();
-        removeDepthOutOfThresholds(th[0], th[1], face);
-
+        uint16_t minTh = th[0], maxTh = th[1];
         Vec3f position, eulerAngles;
 
-        bool cropped = false;
-        try {
-            cropped = cropFace(face, position, eulerAngles);
-        } catch (cv::Exception& e) {
-            cropped = false;
-        }
-        while (!cropped && th[0] > 0 && th[1] < UINT16_MAX) {
+        cv::Mat copyDepth = face.depthMap.clone();
+
+        bool cropped = filterAndCrop(face, minTh, maxTh, position, eulerAngles);
+        bool stopDecrease = false, stopIncrease = false;
+        int step = 150;
+
+        for (int i = 1; !cropped && (!stopDecrease || !stopIncrease) && i < 10; i++) {
             std::cout << "cropping failed in " << face.getName() << "! Retrying with new thresholds..." << std::endl;
+
             face.depthMap = copyDepth.clone();
-            th[0] -= 150;
-            th[1] -= 150;
-            removeDepthOutOfThresholds(th[0], th[1], face);
-            try {
-                cropped = cropFace(face, position, eulerAngles);
-            } catch (cv::Exception& e) {
-                cropped = false;
+            if (!stopDecrease) {
+                minTh = th[0] - i * step;
+                maxTh = th[1] - i * step;
+                if (th[0] > 0) {
+                    cropped = filterAndCrop(face, minTh, maxTh, position, eulerAngles);
+                    if (cropped)
+                        break;
+                } else
+                    stopDecrease = true;
+            }
+
+            if (!stopIncrease) {
+                th[0] = minTh + i * step;
+                th[1] = maxTh + i * step;
+                if (th[1] < UINT16_MAX - 150) {
+                    cropped = filterAndCrop(face, minTh, maxTh, position, eulerAngles);
+                    if (cropped)
+                        break;
+                } else
+                    stopIncrease = true;
             }
         }
 
@@ -77,6 +89,26 @@ vector<Face> Preprocessor::preprocess(vector<Image4D>& images)
     std::cout << "cropped " << counter << " images of " << images.size() << std::endl;
 
     return croppedFaces;
+}
+
+bool Preprocessor::filterAndCrop(Image4D& face, uint16_t minTh, uint16_t maxTh, Vec3f& position, Vec3f& eulerAngles)
+{
+
+    face.depthMap.forEach<uint16_t>([minTh, maxTh](uint16_t& p, const int* pos) {
+        if (p > maxTh || p < minTh || std::isnan(p))
+            p = 0;
+    });
+    //    cv::imshow(face.getName(), face.depthMap);
+    //    cv::waitKey(0);
+
+    bool cropped = false;
+    try {
+        cropped = cropFace(face, position, eulerAngles);
+    } catch (cv::Exception& e) {
+        cropped = false;
+    }
+
+    return cropped;
 }
 
 void Preprocessor::findDepthThresholds(std::vector<Image4D>& images)
@@ -120,8 +152,6 @@ uint16_t* Preprocessor::findDepthThresholds(Image4D& image4d)
             count = log10(count);
             float diff = count - prevCount;
             prevCount = count;
-            //            if (diff < 5 || diff > -5)
-            //                continue;
 
             if (diff >= 0 && prevDiff <= 0) {
                 /* we are in a saddle point (punto di sella) */
@@ -149,15 +179,6 @@ uint16_t* Preprocessor::findDepthThresholds(Image4D& image4d)
     th[1] = maxTh;
 
     return th;
-}
-
-void Preprocessor::removeDepthOutOfThresholds(uint16_t minTh, uint16_t maxTh, Image4D& image4d)
-{
-    image4d.depthMap.forEach<uint16_t>([minTh, maxTh](uint16_t& p, const int* pos) {
-        if (p > maxTh || p < minTh || std::isnan(p))
-            p = 0;
-        return pos;
-    });
 }
 
 bool Preprocessor::cropFace(Image4D& image4d, Vec3f& position, Vec3f& eulerAngles) const

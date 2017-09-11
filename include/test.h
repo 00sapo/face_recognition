@@ -123,7 +123,7 @@ namespace test {
     void testDetectFacePose()
     {
         cout << "\n\nDetect face pose..." << endl;
-        Image4DLoader loader("../RGBD_Face_dataset_training/", "005.*");
+        Image4DLoader loader("../RGBD_Face_dataset_training/", ".*");
 
         auto images = loader.get();
         if (images.empty()) {
@@ -141,11 +141,15 @@ namespace test {
         Preprocessor prep;
         auto faces = prep.preprocess(images);
 
+        int cropped = 0;
         for (auto& face : faces) {
             imshow(face.getName(), face.image);
-            cv::waitKey(0);
+            if (cv::waitKey(0) == 'y') {
+                cropped++;
+            }
         }
 
+        cout << cropped << " images cropped out of " << images.size() << endl;
         system("read -p 'Press [enter] to continue'");
     }
 

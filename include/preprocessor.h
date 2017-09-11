@@ -39,14 +39,6 @@ public:
      */
     std::vector<face::Face> cropFaces(std::vector<face::Image4D>& images);
 
-    /**
-     * @brief removeDepthOutOfThresholds set to 0 all points in depthmap that are out of specified thresholds
-     * @param minTh
-     * @param maxTh
-     * @param image4d
-     */
-    void removeDepthOutOfThresholds(uint16_t minTh, uint16_t maxTh, Image4D& image4d);
-
 private:
     static const std::string FACE_DETECTOR_PATH;
     static const std::string POSE_ESTIMATOR_PATH;
@@ -94,6 +86,7 @@ private:
      * @return True if pose estimation was successful and rotation matrix was added to posesData, false otherwise
      */
     bool estimateFacePose(const face::Image4D& image4d, cv::Vec3f& position, cv::Vec3f& eulerAngles) const;
+    bool filterAndCrop(Image4D& face, uint16_t minTh, uint16_t maxTh, cv::Vec3f& position, cv::Vec3f& eulerAngles);
 };
 
 } // namespace face
