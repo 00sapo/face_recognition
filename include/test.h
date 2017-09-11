@@ -5,8 +5,8 @@
 #include <vector>
 
 #include <opencv2/highgui.hpp>
-#include <opencv2/opencv.hpp>
 #include <opencv2/ml.hpp>
+#include <opencv2/opencv.hpp>
 
 #include "covariancecomputer.h"
 #include "face.h"
@@ -28,10 +28,10 @@ namespace face {
 
 namespace test {
 
-    void testSVM() {
+    void testSVM()
+    {
         SVMmodel model;
         //svm->setCustomKernel();
-
     }
 
     cv::Vec3f randomEulerAngle()
@@ -123,7 +123,7 @@ namespace test {
     void testDetectFacePose()
     {
         cout << "\n\nDetect face pose..." << endl;
-        Image4DLoader loader("../RGBD_Face_dataset_training/", "000.*");
+        Image4DLoader loader("../RGBD_Face_dataset_training/", "005.*");
 
         auto images = loader.get();
         if (images.empty()) {
@@ -141,10 +141,10 @@ namespace test {
         Preprocessor prep;
         auto faces = prep.preprocess(images);
 
-        for (auto& face : faces) {
-            imshow("Cropped face", face.image);
-            cv::waitKey(0);
-        }
+        //        for (auto& face : faces) {
+        //            imshow(face.getName(), face.image);
+        //            cv::waitKey(0);
+        //        }
 
         system("read -p 'Press [enter] to continue'");
     }
@@ -168,7 +168,7 @@ namespace test {
         //        }
 
         Preprocessor prep;
-        prep.segment(images);
+        //        prep.segment(images);
 
         for (auto& image4d : images) {
             imshow("Original image", image4d.depthMap);
@@ -308,7 +308,7 @@ void testPoseClustering()
         auto images4d = loader.get();
         cout << "Loaded " << images4d.size() << " images" << endl;
 
-        for (const auto &image4d : images4d) {
+        for (const auto& image4d : images4d) {
             cv::imshow("Image", image4d.image);
             cv::imshow("Depth map", image4d.depthMap);
             cv::waitKey(0);
@@ -318,13 +318,13 @@ void testPoseClustering()
         auto faces = preproc.preprocess(images4d);
         cout << "Extracted " << faces.size() << " faces from 4D images" << endl;
 
-        for (const auto &face : faces) {
+        for (const auto& face : faces) {
             cv::imshow("Image", face.image);
             cv::imshow("Depth map", face.depthMap);
             cv::waitKey(0);
         }
 
-/*
+        /*
         cout << "Computing covariances..." << endl;
         auto covariance = covComp.computeCovarianceRepresentation(faces, 3);
 

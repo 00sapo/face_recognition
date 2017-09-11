@@ -1,30 +1,27 @@
 #ifndef FACE_PREPROCESSOR_H
 #define FACE_PREPROCESSOR_H
 
-#include <opencv2/objdetect.hpp>
-#include <mutex>
 #include <atomic>
+#include <mutex>
+#include <opencv2/objdetect.hpp>
 
 #include "extern_libs/head_pose_estimation/CRForestEstimator.h"
 
 namespace face {
 
-
-class Image4D;  // forward declarations
+class Image4D; // forward declarations
 class Face;
 
-
-class Preprocessor
-{
+class Preprocessor {
 public:
-    Preprocessor(const std::string& faceDetectorPath = FACE_DETECTOR_PATH, const std::string &poseEstimatorPath = POSE_ESTIMATOR_PATH);
+    Preprocessor(const std::string& faceDetectorPath = FACE_DETECTOR_PATH, const std::string& poseEstimatorPath = POSE_ESTIMATOR_PATH);
 
     /**
      * @brief preprocess cleans up and prepares the 4D images to be processed
      * @param images
      * @return a vector of cropped faces
      */
-    std::vector<Face> preprocess(std::vector<Image4D> &images);
+    std::vector<Face> preprocess(std::vector<Image4D>& images);
 
     /**
      * @brief segment is the first preprocessing step. Removes the background
@@ -32,7 +29,7 @@ public:
      * @param faces
      * @return true if all images background have been removed successfully
      */
-    void segment(std::vector<Image4D> &images);
+    void findDepthThresholds(std::vector<Image4D>& images);
 
     /**
      * @brief cropFaces is the second preprocessing step. Precisely
@@ -40,10 +37,17 @@ public:
      * @param faces
      * @return a vector containing the cropped faces
      */
-    std::vector<face::Face> cropFaces(std::vector<face::Image4D> &images);
+    std::vector<face::Face> cropFaces(std::vector<face::Image4D>& images);
+
+    /**
+     * @brief removeDepthOutOfThresholds set to 0 all points in depthmap that are out of specified thresholds
+     * @param minTh
+     * @param maxTh
+     * @param image4d
+     */
+    void removeDepthOutOfThresholds(uint16_t minTh, uint16_t maxTh, Image4D& image4d);
 
 private:
-
     static const std::string FACE_DETECTOR_PATH;
     static const std::string POSE_ESTIMATOR_PATH;
 
@@ -53,8 +57,12 @@ private:
     cv::CascadeClassifier classifier;
     CRForestEstimator estimator;
 
-
-    void segment(Image4D &face);
+    /**
+     * @brief segment finds thresholds that likely allow a right background segmentation
+     * @param face
+     * @return array of size two, minimum threshold and maximum threshold (in this order)
+     */
+    uint16_t* findDepthThresholds(Image4D& face);
 
     /**
      * @brief detectForegroundFace detects the nearest face in the image
@@ -62,32 +70,32 @@ private:
      * @param detectedFace: ROI of the detected face
      * @return false if no face was detected, true otherwise
      */
-    bool detectForegroundFace(const Image4D &face, cv::Rect &boundingBox);
+    bool detectForegroundFace(const Image4D& face, cv::Rect& boundingBox);
 
     /**
      * @brief removeBackground splits the face cloud in two clusters, discarding
      *        furthest one
      * @param face
      */
-    void removeBackgroundDynamic(Image4D &face, const cv::Rect &boundingBox) const;
+    void removeBackgroundDynamic(Image4D& face, const cv::Rect& boundingBox) const;
 
-    void removeBackgroundFixed(Image4D &face, uint16_t threshold) const;
+    void removeBackgroundFixed(Image4D& face, uint16_t threshold) const;
 
     /**
      * @brief cropFace: crops face region taking into account face orientation
      * @param face: image containing face to crop
      * @return false if no face was detected
      */
-    bool cropFace(face::Image4D &image4d, cv::Vec3f &position, cv::Vec3f &eulerAngles) const;
+    bool cropFace(face::Image4D& image4d, cv::Vec3f& position, cv::Vec3f& eulerAngles) const;
 
     /**
      * @brief estimateFacePose
      * @param face
      * @return True if pose estimation was successful and rotation matrix was added to posesData, false otherwise
      */
-    bool estimateFacePose(const face::Image4D &image4d, cv::Vec3f &position, cv::Vec3f &eulerAngles) const;
+    bool estimateFacePose(const face::Image4D& image4d, cv::Vec3f& position, cv::Vec3f& eulerAngles) const;
 };
 
-}   // namespace face
+} // namespace face
 
 #endif // FACE_PREPROCESSOR_H

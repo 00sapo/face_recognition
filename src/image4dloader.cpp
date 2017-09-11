@@ -5,14 +5,14 @@
 
 #include <thread>
 
-#include <opencv2/opencv.hpp>
 #include <opencv2/imgproc.hpp>
+#include <opencv2/opencv.hpp>
 
 #include <pcl/common/common.h>
-#include <pcl/point_types.h>
 #include <pcl/filters/filter.h>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/io/pcd_io.h>
+#include <pcl/point_types.h>
 
 #include "settings.h"
 
@@ -32,12 +32,14 @@ namespace face {
 
 const string Image4DLoader::MATCH_ALL = ".*";
 
-
 Image4DLoader::Image4DLoader()
-    : Image4DLoader(fs::current_path().string(), ".*(png|jpg|bmp)") { }
+    : Image4DLoader(fs::current_path().string(), ".*(png|jpg|bmp)")
+{
+}
 
 Image4DLoader::Image4DLoader(const string& dirPath, const string& fileNameRegEx)
-    : currentPath(dirPath), fileTemplate(fileNameRegEx)
+    : currentPath(dirPath)
+    , fileTemplate(fileNameRegEx)
 {
     if (!loadFileNames(currentPath))
         cout << "Failed!" << endl;
@@ -48,7 +50,7 @@ bool Image4DLoader::hasNext() const
     return !imageFileNames.empty() && !cloudFileNames.empty();
 }
 
-bool Image4DLoader::get(Image4D &image4d)
+bool Image4DLoader::get(Image4D& image4d)
 {
     if (!hasNext())
         return false;
@@ -69,7 +71,7 @@ bool Image4DLoader::get(Image4D &image4d)
         return false;
     }
 
-    if(!cloud.isOrganized()) {
+    if (!cloud.isOrganized()) {
         std::cerr << "ERROR: loading unorganized point cloud!" << endl;
         return false;
     }
@@ -77,11 +79,11 @@ bool Image4DLoader::get(Image4D &image4d)
     Mat depthMap(cloud.height, cloud.width, CV_16SC1);
     for (uint x = 0; x < cloud.height; ++x) {
         for (uint y = 0; y < cloud.width; ++y) {
-            depthMap.at<uint16_t>(x,y) = cloud.at(y,x).z * 10E2;
+            depthMap.at<uint16_t>(x, y) = cloud.at(y, x).z * 10E2;
         }
     }
 
-    image4d = Image4D(image, depthMap, Settings::getInstance().getK());
+    image4d = Image4D(imageFile.substr(0, imageFile.size() - 3), image, depthMap, Settings::getInstance().getK());
 
     imageFileNames.pop_back();
     cloudFileNames.pop_back();
@@ -89,7 +91,7 @@ bool Image4DLoader::get(Image4D &image4d)
     return true;
 }
 
-void Image4DLoader::getMultiThr(vector<Image4D> &image4DSequence, int begin, int end, std::mutex &mutex) const
+void Image4DLoader::getMultiThr(vector<Image4D>& image4DSequence, int begin, int end, std::mutex& mutex) const
 {
     Mat K = Settings::getInstance().getK();
 
@@ -112,7 +114,7 @@ void Image4DLoader::getMultiThr(vector<Image4D> &image4DSequence, int begin, int
             return;
         }
 
-        if(!cloud.isOrganized()) {
+        if (!cloud.isOrganized()) {
             std::cerr << "ERROR: loading unorganized point cloud!" << endl;
             return;
         }
@@ -120,17 +122,15 @@ void Image4DLoader::getMultiThr(vector<Image4D> &image4DSequence, int begin, int
         Mat depthMap(cloud.height, cloud.width, CV_16SC1);
         for (uint x = 0; x < cloud.height; ++x) {
             for (uint y = 0; y < cloud.width; ++y) {
-                depthMap.at<uint16_t>(x,y) = cloud.at(y,x).z * 10E2;
+                depthMap.at<uint16_t>(x, y) = cloud.at(y, x).z * 10E2;
             }
         }
 
         // lock needed to prevent concurrent writing
         std::lock_guard<std::mutex> lock(mutex);
-        image4DSequence[i] = Image4D(image, depthMap, K);
+        image4DSequence[i] = Image4D(imageFile.substr(0, imageFile.size() - 3), image, depthMap, K);
     }
-
 }
-
 
 vector<Image4D> Image4DLoader::get()
 {
@@ -142,23 +142,23 @@ vector<Image4D> Image4DLoader::get()
     vector<std::thread> threads(numOfThreads);
 
     // equally split number of images to load
-    int blockSize = SIZE/numOfThreads;
+    int blockSize = SIZE / numOfThreads;
     if (blockSize < 1)
         blockSize = 1;
 
     std::mutex imageSeqMutex;
     for (int i = 0; i < numOfThreads && i < SIZE; ++i) {
-        int begin = i*blockSize;
+        int begin = i * blockSize;
         int end = begin + blockSize;
         if (i == numOfThreads - 1)
-            end += SIZE%numOfThreads;
+            end += SIZE % numOfThreads;
 
         // start a thread executing getMultiThr function
         threads[i] = std::thread(&Image4DLoader::getMultiThr, this, std::ref(image4DSequence), begin, end, std::ref(imageSeqMutex));
     }
 
     // wait for threads to start
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));    // FIXME: this is not a safe way to do it
+    std::this_thread::sleep_for(std::chrono::milliseconds(200)); // FIXME: this is not a safe way to do it
 
     // wait for threads to end (syncronization)
     for (auto& thread : threads) {
@@ -171,7 +171,6 @@ vector<Image4D> Image4DLoader::get()
 
     return image4DSequence;
 }
-
 
 void Image4DLoader::setFileNameRegEx(const string& fileNameRegEx)
 {
@@ -210,7 +209,7 @@ bool Image4DLoader::loadFileNames(const string& dirPath)
     // check if directory
     if (!fs::is_directory(full_path)) {
         std::cerr << "\n"
-             << full_path.filename() << " is not a directory" << endl;
+                  << full_path.filename() << " is not a directory" << endl;
         return false;
     }
 
@@ -243,6 +242,5 @@ bool Image4DLoader::matchTemplate(const string& fileName)
 {
     return std::regex_match(fileName, fileTemplate, std::regex_constants::match_any);
 }
-
 
 } // face
