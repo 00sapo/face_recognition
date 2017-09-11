@@ -141,10 +141,10 @@ namespace test {
         Preprocessor prep;
         auto faces = prep.preprocess(images);
 
-        //        for (auto& face : faces) {
-        //            imshow(face.getName(), face.image);
-        //            cv::waitKey(0);
-        //        }
+        for (auto& face : faces) {
+            imshow(face.getName(), face.image);
+            cv::waitKey(0);
+        }
 
         system("read -p 'Press [enter] to continue'");
     }

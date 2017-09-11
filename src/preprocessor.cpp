@@ -229,6 +229,9 @@ bool Preprocessor::cropFace(Image4D& image4d, Vec3f& position, Vec3f& eulerAngle
     faceROI.x = xTop;
     faceROI.width = xBase - xTop;
 
+    if (faceROI.x < 0 || faceROI.y < 0 || faceROI.area() <= 0)
+        return false;
+
     image4d.crop(faceROI);
     return true;
 }
