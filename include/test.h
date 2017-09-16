@@ -78,6 +78,8 @@ namespace test {
 
     }
 
+
+
     cv::Vec3f randomEulerAngle()
     {
         float r1 = float(rand()) / (float(RAND_MAX) / (2.0f * M_PI));
@@ -171,7 +173,10 @@ namespace test {
         auto image4d = loader.get();
 
         Preprocessor prep;
+        auto begin = std::chrono::high_resolution_clock::now();
         auto faces = prep.preprocess(image4d);
+        auto end = std::chrono::high_resolution_clock::now();
+        cout << "Time elapsed: " << std::chrono::duration_cast<std::chrono::seconds>(end - begin).count() << "s" << endl;
 
         for (auto& face : faces) {
             imshow("Cropped face", face.image);

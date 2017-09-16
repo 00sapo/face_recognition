@@ -74,6 +74,15 @@ private:
     void removeBackgroundFixed(Image4D &face, uint16_t threshold) const;
 
     /**
+     * @brief removeOutliers computes the centroid of the depth map
+     *        wrt the image plane and removes (sets to 0) depth values
+     *        of pixels with a distance > threshold from the centroid
+     * @param image4d
+     * @param threshold: max allowed distance
+     */
+    void removeOutliers(Image4D &image4d, float threshold = 300) const;
+
+    /**
      * @brief cropFace: crops face region taking into account face orientation
      * @param face: image containing face to crop
      * @return false if no face was detected

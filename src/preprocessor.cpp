@@ -87,17 +87,7 @@ void Preprocessor::segment(Image4D& image4d)
 
         removeBackgroundDynamic(image4d, boundingBox);
     }
-/*
-    uint16_t MIN = 0;
-    uint16_t MAX = INT16_MAX;
-    float threshold = (MAX + MIN) / 4.5;
-    cv::normalize(image4d.depthMap, image4d.depthMap, MIN, MAX, cv::NORM_MINMAX);
 
-    image4d.depthMap.forEach<uint16_t>([threshold, MAX](uint16_t& p, const int* pos) {
-        if (p > threshold || std::isnan(p))
-            p = 0;
-    });
-*/
     return;
 }
 
@@ -117,18 +107,13 @@ bool Preprocessor::detectForegroundFace(const Image4D &face, cv::Rect &boundingB
 
     // take face in foregound (the one with bigger bounding box)
     boundingBox = *std::max_element(faces.begin(), faces.end(),
-        [](cv::Rect r1, cv::Rect r2) { return r1.area() < r2.area(); });
+        [](const cv::Rect &r1, const cv::Rect &r2) { return r1.area() < r2.area(); });
 
     return true;
 }
 
 void Preprocessor::removeBackgroundDynamic(Image4D &face, const cv::Rect &boundingBox) const
 {
-    assert(boundingBox.x > 0 && boundingBox.y > 0
-        && boundingBox.x + boundingBox.width <= face.getWidth()
-        && boundingBox.y + boundingBox.height <= face.getHeight()
-        && "boundingBox must be included in face.image");
-
     // take non-nan, non-zero points
     vector<float> depth;
     auto lambda = [&depth](int x, int y, const uint16_t& dpt) {
@@ -166,7 +151,6 @@ void Preprocessor::removeBackgroundDynamic(Image4D &face, const cv::Rect &boundi
 
 void Preprocessor::removeBackgroundFixed(Image4D &face, uint16_t threshold) const
 {
-
     face.depthMap.forEach<uint16_t>([threshold](uint16_t& p, const int* pos) {
         if (p > threshold || std::isnan(p))
             p = 0;
@@ -175,13 +159,57 @@ void Preprocessor::removeBackgroundFixed(Image4D &face, uint16_t threshold) cons
     return;
 }
 
+void Preprocessor::removeOutliers(Image4D &image4d, float threshold) const
+{
+    // TODO: a full resolution booleanDepthMap is probably too much
+    //       maybe the same result is achievable with a sampling of a pixel every 4 or 8
+    cv::Mat booleanDepthMap(image4d.getHeight(), image4d.getWidth(), CV_8U);
+    cv::Mat labels, stats, centroids;
+    auto boolIter = booleanDepthMap.begin<bool>();
+    for (auto iter = image4d.depthMap.begin<uint16_t>(); iter < image4d.depthMap.end<uint16_t>(); ++iter, ++boolIter) {
+        *boolIter = *iter != 0;
+    }
+
+    int numOfComponents = cv::connectedComponentsWithStats(booleanDepthMap, labels, stats, centroids, 4);
+    int index = 1;
+    int maxArea = stats.at<int>(1,cv::CC_STAT_AREA);
+    for ( int i = 2; i < numOfComponents; ++i) {
+        int area = stats.at<int>(i,cv::CC_STAT_AREA);
+        if (area > maxArea) {
+            maxArea = area;
+            index = i;
+        }
+    }
+
+    int x = stats.at<int>(index,cv::CC_STAT_LEFT);
+    int y = stats.at<int>(index,cv::CC_STAT_TOP);
+    int width = stats.at<int>(index,cv::CC_STAT_WIDTH);
+    int height = stats.at<int>(index,cv::CC_STAT_HEIGHT);
+    cv::Rect roi(x,y,width,height);
+
+    //image4d.crop(roi);
+
+    image4d.depthMap.forEach<uint16_t>( [&] (uint16_t &depth, const int *pos) {
+       if (!roi.contains(cv::Point(pos[1], pos[0])))
+            depth = 0;
+    });
+}
+
 bool Preprocessor::cropFace(Image4D &image4d, Vec3f &position, Vec3f &eulerAngles) const
 {
+    cv::imshow("Pre", image4d.depthMap);
+    cv::waitKey(0);
+    removeOutliers(image4d);
+    cv::imshow("Post", image4d.depthMap);
+    cv::waitKey(0);
+
     if (!estimateFacePose(image4d, position, eulerAngles)) {
         return false;
     }
 
     std::cout << "Face detected!" << std::endl;
+    std::cout << "Position: " << position[0] << "," << position[1] << "," << position[2] << std::endl;
+    std::cout << "Euler angles: " << eulerAngles[0] << "," << eulerAngles[1] << "," << eulerAngles[2] << std::endl;
 
     const auto HEIGHT = image4d.getHeight();
     const auto WIDTH = image4d.getWidth();
@@ -205,13 +233,15 @@ bool Preprocessor::cropFace(Image4D &image4d, Vec3f &position, Vec3f &eulerAngle
 
     // necessary corrections to take into account head rotations
     yTop += 10 / 8 * eulerAngles[0] + 5 / 8 * eulerAngles[2];
+    if (yTop < 0)   yTop = 0;
     int yBase = yTop + (145 / (position[2] / 1000.f));
+    if (yBase > HEIGHT) yBase = HEIGHT;
     cv::Rect faceROI(0, yTop, WIDTH, yBase - yTop);
 
     const int MAX_Y = faceROI.y + faceROI.height - 30; // stay 30px higher to avoid shoulders
 
     int xTop = 0;
-    for (int i = position[1] - 100; i < position[1] + 100; ++i) { // look for first non-empty column from left
+    for (int i = 0; i < WIDTH; ++i) {   // look for first non-empty column from left
         int nonzeroPixels = 0;
         for (int j = faceROI.y; j < MAX_Y; ++j) {
             if (image4d.depthMap.at<uint16_t>(j, i) != 0)
@@ -224,7 +254,7 @@ bool Preprocessor::cropFace(Image4D &image4d, Vec3f &position, Vec3f &eulerAngle
     }
 
     int xBase = 0;
-    for (int i = position[1] + 100; i >= position[1] - 100; --i) { // look for last non-empty column from right
+    for (int i = WIDTH-1; i >= 0; --i) { // look for last non-empty column from right
         int nonzeroPixels = 0;
         for (int j = faceROI.y; j < MAX_Y; ++j) {
             if (image4d.depthMap.at<uint16_t>(j, i) != 0)
