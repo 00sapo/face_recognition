@@ -66,15 +66,21 @@ namespace test {
         cout << "Creating SVM model..." << endl;
         SVMmodel model;
         cout << "Training model..." << endl;
-        model.trainAuto(imageCovar_000, imageCovar_others, 3);
+        model.train(depthCovar_000, depthCovar_others);
         cout << "Done!" << endl;
-        /*
-        loader.setCurrentPath("../RGBD_Face_dataset_testing/Test1");
-        loader.setFileNameRegEx("004_00_.*");
-        auto test4dImage = loader.get();
-        auto testFace  = preproc.preprocess(test4dImage);
-        auto testCovar = covar.computeCovarianceRepresentation(testFace);
-        */
+
+        vector<int> results;
+
+        Mat sample(1,256, CV_32FC1);
+        auto iterNew = sample.begin<float>();
+        for (auto iter = depthCovar_000[0].begin<float>(); iter != depthCovar_000[0].end<float>(); ++iter, ++iterNew) {
+            *iterNew = *iter;
+        }
+
+        std::cout << model.predict(depthCovar_000[0]) << std::endl;
+
+        for (auto i : results)
+            cout << i << endl;
 
     }
 

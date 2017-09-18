@@ -197,11 +197,11 @@ void Preprocessor::removeOutliers(Image4D &image4d, float threshold) const
 
 bool Preprocessor::cropFace(Image4D &image4d, Vec3f &position, Vec3f &eulerAngles) const
 {
-    cv::imshow("Pre", image4d.depthMap);
-    cv::waitKey(0);
+    //cv::imshow("Pre", image4d.depthMap);
+    //cv::waitKey(0);
     removeOutliers(image4d);
-    cv::imshow("Post", image4d.depthMap);
-    cv::waitKey(0);
+    //cv::imshow("Post", image4d.depthMap);
+    //cv::waitKey(0);
 
     if (!estimateFacePose(image4d, position, eulerAngles)) {
         return false;

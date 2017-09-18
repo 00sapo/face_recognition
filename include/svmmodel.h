@@ -16,6 +16,8 @@ public:
     float predict(cv::InputArray samples,
                   cv::OutputArray results = cv::noArray(), int flags = 0) const;
 
+    bool train    (const std::vector<cv::Mat> targetPerson, const std::vector<cv::Mat> &otherPeople);
+
     bool trainAuto(const std::vector<cv::Mat> &targetPerson, const std::vector<cv::Mat> &otherPeople,
                    int kFold, cv::ml::ParamGrid gammaGrid = cv::ml::SVM::getDefaultGrid(cv::ml::SVM::GAMMA));
 

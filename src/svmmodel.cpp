@@ -3,7 +3,7 @@
 namespace ml = cv::ml;
 using std::vector;
 using cv::Mat;
-
+/*
 namespace cv {
 namespace ml {
 
@@ -30,7 +30,7 @@ struct SvmParams
 
 }
 }
-
+*/
 
 
 namespace face {
@@ -44,7 +44,7 @@ namespace face {
 class SteinKernel : public ml::SVM::Kernel {
 
 public:
-    SteinKernel(ml::SvmParams params = ml::SvmParams()) : params(params) { }
+    SteinKernel(float gamma) : gamma(gamma) { }
 
     /**
      * @brief cv::ml::SVM::Kernel::calc compute the Stein kernel function.
@@ -63,7 +63,7 @@ public:
             Mat X(16, 16, CV_32F, (void*)(x + n * i));
             auto A = X + Y;
             double   s = std::log10(determinant(A * 0.5)) - 0.5 * std::log10(determinant(X * Y));
-            results[i] = std::exp(-params.gamma * s);
+            results[i] = std::exp(-gamma * s);
         }
     }
 
@@ -73,14 +73,14 @@ public:
         return ml::SVM::CUSTOM;
     }
 
-    ml::SvmParams params;
+    float gamma;
 };
 
 
 SVMmodel::SVMmodel()
 {
     svm = ml::SVM::create();
-    svm->setCustomKernel(cv::Ptr<SteinKernel>());
+    svm->setCustomKernel(new SteinKernel(1));
 }
 
 SVMmodel::SVMmodel(const std::string &filename)
@@ -89,44 +89,50 @@ SVMmodel::SVMmodel(const std::string &filename)
         std::cout << "Error. Failed loading pretrained SVM model." << std::endl;
 }
 
-float SVMmodel::predict(cv::InputArray samples,
-                        cv::OutputArray results,
-                        int flags) const
+float SVMmodel::predict(cv::InputArray samples, cv::OutputArray results, int flags) const
 {
-    return svm->predict(samples, results, flags);
+    return svm->predict(samples/*, results, flags*/);
 }
 
-bool SVMmodel::trainAuto(const vector<Mat> &targetPerson, const vector<Mat> &otherPeople, int kFold,
-                         ml::ParamGrid gammaGrid)
+
+bool SVMmodel::train(const vector<Mat> targetPerson, const vector<Mat> &otherPeople)
 {
-    // conversion from vector<Mat> to Mat....
+    std::cout << "conversion from vector<Mat> to Mat..." << std::endl;
     const auto personSize = targetPerson.size();
     const auto trainDataHeight = personSize + otherPeople.size();
     const auto trainDataWidth  = targetPerson[0].rows * targetPerson[0].cols;
 
-    Mat data(trainDataHeight, trainDataWidth, CV_32F);
-    Mat labels(trainDataHeight, 1, CV_32F);
+    Mat data(trainDataHeight, trainDataWidth, CV_32FC1);
+    Mat labels(trainDataHeight, 1, CV_32SC1);
 
-    // fill data rows with targetPerson
+    std::cout << "  fill data rows with targetPerson" << std::endl;
     for (auto i = 0; i < personSize; ++i) {
         auto iter = targetPerson[i].begin<float>();
         for (auto j = 0; j < trainDataWidth; ++j, ++iter) {
             data.at<float>(i,j) = *iter;
         }
-        labels.at<float>(i,0) = 1.0f;
+        labels.at<float>(i,0) = 1;
     }
 
-    // fill data rows with otherPeople
+    std::cout << "  fill data rows with otherPeople" << std::endl;
     for (auto i = personSize; i < trainDataHeight; ++i) {
-        auto iter = otherPeople[i].begin<float>();
+        auto iter = otherPeople[i-personSize].begin<float>();
         for (auto j = 0; j < trainDataWidth; ++j, ++iter) {
             data.at<float>(i,j) = *iter;
         }
-        labels.at<float>(i,0) = -1.0f;
+        labels.at<float>(i,0) = -1;
     }
 
+    std::cout << "Training..." << std::endl;
+
     auto trainData = ml::TrainData::create(data, ml::ROW_SAMPLE, labels);
-    return svm->trainAuto(trainData, kFold, ml::SVM::getDefaultGrid(ml::SVM::C), gammaGrid);
+    return svm->train(trainData);
+}
+
+bool SVMmodel::trainAuto(const vector<Mat> &targetPerson, const vector<Mat> &otherPeople, int kFold,
+                         ml::ParamGrid gammaGrid)
+{
+
 }
 
 bool SVMmodel::load(const std::string &filename)
