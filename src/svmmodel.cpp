@@ -81,6 +81,8 @@ SVMmodel::SVMmodel()
 {
     svm = ml::SVM::create();
     svm->setCustomKernel(new SteinKernel(1));
+    svm->setType(ml::SVM::C_SVC);
+
 }
 
 SVMmodel::SVMmodel(const std::string &filename)
@@ -99,25 +101,25 @@ bool SVMmodel::train(const vector<Mat> targetPerson, const vector<Mat> &otherPeo
 {
     std::cout << "conversion from vector<Mat> to Mat..." << std::endl;
     const auto personSize = targetPerson.size();
-    const auto trainDataHeight = personSize + otherPeople.size();
-    const auto trainDataWidth  = targetPerson[0].rows * targetPerson[0].cols;
+    const auto samples  = personSize + otherPeople.size();
+    const auto features = targetPerson[0].rows * targetPerson[0].cols;
 
-    Mat data(trainDataHeight, trainDataWidth, CV_32FC1);
-    Mat labels(trainDataHeight, 1, CV_32SC1);
+    Mat data(samples, features, CV_32FC1);
+    Mat labels(samples, 1, CV_32SC1);
 
     std::cout << "  fill data rows with targetPerson" << std::endl;
     for (auto i = 0; i < personSize; ++i) {
         auto iter = targetPerson[i].begin<float>();
-        for (auto j = 0; j < trainDataWidth; ++j, ++iter) {
+        for (auto j = 0; j < features; ++j, ++iter) {
             data.at<float>(i,j) = *iter;
         }
         labels.at<float>(i,0) = 1;
     }
 
     std::cout << "  fill data rows with otherPeople" << std::endl;
-    for (auto i = personSize; i < trainDataHeight; ++i) {
+    for (auto i = personSize; i < samples; ++i) {
         auto iter = otherPeople[i-personSize].begin<float>();
-        for (auto j = 0; j < trainDataWidth; ++j, ++iter) {
+        for (auto j = 0; j < features; ++j, ++iter) {
             data.at<float>(i,j) = *iter;
         }
         labels.at<float>(i,0) = -1;
@@ -126,7 +128,9 @@ bool SVMmodel::train(const vector<Mat> targetPerson, const vector<Mat> &otherPeo
     std::cout << "Training..." << std::endl;
 
     auto trainData = ml::TrainData::create(data, ml::ROW_SAMPLE, labels);
-    return svm->train(trainData);
+    auto result = svm->train(trainData);
+
+    return result;
 }
 
 bool SVMmodel::trainAuto(const vector<Mat> &targetPerson, const vector<Mat> &otherPeople, int kFold,
@@ -145,5 +149,6 @@ void SVMmodel::save(const std::string &filename)
 {
     svm->save(filename);
 }
+
 
 }   // namespace face

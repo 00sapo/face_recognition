@@ -47,9 +47,9 @@ namespace test {
 
         CovarianceComputer covar;
         cout << "Computing covariances for 000..." << endl;
-        auto facesCovar_000    = covar.computeCovarianceRepresentation(faces_000, 3);
+        auto facesCovar_000    = covar.computeCovarianceRepresentation(faces_000, 5);
         cout << "Computing covariances for others..." << endl;
-        auto facesCovar_others = covar.computeCovarianceRepresentation(faces_others, 3);
+        auto facesCovar_others = covar.computeCovarianceRepresentation(faces_others, 5);
 
         vector<Mat> imageCovar_000, imageCovar_others;
         vector<Mat> depthCovar_000, depthCovar_others;
@@ -69,7 +69,7 @@ namespace test {
         model.train(depthCovar_000, depthCovar_others);
         cout << "Done!" << endl;
 
-        vector<int> results;
+        vector<float> results;
 
         Mat sample(1,256, CV_32FC1);
         auto iterNew = sample.begin<float>();
@@ -77,7 +77,14 @@ namespace test {
             *iterNew = *iter;
         }
 
-        std::cout << model.predict(depthCovar_000[0]) << std::endl;
+        std::cout << model.predict(sample) << std::endl;
+
+        iterNew = sample.begin<float>();
+        for (auto iter = depthCovar_others[0].begin<float>(); iter != depthCovar_others[0].end<float>(); ++iter, ++iterNew) {
+            *iterNew = *iter;
+        }
+
+        std::cout << model.predict(sample) << std::endl;
 
         for (auto i : results)
             cout << i << endl;
