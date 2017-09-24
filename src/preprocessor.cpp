@@ -40,52 +40,35 @@ Preprocessor::Preprocessor(const string& faceDetectorPath, const string& poseEst
 
 vector<Face> Preprocessor::preprocess(vector<Image4D>& images)
 {
-    const auto SIZE = images.size();
+    const ulong SIZE = images.size();
     vector<Face> croppedFaces;
     croppedFaces.reserve(SIZE);
     int counter = 0;
 
+    std::cout << "Preprocessing... " << std::endl;
     for (auto& face : images) {
-        uint16_t* th = findDepthThresholds(face);
-        uint16_t minTh = th[0], maxTh = th[1];
-        Vec3f position, eulerAngles;
+        vector<threshold> thresholds;
+        findDepthThresholds(face, thresholds, 2);
+        for (auto th : thresholds) {
+            Vec3f position, eulerAngles;
 
-        cv::Mat copyDepth = face.depthMap.clone();
+            cv::Mat copyDepth = face.depthMap.clone();
 
-        bool cropped = filterAndCrop(face, minTh, maxTh, position, eulerAngles);
-        bool stopDecrease = false, stopIncrease = false;
-        int step = 150;
+            bool cropped = filterAndCrop(face, th.minTh, th.maxTh, position, eulerAngles);
 
-        for (int i = 1; !cropped && (!stopDecrease || !stopIncrease) && i < 10; i++) {
-            std::cout << "cropping failed in " << face.getName() << "! Retrying with new thresholds..." << std::endl;
-
-            face.depthMap = copyDepth.clone();
-            if (!stopDecrease) {
-                minTh = th[0] - i * step;
-                maxTh = th[1] - i * step;
-                if (th[0] > 0) {
-                    cropped = filterAndCrop(face, minTh, maxTh, position, eulerAngles);
-                    if (cropped)
-                        break;
-                } else
-                    stopDecrease = true;
+            if (cropped) {
+                //                std::cout << face.getName() << " cropped!" << std::endl;
+                counter++;
+                croppedFaces.emplace_back(face, position, eulerAngles);
+                break;
+            } else {
+                //                std::cout << "cropping failed in " << face.getName() << "! Retrying with new thresholds..." << std::endl;
+                face.depthMap = copyDepth.clone();
             }
-
-            if (!stopIncrease) {
-                th[0] = minTh + i * step;
-                th[1] = maxTh + i * step;
-                if (th[1] < UINT16_MAX - 150) {
-                    cropped = filterAndCrop(face, minTh, maxTh, position, eulerAngles);
-                    if (cropped)
-                        break;
-                } else
-                    stopIncrease = true;
-            }
+            croppedFaces.emplace_back(face, position, eulerAngles);
         }
-
-        counter++;
-        croppedFaces.emplace_back(face, position, eulerAngles);
     }
+    printf("\n");
     std::cout << "cropped " << counter << " images of " << images.size() << std::endl;
 
     return croppedFaces;
@@ -111,7 +94,7 @@ bool Preprocessor::filterAndCrop(Image4D& face, uint16_t minTh, uint16_t maxTh, 
     return cropped;
 }
 
-void Preprocessor::findDepthThresholds(std::vector<Image4D>& images)
+/*void Preprocessor::findDepthThresholds(std::vector<Image4D>& images)
 {
     // for each image...
     for (auto& image : images) {
@@ -119,11 +102,24 @@ void Preprocessor::findDepthThresholds(std::vector<Image4D>& images)
     }
 
     return;
-}
+}*/
 
 // ---------- private member functions ----------
+int Preprocessor::findLeastFreqTh(std::vector<threshold> interestingThs)
+{
+    float min = FLT_MAX;
+    vector<threshold>::iterator minIt;
+    for (vector<threshold>::iterator it = interestingThs.begin(); it < interestingThs.end(); it++) {
+        threshold v = *it;
+        if (v.freq < min) {
+            min = v.freq;
+            minIt = it;
+        }
+    }
+    return minIt - interestingThs.begin();
+}
 
-uint16_t* Preprocessor::findDepthThresholds(Image4D& image4d)
+void Preprocessor::findDepthThresholds(Image4D& image4d, std::vector<threshold>& interestingThs, int k)
 {
     // second algorithm
 
@@ -136,49 +132,64 @@ uint16_t* Preprocessor::findDepthThresholds(Image4D& image4d)
 
     std::sort(depthCopy.begin<uint16_t>(), depthCopy.end<uint16_t>());
 
-    float count = 1, prevCount = 0, maxFrequency = 0, __maxFrequency__ = 0;
+    float prevFreq = 0, minInterestingFreq = 0;
+    float freq = 0, localMaxFreq = 0;
     float prevDiff = 0;
     uint16_t minTh = 0.0, maxTh = 0.0;
 
     for (uint16_t* p = (uint16_t*)depthCopy.data + 1; p <= (uint16_t*)depthCopy.dataend; p++) {
         uint16_t value = *p;
-        if (value >= max / 2 || isnan(value) || value <= 5) {
+        if (isnan(value) || value <= 5) {
+            /* filtering everything useless */
             continue;
         }
+        if (value >= max / 2)
+            break;
 
         if (value == *(p - 1)) {
-            count++;
+            freq++;
         } else {
-            count = log10(count);
-            float diff = count - prevCount;
-            prevCount = count;
+            /* since depthCopy has been ordered, we have just counted the number of equal values */
+            /* logarithm decreases local maximum, derivative finds maximums and saddle points */
+            freq = log10(freq);
+            float diff = freq - prevFreq;
+            prevFreq = freq;
 
             if (diff >= 0 && prevDiff <= 0) {
                 /* we are in a saddle point (punto di sella) */
-                if (__maxFrequency__ > maxFrequency) {
-                    maxFrequency = __maxFrequency__;
-                    minTh = maxTh;
-                    maxTh = value;
-                    __maxFrequency__ = 0;
+                /* memorizing new threshold found */
+                threshold newTh;
+                newTh.freq = localMaxFreq;
+                newTh.maxTh = value + 150;
+                newTh.minTh = maxTh - 150;
+                maxTh = newTh.freq;
+                if (interestingThs.size() < k)
+                    interestingThs.push_back(newTh);
+                else if (localMaxFreq >= minInterestingFreq) {
+                    //find least frequent value
+                    int pos = findLeastFreqTh(interestingThs);
+                    // updating it
+                    interestingThs.at(pos) = newTh;
+                    // updating minimum interesting frequency at now
+                    pos = findLeastFreqTh(interestingThs);
+                    minInterestingFreq = interestingThs.at(pos).freq;
+                    localMaxFreq = 0;
                 }
             }
 
-            if (count > __maxFrequency__) {
-                __maxFrequency__ = count;
-            }
+            if (freq > localMaxFreq)
+                localMaxFreq = freq;
+
             prevDiff = diff;
-            count = 1;
+            freq = 1;
         }
+
+        //sorting largest to smallest
+        std::sort(interestingThs.begin(), interestingThs.end(),
+            [](const threshold& a, const threshold& b) {
+                return a.maxTh - a.minTh < b.maxTh - b.minTh;
+            });
     }
-    /* enlarge a bit the thresholds */
-    minTh -= 150;
-    maxTh += 150;
-
-    uint16_t* th = new uint16_t[2];
-    th[0] = minTh;
-    th[1] = maxTh;
-
-    return th;
 }
 
 bool Preprocessor::cropFace(Image4D& image4d, Vec3f& position, Vec3f& eulerAngles) const
@@ -187,7 +198,7 @@ bool Preprocessor::cropFace(Image4D& image4d, Vec3f& position, Vec3f& eulerAngle
         return false;
     }
 
-    std::cout << "Face detected!" << std::endl;
+    //    std::cout << "Face detected in " << image4d.getName() << std::endl;
 
     const auto HEIGHT = image4d.getHeight();
     const auto WIDTH = image4d.getWidth();

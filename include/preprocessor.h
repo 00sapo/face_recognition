@@ -2,12 +2,18 @@
 #define FACE_PREPROCESSOR_H
 
 #include <atomic>
+#include <c++/7.1.1/bits/stl_iterator_base_types.h>
 #include <mutex>
 #include <opencv2/objdetect.hpp>
 
 #include "extern_libs/head_pose_estimation/CRForestEstimator.h"
 
 namespace face {
+struct threshold {
+    float freq;
+    uint16_t minTh;
+    uint16_t maxTh;
+};
 
 class Image4D; // forward declarations
 class Face;
@@ -29,7 +35,8 @@ public:
      * @param faces
      * @return true if all images background have been removed successfully
      */
-    void findDepthThresholds(std::vector<Image4D>& images);
+
+    void findDepthThresholds(Image4D& image4d, std::vector<threshold>& interestingThs, int k);
 
     /**
      * @brief cropFaces is the second preprocessing step. Precisely
@@ -38,6 +45,8 @@ public:
      * @return a vector containing the cropped faces
      */
     std::vector<face::Face> cropFaces(std::vector<face::Image4D>& images);
+
+    int findLeastFreqTh(std::vector<threshold> interestingThs);
 
 private:
     static const std::string FACE_DETECTOR_PATH;
@@ -48,13 +57,6 @@ private:
 
     cv::CascadeClassifier classifier;
     CRForestEstimator estimator;
-
-    /**
-     * @brief segment finds thresholds that likely allow a right background segmentation
-     * @param face
-     * @return array of size two, minimum threshold and maximum threshold (in this order)
-     */
-    uint16_t* findDepthThresholds(Image4D& face);
 
     /**
      * @brief detectForegroundFace detects the nearest face in the image
