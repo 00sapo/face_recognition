@@ -123,7 +123,7 @@ namespace test {
     void testDetectFacePose()
     {
         cout << "\n\nDetect face pose..." << endl;
-        Image4DLoader loader("../RGBD_Face_dataset_training/", "000.*");
+        Image4DLoader loader("../RGBD_Face_dataset_training/", "02[0-5].*");
 
         auto images = loader.get();
         if (images.empty()) {
@@ -150,7 +150,9 @@ namespace test {
         }
 
         cout << cropped << " images cropped out of " << images.size() << endl;
+        /*
         system("read -p 'Press [enter] to continue'");
+    */
     }
 
     void testBackgroundRemoval()

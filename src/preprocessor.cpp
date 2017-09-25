@@ -48,7 +48,7 @@ vector<Face> Preprocessor::preprocess(vector<Image4D>& images)
     std::cout << "Preprocessing... " << std::endl;
     for (auto& face : images) {
         vector<threshold> thresholds;
-        findDepthThresholds(face, thresholds, 4);
+        findDepthThresholds(face, thresholds, 1);
         for (auto th : thresholds) {
             Vec3f position, eulerAngles;
 
@@ -62,8 +62,9 @@ vector<Face> Preprocessor::preprocess(vector<Image4D>& images)
                 croppedFaces.emplace_back(face, position, eulerAngles);
                 break;
             } else {
-                cv::imshow(face.getName(), face.depthMap);
-                cv::waitKey(0);
+                //                cv::normalize(face.depthMap, face.depthMap, 0, 255, cv::NORM_MINMAX);
+                //                cv::imshow(face.getName(), face.depthMap);
+                //                cv::waitKey(0);
                 //                std::cout << "cropping failed in " << face.getName() << "! Retrying with new thresholds..." << std::endl;
                 face.depthMap = copyDepth.clone();
             }
@@ -135,21 +136,21 @@ void Preprocessor::findDepthThresholds(Image4D& image4d, std::vector<threshold>&
     std::sort(depthCopy.begin<uint16_t>(), depthCopy.end<uint16_t>());
 
     float prevFreq = 0, minInterestingFreq = 0;
-    float freq = 0, localMaxFreq = 0;
+    float freq = 1, localMaxFreq = 0;
     float prevDiff = 0;
     threshold newTh = { 0, 0, 0 };
     //    uint16_t minTh = 0, temp = 0;
 
     for (uint16_t* p = (uint16_t*)depthCopy.data + 1; p <= (uint16_t*)depthCopy.dataend; p++) {
         uint16_t value = *p;
-        if (isnan(value) || value <= 5 || value <= newTh.maxTh) {
+        if (isnan(value) || value <= 5) {
             /* filtering everything useless */
             continue;
         }
-        if (value >= max / 2)
+        if (value >= max / 2.f)
             break;
 
-        if (value == *(p - 1)) {
+        if (value <= *(p - 1) + 2 && value >= *(p - 1) - 2) {
             freq++;
         } else {
             /* since depthCopy has been ordered, we have just counted the number of equal values */
@@ -165,13 +166,13 @@ void Preprocessor::findDepthThresholds(Image4D& image4d, std::vector<threshold>&
                 /* we are in a saddle point (punto di sella) */
                 /* memorizing new threshold found */
                 newTh.freq = localMaxFreq;
-                newTh.minTh = newTh.maxTh;
-                newTh.maxTh = value + 300;
+                newTh.minTh = newTh.maxTh == 0 ? 0 : newTh.maxTh - 150;
+                newTh.maxTh = value + 150;
                 //                if (newTh.minTh != 0) {
                 //                temp = newTh.maxTh;
                 if (interestingThs.size() < k)
                     interestingThs.push_back(newTh);
-                else if (localMaxFreq >= minInterestingFreq) {
+                else if (localMaxFreq > minInterestingFreq) {
                     //find least frequent value
                     int pos = findLeastFreqTh(interestingThs);
                     // updating it
