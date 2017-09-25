@@ -17,12 +17,12 @@
 #include "settings.h"
 #include "svmmodel.h"
 
+using cv::Mat;
+using cv::waitKey;
 using std::cout;
 using std::endl;
 using std::string;
 using std::vector;
-using cv::Mat;
-using cv::waitKey;
 
 namespace face {
 
@@ -123,7 +123,7 @@ namespace test {
     void testDetectFacePose()
     {
         cout << "\n\nDetect face pose..." << endl;
-        Image4DLoader loader("../RGBD_Face_dataset_training/", ".*");
+        Image4DLoader loader("../RGBD_Face_dataset_training/", "000.*");
 
         auto images = loader.get();
         if (images.empty()) {

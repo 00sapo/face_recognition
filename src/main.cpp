@@ -39,5 +39,5 @@ void testFunctions()
     //
     //    face::test::testBackgroundRemoval();
 
-    cout << "\n\nTests finished!" << endl;
+    std::cout << "\n\nTests finished!" << std::endl;
 }

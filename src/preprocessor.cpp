@@ -5,9 +5,9 @@
 #include "face.h"
 #include "image4d.h"
 
+using cv::Vec3f;
 using std::string;
 using std::vector;
-using cv::Vec3f;
 
 namespace face {
 
@@ -48,7 +48,7 @@ vector<Face> Preprocessor::preprocess(vector<Image4D>& images)
     std::cout << "Preprocessing... " << std::endl;
     for (auto& face : images) {
         vector<threshold> thresholds;
-        findDepthThresholds(face, thresholds, 2);
+        findDepthThresholds(face, thresholds, 4);
         for (auto th : thresholds) {
             Vec3f position, eulerAngles;
 
@@ -62,6 +62,8 @@ vector<Face> Preprocessor::preprocess(vector<Image4D>& images)
                 croppedFaces.emplace_back(face, position, eulerAngles);
                 break;
             } else {
+                cv::imshow(face.getName(), face.depthMap);
+                cv::waitKey(0);
                 //                std::cout << "cropping failed in " << face.getName() << "! Retrying with new thresholds..." << std::endl;
                 face.depthMap = copyDepth.clone();
             }
@@ -135,11 +137,12 @@ void Preprocessor::findDepthThresholds(Image4D& image4d, std::vector<threshold>&
     float prevFreq = 0, minInterestingFreq = 0;
     float freq = 0, localMaxFreq = 0;
     float prevDiff = 0;
-    uint16_t minTh = 0.0, maxTh = 0.0;
+    threshold newTh = { 0, 0, 0 };
+    //    uint16_t minTh = 0, temp = 0;
 
     for (uint16_t* p = (uint16_t*)depthCopy.data + 1; p <= (uint16_t*)depthCopy.dataend; p++) {
         uint16_t value = *p;
-        if (isnan(value) || value <= 5) {
+        if (isnan(value) || value <= 5 || value <= newTh.maxTh) {
             /* filtering everything useless */
             continue;
         }
@@ -155,14 +158,17 @@ void Preprocessor::findDepthThresholds(Image4D& image4d, std::vector<threshold>&
             float diff = freq - prevFreq;
             prevFreq = freq;
 
+            if (freq > localMaxFreq)
+                localMaxFreq = freq;
+
             if (diff >= 0 && prevDiff <= 0) {
                 /* we are in a saddle point (punto di sella) */
                 /* memorizing new threshold found */
-                threshold newTh;
                 newTh.freq = localMaxFreq;
-                newTh.maxTh = value + 150;
-                newTh.minTh = maxTh - 150;
-                maxTh = newTh.freq;
+                newTh.minTh = newTh.maxTh;
+                newTh.maxTh = value + 300;
+                //                if (newTh.minTh != 0) {
+                //                temp = newTh.maxTh;
                 if (interestingThs.size() < k)
                     interestingThs.push_back(newTh);
                 else if (localMaxFreq >= minInterestingFreq) {
@@ -174,11 +180,9 @@ void Preprocessor::findDepthThresholds(Image4D& image4d, std::vector<threshold>&
                     pos = findLeastFreqTh(interestingThs);
                     minInterestingFreq = interestingThs.at(pos).freq;
                     localMaxFreq = 0;
+                    //                    }
                 }
             }
-
-            if (freq > localMaxFreq)
-                localMaxFreq = freq;
 
             prevDiff = diff;
             freq = 1;

@@ -2,7 +2,6 @@
 #define FACE_PREPROCESSOR_H
 
 #include <atomic>
-#include <c++/7.1.1/bits/stl_iterator_base_types.h>
 #include <mutex>
 #include <opencv2/objdetect.hpp>
 
