@@ -159,12 +159,6 @@ void CovarianceComputer::setToCovariance(const vector<const Face*>& set, Mat &im
         }
     }
 
-    std::cout << "Image block size: " << imageBlocks.size() << std::endl;
-    std::cout << "Depth block size: " << depthBlocks.size() << std::endl;
-
-    //cv::calcCovarMatrix(imageBlocks, imageCovariance, imageMean, cv::COVAR_NORMAL, CV_32FC1);
-    //cv::calcCovarMatrix(depthBlocks, depthCovariance, depthMean, cv::COVAR_NORMAL, CV_32FC1);
-
     imageCovariance = Mat(16,16,CV_32FC1);
     depthCovariance = Mat(16,16,CV_32FC1);
 
@@ -183,11 +177,5 @@ void CovarianceComputer::setToCovariance(const vector<const Face*>& set, Mat &im
     return;
 }
 
-/*
-void PoseManager::addPoseData(const Pose &pose)
-{
-    posesData.push_back(pose);
-}
-*/
 
 } // namespace face

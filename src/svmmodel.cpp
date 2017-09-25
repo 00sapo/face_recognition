@@ -82,6 +82,8 @@ SVMmodel::SVMmodel()
     svm = ml::SVM::create();
     svm->setCustomKernel(new SteinKernel(1));
     svm->setType(ml::SVM::C_SVC);
+    svm->setC(1);
+    svm->setTermCriteria(cv::TermCriteria(cv::TermCriteria::MAX_ITER, 100, 1e-6));
 
 }
 
@@ -91,52 +93,38 @@ SVMmodel::SVMmodel(const std::string &filename)
         std::cout << "Error. Failed loading pretrained SVM model." << std::endl;
 }
 
-float SVMmodel::predict(cv::InputArray samples, cv::OutputArray results, int flags) const
+float SVMmodel::predict(cv::InputArray &samples) const
 {
-    return svm->predict(samples/*, results, flags*/);
+    Mat res;
+    svm->predict(samples, res);
+    return res.at<float>(0);
 }
 
 
-bool SVMmodel::train(const vector<Mat> targetPerson, const vector<Mat> &otherPeople)
+bool SVMmodel::train(const std::vector<cv::Mat> &targetPerson, const vector<Mat> &otherPeople)
 {
-    std::cout << "conversion from vector<Mat> to Mat..." << std::endl;
-    const auto personSize = targetPerson.size();
-    const auto samples  = personSize + otherPeople.size();
-    const auto features = targetPerson[0].rows * targetPerson[0].cols;
-
-    Mat data(samples, features, CV_32FC1);
-    Mat labels(samples, 1, CV_32SC1);
-
-    std::cout << "  fill data rows with targetPerson" << std::endl;
-    for (auto i = 0; i < personSize; ++i) {
-        auto iter = targetPerson[i].begin<float>();
-        for (auto j = 0; j < features; ++j, ++iter) {
-            data.at<float>(i,j) = *iter;
-        }
-        labels.at<float>(i,0) = 1;
-    }
-
-    std::cout << "  fill data rows with otherPeople" << std::endl;
-    for (auto i = personSize; i < samples; ++i) {
-        auto iter = otherPeople[i-personSize].begin<float>();
-        for (auto j = 0; j < features; ++j, ++iter) {
-            data.at<float>(i,j) = *iter;
-        }
-        labels.at<float>(i,0) = -1;
-    }
-
-    std::cout << "Training..." << std::endl;
-
-    auto trainData = ml::TrainData::create(data, ml::ROW_SAMPLE, labels);
-    auto result = svm->train(trainData);
-
-    return result;
+    auto trainData = formatDataForTraining(targetPerson, otherPeople);
+    return svm->train(trainData);
 }
 
-bool SVMmodel::trainAuto(const vector<Mat> &targetPerson, const vector<Mat> &otherPeople, int kFold,
-                         ml::ParamGrid gammaGrid)
+bool SVMmodel::trainAuto(const vector<Mat> &targetPerson, const vector<Mat> &otherPeople,
+                         const ml::ParamGrid &gammaGrid, const ml::ParamGrid &CGrid)
 {
+    auto trainData = formatDataForTraining(targetPerson, otherPeople);
 
+    double bestGamma, bestC;
+    float bestScore = 0;
+    for (auto gamma = gammaGrid.minVal; gamma < gammaGrid.maxVal; gamma *= gammaGrid.logStep) {
+        svm->setCustomKernel(new SteinKernel(gamma));
+        for (auto C = CGrid.minVal; C < CGrid.maxVal; C *= CGrid.logStep) {
+           svm->setC(C);
+           svm->train(trainData);
+           if (bestScore < evaluate(targetPerson,vector<int>())) {
+               bestGamma = gamma;
+               bestC = C;
+           }
+        }
+    }
 }
 
 bool SVMmodel::load(const std::string &filename)
@@ -145,9 +133,49 @@ bool SVMmodel::load(const std::string &filename)
     return svm != nullptr;
 }
 
-void SVMmodel::save(const std::string &filename)
+void SVMmodel::save(const std::string &filename) const
 {
     svm->save(filename);
+}
+
+cv::Ptr<ml::TrainData> SVMmodel::formatDataForTraining(const vector<Mat> &targetPerson,
+                                                       const vector<Mat> &otherPeople) const
+{
+    std::cout << "conversion from vector<Mat> to Mat..." << std::endl;
+    const auto personSize = targetPerson.size();
+    const auto samples  = personSize + otherPeople.size();
+    const auto features = targetPerson[0].rows * targetPerson[0].cols;
+
+    Mat data(samples, features, CV_32FC1);
+
+    vector<int> lab;
+
+    std::cout << "  fill data rows with targetPerson" << std::endl;
+    for (auto i = 0; i < personSize; ++i) {
+        auto iter = targetPerson[i].begin<float>();
+        for (auto j = 0; j < features; ++j, ++iter) {
+            data.at<float>(i,j) = *iter;
+        }
+        lab.push_back(1);
+    }
+
+    std::cout << "  fill data rows with otherPeople" << std::endl;
+    for (auto i = personSize; i < samples; ++i) {
+        auto iter = otherPeople[i-personSize].begin<float>();
+        for (auto j = 0; j < features; ++j, ++iter) {
+            data.at<float>(i,j) = *iter;
+        }
+        lab.push_back(-1);
+    }
+
+    Mat labels(lab,true);
+
+    return ml::TrainData::create(data, ml::ROW_SAMPLE, labels);
+}
+
+float SVMmodel::evaluate(cv::InputArray &validationData, const std::vector<int> &groundTruth)
+{
+    return 0;
 }
 
 
