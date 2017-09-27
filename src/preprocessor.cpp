@@ -66,7 +66,7 @@ vector<Face> Preprocessor::preprocess(vector<Image4D>& images)
                 //                cv::imshow(face.getName(), face.depthMap);
                 //                cv::waitKey(0);
                 //                std::cout << "cropping failed in " << face.getName() << "! Retrying with new thresholds..." << std::endl;
-                face.depthMap = copyDepth.clone();
+                //                face.depthMap = copyDepth.clone();
             }
             croppedFaces.emplace_back(face, position, eulerAngles);
         }
@@ -150,7 +150,7 @@ void Preprocessor::findDepthThresholds(Image4D& image4d, std::vector<threshold>&
         if (value >= max / 2.f)
             break;
 
-        if (value <= *(p - 1) + 2 && value >= *(p - 1) - 2) {
+        if (value == *(p - 1)) {
             freq++;
         } else {
             /* since depthCopy has been ordered, we have just counted the number of equal values */
@@ -162,11 +162,11 @@ void Preprocessor::findDepthThresholds(Image4D& image4d, std::vector<threshold>&
             if (freq > localMaxFreq)
                 localMaxFreq = freq;
 
-            if (diff >= 0 && prevDiff <= 0) {
+            if (diff >= 0 && prevDiff <= -0) {
                 /* we are in a saddle point (punto di sella) */
                 /* memorizing new threshold found */
                 newTh.freq = localMaxFreq;
-                newTh.minTh = newTh.maxTh == 0 ? 0 : newTh.maxTh - 150;
+                newTh.minTh = newTh.maxTh == 0 ? 0 : newTh.maxTh - 250;
                 newTh.maxTh = value + 150;
                 //                if (newTh.minTh != 0) {
                 //                temp = newTh.maxTh;
@@ -199,10 +199,44 @@ void Preprocessor::findDepthThresholds(Image4D& image4d, std::vector<threshold>&
 
 bool Preprocessor::cropFace(Image4D& image4d, Vec3f& position, Vec3f& eulerAngles) const
 {
+
+    cv::Mat canny;
+    std::vector<std::vector<cv::Point>> contours;
+    // thresh is the threshold used for Canny filter: 2/5 of maximum representable (UINT16_MAX/2)
+    int thresh = 255;
+
+    //    cv::imshow("depth", image4d.depthMap);
+    //    cv::waitKey(0);
+    image4d.depthMap.convertTo(canny, CV_8UC1);
+    cv::blur(canny, canny, cv::Size(2, 2));
+    cv::Canny(canny, canny, 100, 200, 5);
+    cv::findContours(canny, contours, cv::RETR_LIST, cv::CHAIN_APPROX_SIMPLE, cv::Point(0, 0));
+    double max = 0;
+    vector<cv::Point> mainContour;
+    for (vector<cv::Point> contour : contours) {
+        //        double area = cvdeleting outside rect::contourArea(contour);
+        double perimeter = cv::arcLength(contour, true);
+        if (perimeter > max) {
+            max = perimeter;
+            mainContour = contour;
+        }
+    }
+    vector<cv::Point> contour_poly;
+    cv::Rect boundRect;
+
+    cv::approxPolyDP(cv::Mat(mainContour, CV_32S), contour_poly, 3, true);
+    boundRect = cv::boundingRect(cv::Mat(contour_poly));
+    cv::Mat mask = cv::Mat::zeros(image4d.getHeight(), image4d.getWidth(), CV_8U); // all 0
+    mask(boundRect) = 255;
+    cv::Mat image, depth;
+    image4d.depthMap.copyTo(depth, mask);
+    image4d.image.copyTo(image, mask);
+    image4d.image = image;
+    image4d.depthMap = depth;
+
     if (!estimateFacePose(image4d, position, eulerAngles)) {
         return false;
     }
-
     //    std::cout << "Face detected in " << image4d.getName() << std::endl;
 
     const auto HEIGHT = image4d.getHeight();

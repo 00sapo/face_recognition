@@ -123,7 +123,7 @@ namespace test {
     void testDetectFacePose()
     {
         cout << "\n\nDetect face pose..." << endl;
-        Image4DLoader loader("../RGBD_Face_dataset_training/", "02[0-5].*");
+        Image4DLoader loader("../RGBD_Face_dataset_training/", ".*");
 
         auto images = loader.get();
         if (images.empty()) {

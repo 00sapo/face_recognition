@@ -18,13 +18,13 @@
 
 #include "image4d.h"
 
-using std::cout;
-using std::endl;
-using std::vector;
-using std::string;
 using cv::Mat;
 using pcl::PointCloud;
 using pcl::PointXYZ;
+using std::cout;
+using std::endl;
+using std::string;
+using std::vector;
 
 namespace fs = boost::filesystem;
 
