@@ -1,36 +1,12 @@
 #include "svmmodel.h"
 
 namespace ml = cv::ml;
+
 using std::vector;
+using std::cout;
+using std::endl;
 using cv::Mat;
-/*
-namespace cv {
-namespace ml {
 
-struct SvmParams
-{
-    int         svmType;
-    int         kernelType;
-    double      gamma;
-    double      coef0;
-    double      degree;
-    double      C;
-    double      nu;
-    double      p;
-    Mat         classWeights;
-    TermCriteria termCrit;
-
-    SvmParams();
-
-    SvmParams( int _svmType, int _kernelType,
-            double _degree, double _gamma, double _coef0,
-            double _Con, double _nu, double _p,
-            const Mat& _classWeights, TermCriteria _termCrit );
-};
-
-}
-}
-*/
 
 
 namespace face {
@@ -84,7 +60,6 @@ SVMmodel::SVMmodel()
     svm->setType(ml::SVM::C_SVC);
     svm->setC(1);
     svm->setTermCriteria(cv::TermCriteria(cv::TermCriteria::MAX_ITER, 100, 1e-6));
-
 }
 
 SVMmodel::SVMmodel(const std::string &filename)
@@ -93,7 +68,7 @@ SVMmodel::SVMmodel(const std::string &filename)
         std::cout << "Error. Failed loading pretrained SVM model." << std::endl;
 }
 
-float SVMmodel::predict(cv::InputArray &samples) const
+float SVMmodel::predict(Mat &samples) const
 {
     Mat res;
     svm->predict(samples, res);
@@ -103,28 +78,57 @@ float SVMmodel::predict(cv::InputArray &samples) const
 
 bool SVMmodel::train(const std::vector<cv::Mat> &targetPerson, const vector<Mat> &otherPeople)
 {
-    auto trainData = formatDataForTraining(targetPerson, otherPeople);
+    auto trainMatrix = formatDataForTraining(targetPerson, otherPeople);
+    vector<int> labelsVector;
+    for (const auto &p : targetPerson) {
+        labelsVector.push_back(1);
+    }
+    for (const auto &o : otherPeople) {
+        labelsVector.push_back(-1);
+    }
+    auto trainData = ml::TrainData::create(trainMatrix, ml::ROW_SAMPLE, Mat(labelsVector, true));
     return svm->train(trainData);
 }
 
 bool SVMmodel::trainAuto(const vector<Mat> &targetPerson, const vector<Mat> &otherPeople,
                          const ml::ParamGrid &gammaGrid, const ml::ParamGrid &CGrid)
 {
-    auto trainData = formatDataForTraining(targetPerson, otherPeople);
+    auto trainMatrix    = formatDataForTraining(targetPerson, otherPeople);
+    auto validationData = trainMatrix(cv::Rect(0,targetPerson.size(),trainMatrix.cols, otherPeople.size()));
+
+    vector<int> labelsVector;
+    for (const auto &p : targetPerson) {
+        labelsVector.push_back(1);
+    }
+    for (const auto &o : otherPeople) {
+        labelsVector.push_back(-1);
+    }
+    Mat labels(labelsVector,true);
+
+    auto trainData = ml::TrainData::create(trainMatrix, ml::ROW_SAMPLE, labels);
 
     double bestGamma, bestC;
     float bestScore = 0;
     for (auto gamma = gammaGrid.minVal; gamma < gammaGrid.maxVal; gamma *= gammaGrid.logStep) {
         svm->setCustomKernel(new SteinKernel(gamma));
         for (auto C = CGrid.minVal; C < CGrid.maxVal; C *= CGrid.logStep) {
+           std::cout << "C = " << C << "; gamma = " << gamma << std::endl;
            svm->setC(C);
+           cout << "Training..." << endl;
            svm->train(trainData);
-           if (bestScore < evaluate(targetPerson,vector<int>())) {
+           cout << "Done!" << endl;
+           auto score = evaluate(validationData,
+                                 labels(cv::Rect(0,targetPerson.size(),1,otherPeople.size())));
+           cout << "Score: " << score << endl;
+           if (bestScore < score) {
                bestGamma = gamma;
                bestC = C;
            }
         }
     }
+
+    std::cout << "Best C: " << bestC << std::endl;
+    std::cout << "Best gamma: " << bestGamma << std::endl;
 }
 
 bool SVMmodel::load(const std::string &filename)
@@ -138,17 +142,28 @@ void SVMmodel::save(const std::string &filename) const
     svm->save(filename);
 }
 
-cv::Ptr<ml::TrainData> SVMmodel::formatDataForTraining(const vector<Mat> &targetPerson,
-                                                       const vector<Mat> &otherPeople) const
+Mat SVMmodel::formatDataForTraining(const vector<Mat> &targetPerson,
+                                    const vector<Mat> &otherPeople) const
 {
+    vector<Mat> trainingSamples;
+    trainingSamples.reserve(targetPerson.size() + otherPeople.size());
+    for (const auto &mat : targetPerson) {
+        trainingSamples.push_back(mat);
+    }
+    for (const auto &mat : otherPeople) {
+        trainingSamples.push_back(mat);
+    }
+
+/*
     std::cout << "conversion from vector<Mat> to Mat..." << std::endl;
     const auto personSize = targetPerson.size();
     const auto samples  = personSize + otherPeople.size();
     const auto features = targetPerson[0].rows * targetPerson[0].cols;
 
-    Mat data(samples, features, CV_32FC1);
+    //Mat data(samples, features, CV_32FC1);
 
-    vector<int> lab;
+
+
 
     std::cout << "  fill data rows with targetPerson" << std::endl;
     for (auto i = 0; i < personSize; ++i) {
@@ -167,15 +182,42 @@ cv::Ptr<ml::TrainData> SVMmodel::formatDataForTraining(const vector<Mat> &target
         }
         lab.push_back(-1);
     }
-
-    Mat labels(lab,true);
-
-    return ml::TrainData::create(data, ml::ROW_SAMPLE, labels);
+*/
+    return matVectorToMat(trainingSamples);
 }
 
-float SVMmodel::evaluate(cv::InputArray &validationData, const std::vector<int> &groundTruth)
+
+float SVMmodel::evaluate(Mat &validationData, const Mat &groundTruth)
 {
-    return 0;
+    assert(validationData.rows == groundTruth.rows &&
+           "Attention! Validation and ground truth arrays should be of the same size");
+
+    const int N = validationData.rows;
+    int correctClassification = 0;
+    for (int i = 0; i < N; ++i) {
+        auto row = validationData.row(i);
+        auto prediction = predict(row);
+        auto truth = float(groundTruth.at<int>(i,0));
+        if (prediction == truth)
+            ++correctClassification;
+    }
+
+    return correctClassification/N;
+}
+
+Mat SVMmodel::matVectorToMat(const vector<Mat> &data)
+{
+    const int height = data.size();
+    const int width  = data[0].rows * data[0].cols;
+    Mat matrix(height, width, data[0].type());
+    for (auto i = 0; i < height; ++i) {
+        auto iter = data[i].begin<float>();
+        for (auto j = 0; j < width; ++j, ++iter) {
+            matrix.at<float>(i,j) = *iter;
+        }
+    }
+
+    return matrix;
 }
 
 

@@ -49,6 +49,12 @@ namespace test {
         cout << "Computing covariances for 000..." << endl;
         auto facesCovar_000    = covar.computeCovarianceRepresentation(faces_000, 5);
         cout << "Computing covariances for others..." << endl;
+
+        // FIXME? in this way we have a statistical representation of all the faces
+        // which are not the target face. Is it correct? Maybe the model would be
+        // more descriptive if every identity has its own covariance matrixes.
+        // This has two advantages: first the covariances are more specific
+        // and second the training set is much bigger.
         auto facesCovar_others = covar.computeCovarianceRepresentation(faces_others, 5);
 
         vector<Mat> imageCovar_000, imageCovar_others;
@@ -66,9 +72,9 @@ namespace test {
         cout << "Creating SVM model..." << endl;
         SVMmodel model;
         cout << "Training model..." << endl;
-        model.train(depthCovar_000, depthCovar_others);
+        model.trainAuto(depthCovar_000, depthCovar_others);
         cout << "Done!" << endl;
-
+/*
         vector<float> results;
 
         Mat sample(1,256, CV_32FC1);
@@ -88,6 +94,7 @@ namespace test {
 
         for (auto i : results)
             cout << i << endl;
+            */
 
     }
 
