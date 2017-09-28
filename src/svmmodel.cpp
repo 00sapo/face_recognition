@@ -24,7 +24,7 @@ public:
 
     /**
      * @brief cv::ml::SVM::Kernel::calc compute the Stein kernel function.
-     *        It uses only gamma parameter
+     *        It uses only sigma parameter
      * @param vcount number of samples (matrixes in our case)
      * @param n length of sample (# of matrixes elements in our case)
      * @param x one of the input sample
@@ -56,7 +56,9 @@ public:
 SVMmodel::SVMmodel()
 {
     svm = ml::SVM::create();
-    svm->setCustomKernel(new SteinKernel(1));
+    kernel = cv::Ptr<SteinKernel>(1);
+
+    svm->setCustomKernel(kernel);
     svm->setType(ml::SVM::C_SVC);
     svm->setC(1);
     svm->setTermCriteria(cv::TermCriteria(cv::TermCriteria::MAX_ITER, 100, 1e-6));
@@ -90,7 +92,7 @@ bool SVMmodel::train(const std::vector<cv::Mat> &targetPerson, const vector<Mat>
     return svm->train(trainData);
 }
 
-bool SVMmodel::trainAuto(const vector<Mat> &targetPerson, const vector<Mat> &otherPeople,
+SteinKernelParams SVMmodel::trainAuto(const vector<Mat> &targetPerson, const vector<Mat> &otherPeople,
                          const ml::ParamGrid &gammaGrid, const ml::ParamGrid &CGrid)
 {
     auto trainMatrix    = formatDataForTraining(targetPerson, otherPeople);
@@ -110,10 +112,10 @@ bool SVMmodel::trainAuto(const vector<Mat> &targetPerson, const vector<Mat> &oth
     double bestGamma, bestC;
     float bestScore = 0;
     for (auto gamma = gammaGrid.minVal; gamma < gammaGrid.maxVal; gamma *= gammaGrid.logStep) {
-        svm->setCustomKernel(new SteinKernel(gamma));
+        setGamma(gamma);
         for (auto C = CGrid.minVal; C < CGrid.maxVal; C *= CGrid.logStep) {
            std::cout << "C = " << C << "; gamma = " << gamma << std::endl;
-           svm->setC(C);
+           setC(C);
            cout << "Training..." << endl;
            svm->train(trainData);
            cout << "Done!" << endl;
@@ -129,6 +131,8 @@ bool SVMmodel::trainAuto(const vector<Mat> &targetPerson, const vector<Mat> &oth
 
     std::cout << "Best C: " << bestC << std::endl;
     std::cout << "Best gamma: " << bestGamma << std::endl;
+
+    return SteinKernelParams(bestC, bestGamma);
 }
 
 bool SVMmodel::load(const std::string &filename)
@@ -142,6 +146,27 @@ void SVMmodel::save(const std::string &filename) const
     svm->save(filename);
 }
 
+
+void SVMmodel::setC(float C)
+{
+    svm->setC(C);
+}
+
+void SVMmodel::setGamma(float gamma)
+{
+    svm->setCustomKernel(new SteinKernel(gamma));
+}
+
+void SVMmodel::setParams(const SteinKernelParams &params)
+{
+    setC(params.C);
+    setGamma(params.gamma);
+}
+
+
+
+
+
 Mat SVMmodel::formatDataForTraining(const vector<Mat> &targetPerson,
                                     const vector<Mat> &otherPeople) const
 {
@@ -154,35 +179,6 @@ Mat SVMmodel::formatDataForTraining(const vector<Mat> &targetPerson,
         trainingSamples.push_back(mat);
     }
 
-/*
-    std::cout << "conversion from vector<Mat> to Mat..." << std::endl;
-    const auto personSize = targetPerson.size();
-    const auto samples  = personSize + otherPeople.size();
-    const auto features = targetPerson[0].rows * targetPerson[0].cols;
-
-    //Mat data(samples, features, CV_32FC1);
-
-
-
-
-    std::cout << "  fill data rows with targetPerson" << std::endl;
-    for (auto i = 0; i < personSize; ++i) {
-        auto iter = targetPerson[i].begin<float>();
-        for (auto j = 0; j < features; ++j, ++iter) {
-            data.at<float>(i,j) = *iter;
-        }
-        lab.push_back(1);
-    }
-
-    std::cout << "  fill data rows with otherPeople" << std::endl;
-    for (auto i = personSize; i < samples; ++i) {
-        auto iter = otherPeople[i-personSize].begin<float>();
-        for (auto j = 0; j < features; ++j, ++iter) {
-            data.at<float>(i,j) = *iter;
-        }
-        lab.push_back(-1);
-    }
-*/
     return matVectorToMat(trainingSamples);
 }
 

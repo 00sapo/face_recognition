@@ -7,6 +7,20 @@
 namespace face {
 
 
+class SteinKernel;
+
+struct SteinKernelParams {
+
+    SteinKernelParams() : C(1), gamma(1) { }
+    SteinKernelParams(float C, float gamma) : C(C), gamma(gamma) {}
+
+    float C;
+    float gamma;
+};
+
+/**
+ * @brief The SVMmodel class is a Stein kernel SVM model
+ */
 class SVMmodel
 {
 public:
@@ -15,14 +29,28 @@ public:
 
     float predict(cv::Mat &samples) const;
 
-    bool train    (const std::vector<cv::Mat> &targetPerson, const std::vector<cv::Mat> &otherPeople);
+    bool train(const std::vector<cv::Mat> &targetPerson, const std::vector<cv::Mat> &otherPeople);
 
-    bool trainAuto(const std::vector<cv::Mat> &targetPerson, const std::vector<cv::Mat> &otherPeople,
-                   const cv::ml::ParamGrid &gammaGrid = cv::ml::SVM::getDefaultGrid(cv::ml::SVM::GAMMA),
-                   const cv::ml::ParamGrid &CGrid     = cv::ml::SVM::getDefaultGrid(cv::ml::SVM::C));
+    /**
+     * @brief trainAuto automatically chooses the best values for C and sigma parameters
+     *        performing a grid search (without cross validation because of the small number of
+     *        positive samples)
+     * @param targetPerson
+     * @param otherPeople
+     * @param gammaGrid
+     * @param CGrid
+     * @return
+     */
+    SteinKernelParams trainAuto(const std::vector<cv::Mat> &targetPerson, const std::vector<cv::Mat> &otherPeople,
+                                const cv::ml::ParamGrid &gammaGrid = cv::ml::SVM::getDefaultGrid(cv::ml::SVM::GAMMA),
+                                const cv::ml::ParamGrid &CGrid     = cv::ml::SVM::getDefaultGrid(cv::ml::SVM::C));
 
     bool load(const std::string &filename);
     void save(const std::string &filename) const;
+
+    void setC(float C);
+    void setGamma(float gamma);
+    void setParams(const SteinKernelParams &params);
 
     static cv::Mat matVectorToMat(const std::vector<cv::Mat> &data);
 
@@ -30,7 +58,7 @@ private:
     cv::Ptr<cv::ml::SVM> svm;
 
     cv::Mat formatDataForTraining(const std::vector<cv::Mat> &targetPerson,
-                                                     const std::vector<cv::Mat> &otherPeople) const;
+                                  const std::vector<cv::Mat> &otherPeople) const;
 
     /**
      * @brief evaluates the trained svm accuracy
