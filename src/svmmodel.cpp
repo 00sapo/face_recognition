@@ -56,9 +56,8 @@ public:
 SVMmodel::SVMmodel()
 {
     svm = ml::SVM::create();
-    kernel = cv::Ptr<SteinKernel>(1);
 
-    svm->setCustomKernel(kernel);
+    svm->setCustomKernel(new SteinKernel(1));
     svm->setType(ml::SVM::C_SVC);
     svm->setC(1);
     svm->setTermCriteria(cv::TermCriteria(cv::TermCriteria::MAX_ITER, 100, 1e-6));

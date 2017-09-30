@@ -32,47 +32,46 @@ namespace test {
         string dirPath = "../RGBD_Face_dataset_training/";
         Image4DLoader loader(dirPath, "000_.*");
 
-        cout << "Loading first identity 4D images..." << endl;
-        auto images4d_000 = loader.get();
+        vector<vector<Image4D>> identities;
+        for (int i = 0; i <= 25; ++i) {
+            string fileNameRegEx = i/10 >= 1 ? "0" : "00";
+            fileNameRegEx += std::to_string(i) + "_.*";
 
-        loader.setFileNameRegEx("00[1-9]_.*");
-        cout << "Loading other identity 4D images..." << endl;
-        auto images4d_others = loader.get();
+            loader.setFileNameRegEx(fileNameRegEx);
+            identities.push_back(loader.get());
+        }
 
         Preprocessor preproc;
-        cout << "Preprocessing 000..." << endl;
-        auto faces_000    = preproc.preprocess(images4d_000);
-        cout << "Preprocessing others..." << endl;
-        auto faces_others = preproc.preprocess(images4d_others);
+        cout << "Preprocessing..." << endl;
+
+        vector<vector<Face>> faces;
+        for (auto &id : identities) {
+            faces.push_back(preproc.preprocess(id));
+        }
 
         CovarianceComputer covar;
         cout << "Computing covariances for 000..." << endl;
-        auto facesCovar_000    = covar.computeCovarianceRepresentation(faces_000, 5);
-        cout << "Computing covariances for others..." << endl;
-
-        // FIXME? in this way we have a statistical representation of all the faces
-        // which are not the target face. Is it correct? Maybe the model would be
-        // more descriptive if every identity has its own covariance matrixes.
-        // This has two advantages: first the covariances are more specific
-        // and second the training set is much bigger.
-        auto facesCovar_others = covar.computeCovarianceRepresentation(faces_others, 5);
-
-        vector<Mat> imageCovar_000, imageCovar_others;
-        vector<Mat> depthCovar_000, depthCovar_others;
-        for (auto &pair : facesCovar_000) {
-            imageCovar_000.push_back(pair.first);
-            depthCovar_000.push_back(pair.second);
+        vector<vector<Mat>> depthCovariances;
+        for (const auto &face : faces) {
+            auto pairs = covar.computeCovarianceRepresentation(face, 3);
+            vector<Mat> depth;
+            for (auto &pair : pairs) {
+                depth.push_back(pair.second);
+            }
+            depthCovariances.push_back(depth);
         }
 
-        for (auto &pair : facesCovar_others) {
-            imageCovar_others.push_back(pair.first);
-            depthCovar_others.push_back(pair.second);
+        vector<Mat> others;
+        for (int  i = 1; i <= 25; ++i) {
+            for (auto &depth : depthCovariances[i]) {
+                others.push_back(depth);
+            }
         }
 
         cout << "Creating SVM model..." << endl;
         SVMmodel model;
         cout << "Training model..." << endl;
-        model.trainAuto(depthCovar_000, depthCovar_others);
+        model.trainAuto(depthCovariances[0], others);
         cout << "Done!" << endl;
 /*
         vector<float> results;
