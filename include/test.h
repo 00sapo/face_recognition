@@ -5,8 +5,8 @@
 #include <vector>
 
 #include <opencv2/highgui.hpp>
-#include <opencv2/opencv.hpp>
 #include <opencv2/ml.hpp>
+#include <opencv2/opencv.hpp>
 
 #include "covariancecomputer.h"
 #include "face.h"
@@ -17,24 +17,26 @@
 #include "settings.h"
 #include "svmmodel.h"
 
+using cv::Mat;
+using cv::waitKey;
 using std::cout;
 using std::endl;
 using std::string;
 using std::vector;
-using cv::Mat;
-using cv::waitKey;
 
 namespace face {
 
 namespace test {
 
-    void testSVM() {
+    void testSVM()
+    {
         string dirPath = "../RGBD_Face_dataset_training/";
         Image4DLoader loader(dirPath, "000_.*");
 
         vector<vector<Image4D>> identities;
+        /* why not using a simple regex? */
         for (int i = 0; i <= 25; ++i) {
-            string fileNameRegEx = i/10 >= 1 ? "0" : "00";
+            string fileNameRegEx = i / 10 >= 1 ? "0" : "00";
             fileNameRegEx += std::to_string(i) + "_.*";
 
             loader.setFileNameRegEx(fileNameRegEx);
@@ -45,26 +47,26 @@ namespace test {
         cout << "Preprocessing..." << endl;
 
         vector<vector<Face>> faces;
-        for (auto &id : identities) {
+        for (auto& id : identities) {
             faces.push_back(preproc.preprocess(id));
         }
 
         CovarianceComputer covar;
         cout << "Computing covariances for 000..." << endl;
         vector<vector<Mat>> depthCovariances;
-        for (const auto &face : faces) {
+        for (const auto& face : faces) {
             auto pairs = covar.computeCovarianceRepresentation(face, 3);
             vector<Mat> depth;
-            for (auto &pair : pairs) {
-                depth.push_back(pair.first);    // using grayscale image
+            for (auto& pair : pairs) {
+                depth.push_back(pair.first); // using grayscale image
                 //depth.push_back(pair.second);
             }
             depthCovariances.push_back(depth);
         }
 
         vector<Mat> others;
-        for (int  i = 1; i <= 25; ++i) {
-            for (auto &depth : depthCovariances[i]) {
+        for (int i = 1; i <= 25; ++i) {
+            for (auto& depth : depthCovariances[i]) {
                 Mat normalized;
                 cv::normalize(depth, normalized);
                 others.push_back(normalized);
@@ -104,10 +106,7 @@ namespace test {
         for (auto i : results)
             cout << i << endl;
             */
-
     }
-
-
 
     cv::Vec3f randomEulerAngle()
     {
@@ -372,7 +371,7 @@ void testPoseClustering()
         auto images4d = loader.get();
         cout << "Loaded " << images4d.size() << " images" << endl;
 
-        for (const auto &image4d : images4d) {
+        for (const auto& image4d : images4d) {
             cv::imshow("Image", image4d.image);
             cv::imshow("Depth map", image4d.depthMap);
             cv::waitKey(0);
@@ -382,13 +381,13 @@ void testPoseClustering()
         auto faces = preproc.preprocess(images4d);
         cout << "Extracted " << faces.size() << " faces from 4D images" << endl;
 
-        for (const auto &face : faces) {
+        for (const auto& face : faces) {
             cv::imshow("Image", face.image);
             cv::imshow("Depth map", face.depthMap);
             cv::waitKey(0);
         }
 
-/*
+        /*
         cout << "Computing covariances..." << endl;
         auto covariance = covComp.computeCovarianceRepresentation(faces, 3);
 

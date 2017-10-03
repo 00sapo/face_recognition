@@ -3,11 +3,11 @@
 #include "face.h"
 #include "lbp.h"
 
+using cv::Mat;
 using std::cout;
 using std::endl;
 using std::string;
 using std::vector;
-using cv::Mat;
 
 namespace face {
 
@@ -26,6 +26,7 @@ vector<std::pair<Mat, Mat>> CovarianceComputer::computeCovarianceRepresentation(
 
         // compute covariance representation of the set
         cout << "Set to covariance..." << endl;
+        /* Why not using OpenCV covariance computing function? */
         setToCovariance(cluster, imgCovariance, depthCovariance);
         covariances.emplace_back(imgCovariance, depthCovariance);
     }
@@ -105,7 +106,7 @@ int CovarianceComputer::getNearestCenterId(const Pose& pose, const vector<Pose>&
     return index;
 }
 
-void CovarianceComputer::setToCovariance(const vector<const Face*>& set, Mat &imageCovariance, Mat &depthCovariance) const
+void CovarianceComputer::setToCovariance(const vector<const Face*>& set, Mat& imageCovariance, Mat& depthCovariance) const
 {
     const int SET_SIZE = set.size();
     if (SET_SIZE == 0) {
@@ -150,32 +151,31 @@ void CovarianceComputer::setToCovariance(const vector<const Face*>& set, Mat &im
                 auto imageHist = OLBPHist(image);
                 auto depthHist = OLBPHist(depth);
 
-                imageBlocks[p + 4*q][i] = imageHist;
-                depthBlocks[p + 4*q][i] = depthHist;
+                imageBlocks[p + 4 * q][i] = imageHist;
+                depthBlocks[p + 4 * q][i] = depthHist;
 
-                imageMean.at<float>(p + 4*q, i) = mean(imageHist)[0];
-                depthMean.at<float>(p + 4*q, i) = mean(depthHist)[0];
+                imageMean.at<float>(p + 4 * q, i) = mean(imageHist)[0];
+                depthMean.at<float>(p + 4 * q, i) = mean(depthHist)[0];
             }
         }
     }
 
-    imageCovariance = Mat(16,16,CV_32FC1);
-    depthCovariance = Mat(16,16,CV_32FC1);
+    imageCovariance = Mat(16, 16, CV_32FC1);
+    depthCovariance = Mat(16, 16, CV_32FC1);
 
     for (int p = 0; p < 16; ++p) {
         for (int q = 0; q < 16; ++q) {
             float imageValue = 0, depthValue = 0;
             for (int i = 0; i < SET_SIZE; ++i) {
-                imageValue += (imageBlocks[p][i] - imageMean.at<float>(p,i)).dot(imageBlocks[q][i] - imageMean.at<float>(q,i));
-                depthValue += (depthBlocks[p][i] - depthMean.at<float>(p,i)).dot(depthBlocks[q][i] - depthMean.at<float>(q,i));
+                imageValue += (imageBlocks[p][i] - imageMean.at<float>(p, i)).dot(imageBlocks[q][i] - imageMean.at<float>(q, i));
+                depthValue += (depthBlocks[p][i] - depthMean.at<float>(p, i)).dot(depthBlocks[q][i] - depthMean.at<float>(q, i));
             }
-            imageCovariance.at<float>(p,q) = imageValue / SET_SIZE;
-            depthCovariance.at<float>(p,q) = depthValue / SET_SIZE;
+            imageCovariance.at<float>(p, q) = imageValue / SET_SIZE;
+            depthCovariance.at<float>(p, q) = depthValue / SET_SIZE;
         }
     }
 
     return;
 }
-
 
 } // namespace face

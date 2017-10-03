@@ -2,15 +2,12 @@
 
 namespace ml = cv::ml;
 
-using std::vector;
+using cv::Mat;
 using std::cout;
 using std::endl;
-using cv::Mat;
-
-
+using std::vector;
 
 namespace face {
-
 
 /**
  * @brief The SteinKernel class is a custom SVM kernel for
@@ -20,7 +17,10 @@ namespace face {
 class SteinKernel : public ml::SVM::Kernel {
 
 public:
-    SteinKernel(float gamma) : gamma(gamma) { }
+    SteinKernel(float gamma)
+        : gamma(gamma)
+    {
+    }
 
     /**
      * @brief calc computes the Stein kernel function.
@@ -34,16 +34,15 @@ public:
      */
     void calc(int N, int numOfFeatures, const float* samples, const float* x, float* results)
     {
-       Mat Y(16, 16, CV_32F, (void*)(x));
+        Mat Y(16, 16, CV_32F, (void*)(x));
 
         for (int i = 0; i < N; i++) {
             Mat X(16, 16, CV_32F, (void*)(samples + numOfFeatures * i));
             auto A = X + Y;
-            double   S = std::log10(cv::determinant(A / 2)) - std::log10(cv::determinant(X * Y)) / 2;
+            double S = std::log10(cv::determinant(A / 2)) - std::log10(cv::determinant(X * Y)) / 2;
             results[i] = std::exp(-gamma * S);
         }
     }
-
 
     int getType() const
     {
@@ -52,7 +51,6 @@ public:
 
     float gamma;
 };
-
 
 SVMmodel::SVMmodel()
 {
@@ -64,49 +62,48 @@ SVMmodel::SVMmodel()
     svm->setTermCriteria(cv::TermCriteria(cv::TermCriteria::MAX_ITER, 100, 1e-6));
 }
 
-SVMmodel::SVMmodel(const std::string &filename)
+SVMmodel::SVMmodel(const std::string& filename)
 {
-    if(!load(filename))
+    if (!load(filename))
         std::cout << "Error. Failed loading pretrained SVM model." << std::endl;
 }
 
-float SVMmodel::predict(Mat &samples) const
+float SVMmodel::predict(Mat& samples) const
 {
     Mat res;
     svm->predict(samples, res);
     return res.at<float>(0);
 }
 
-
-bool SVMmodel::train(const std::vector<cv::Mat> &targetPerson, const vector<Mat> &otherPeople)
+bool SVMmodel::train(const std::vector<cv::Mat>& targetPerson, const vector<Mat>& otherPeople)
 {
     auto trainMatrix = formatDataForTraining(targetPerson, otherPeople);
     vector<int> labelsVector;
-    for (const auto &p : targetPerson) {
+    for (const auto& p : targetPerson) {
         labelsVector.push_back(1);
     }
-    for (const auto &o : otherPeople) {
+    for (const auto& o : otherPeople) {
         labelsVector.push_back(-1);
     }
     auto trainData = ml::TrainData::create(trainMatrix, ml::ROW_SAMPLE, Mat(labelsVector, true));
     return svm->train(trainData);
 }
 
-SteinKernelParams SVMmodel::trainAuto(const vector<Mat> &targetPerson, const vector<Mat> &otherPeople,
-                         const ml::ParamGrid &gammaGrid, const ml::ParamGrid &CGrid)
+SteinKernelParams SVMmodel::trainAuto(const vector<Mat>& targetPerson, const vector<Mat>& otherPeople,
+    const ml::ParamGrid& gammaGrid, const ml::ParamGrid& CGrid)
 {
-    auto trainMatrix    = formatDataForTraining(targetPerson, otherPeople);
+    auto trainMatrix = formatDataForTraining(targetPerson, otherPeople);
     auto validationData = //trainMatrix(cv::Rect(0,0,trainMatrix.cols, targetPerson.size()));
-                          trainMatrix(cv::Rect(0,targetPerson.size(),trainMatrix.cols, otherPeople.size()));
+        trainMatrix(cv::Rect(0, targetPerson.size(), trainMatrix.cols, otherPeople.size()));
 
     vector<int> labelsVector;
-    for (const auto &p : targetPerson) {
+    for (const auto& p : targetPerson) {
         labelsVector.push_back(1);
     }
-    for (const auto &o : otherPeople) {
+    for (const auto& o : otherPeople) {
         labelsVector.push_back(-1);
     }
-    Mat labels(labelsVector,true);
+    Mat labels(labelsVector, true);
 
     auto trainData = ml::TrainData::create(trainMatrix, ml::ROW_SAMPLE, labels);
 
@@ -134,21 +131,20 @@ SteinKernelParams SVMmodel::trainAuto(const vector<Mat> &targetPerson, const vec
 
     std::cout << "Best C: " << bestC << std::endl;
     std::cout << "Best gamma: " << bestGamma << std::endl;
-
+    std::cout << "Best score: " << bestScore << std::endl;
     return SteinKernelParams(bestC, bestGamma);
 }
 
-bool SVMmodel::load(const std::string &filename)
+bool SVMmodel::load(const std::string& filename)
 {
     svm = ml::SVM::load(filename);
     return svm != nullptr;
 }
 
-void SVMmodel::save(const std::string &filename) const
+void SVMmodel::save(const std::string& filename) const
 {
     svm->save(filename);
 }
-
 
 void SVMmodel::setC(float C)
 {
@@ -160,43 +156,37 @@ void SVMmodel::setGamma(float gamma)
     svm->setCustomKernel(new SteinKernel(gamma));
 }
 
-void SVMmodel::setParams(const SteinKernelParams &params)
+void SVMmodel::setParams(const SteinKernelParams& params)
 {
     setC(params.C);
     setGamma(params.gamma);
 }
 
-
-
-
-
-Mat SVMmodel::formatDataForTraining(const vector<Mat> &targetPerson,
-                                    const vector<Mat> &otherPeople) const
+Mat SVMmodel::formatDataForTraining(const vector<Mat>& targetPerson,
+    const vector<Mat>& otherPeople) const
 {
     vector<Mat> trainingSamples;
     trainingSamples.reserve(targetPerson.size() + otherPeople.size());
-    for (const auto &mat : targetPerson) {
+    for (const auto& mat : targetPerson) {
         trainingSamples.push_back(mat);
     }
-    for (const auto &mat : otherPeople) {
+    for (const auto& mat : otherPeople) {
         trainingSamples.push_back(mat);
     }
 
     return matVectorToMat(trainingSamples);
 }
 
-
-float SVMmodel::evaluate(Mat &validationData, const Mat &groundTruth)
+float SVMmodel::evaluate(Mat& validationData, const Mat& groundTruth)
 {
-    assert(validationData.rows == groundTruth.rows &&
-           "Attention! Validation and ground truth arrays should be of the same size");
+    assert(validationData.rows == groundTruth.rows && "Attention! Validation and ground truth arrays should be of the same size");
 
     const int N = validationData.rows;
     int correctClassification = 0;
     for (int i = 0; i < N; ++i) {
         auto row = validationData.row(i);
         auto prediction = predict(row);
-        auto truth = float(groundTruth.at<int>(i,0));
+        auto truth = float(groundTruth.at<int>(i, 0));
         if (prediction == truth)
             ++correctClassification;
     }
@@ -204,20 +194,19 @@ float SVMmodel::evaluate(Mat &validationData, const Mat &groundTruth)
     return correctClassification / float(N);
 }
 
-Mat SVMmodel::matVectorToMat(const vector<Mat> &data)
+Mat SVMmodel::matVectorToMat(const vector<Mat>& data)
 {
     const int height = data.size();
-    const int width  = data[0].rows * data[0].cols;
+    const int width = data[0].rows * data[0].cols;
     Mat matrix(height, width, data[0].type());
     for (auto i = 0; i < height; ++i) {
         auto iter = data[i].begin<float>();
         for (auto j = 0; j < width; ++j, ++iter) {
-            matrix.at<float>(i,j) = *iter;
+            matrix.at<float>(i, j) = *iter;
         }
     }
 
     return matrix;
 }
 
-
-}   // namespace face
+} // namespace face
