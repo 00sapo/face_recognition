@@ -127,6 +127,7 @@ SteinKernelParams SVMmodel::trainAuto(const vector<Mat> &targetPerson, const vec
            if (bestScore < score) {
                bestGamma = gamma;
                bestC = C;
+               bestScore = score;
            }
         }
     }
