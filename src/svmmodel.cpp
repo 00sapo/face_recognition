@@ -23,23 +23,24 @@ public:
     SteinKernel(float gamma) : gamma(gamma) { }
 
     /**
-     * @brief cv::ml::SVM::Kernel::calc compute the Stein kernel function.
-     *        It uses only sigma parameter
-     * @param vcount number of samples (matrixes in our case)
-     * @param n length of sample (# of matrixes elements in our case)
-     * @param x one of the input sample
-     * @param y another input sample
+     * @brief calc computes the Stein kernel function.
+     *        results[i] = <h(x),h(samples[i])>, for i = 0,...,N-1
+     *        where <X,Y> denotes the inner product.
+     * @param N number of input samples (matrixes in our case)
+     * @param numOfFeatures length of sample (# of matrixes elements in our case)
+     * @param samples input samples
+     * @param x another input sample
      * @param results array of the results
      */
-    void calc(int vcount, int n, const float* x, const float* y, float* results)
+    void calc(int N, int numOfFeatures, const float* samples, const float* x, float* results)
     {
-       Mat Y(16, 16, CV_32F, (void*)y);
+       Mat Y(16, 16, CV_32F, (void*)(x));
 
-        for (int i = 0; i < vcount; i++) {
-            Mat X(16, 16, CV_32F, (void*)(x + n * i));
+        for (int i = 0; i < N; i++) {
+            Mat X(16, 16, CV_32F, (void*)(samples + numOfFeatures * i));
             auto A = X + Y;
-            double   s = std::log10(determinant(A * 0.5)) - 0.5 * std::log10(determinant(X * Y));
-            results[i] = std::exp(-gamma * s);
+            double   S = std::log10(cv::determinant(A / 2)) - std::log10(cv::determinant(X * Y)) / 2;
+            results[i] = std::exp(-gamma * S);
         }
     }
 
@@ -95,7 +96,8 @@ SteinKernelParams SVMmodel::trainAuto(const vector<Mat> &targetPerson, const vec
                          const ml::ParamGrid &gammaGrid, const ml::ParamGrid &CGrid)
 {
     auto trainMatrix    = formatDataForTraining(targetPerson, otherPeople);
-    auto validationData = trainMatrix(cv::Rect(0,targetPerson.size(),trainMatrix.cols, otherPeople.size()));
+    auto validationData = //trainMatrix(cv::Rect(0,0,trainMatrix.cols, targetPerson.size()));
+                          trainMatrix(cv::Rect(0,targetPerson.size(),trainMatrix.cols, otherPeople.size()));
 
     vector<int> labelsVector;
     for (const auto &p : targetPerson) {
@@ -119,6 +121,7 @@ SteinKernelParams SVMmodel::trainAuto(const vector<Mat> &targetPerson, const vec
            svm->train(trainData);
            cout << "Done!" << endl;
            auto score = evaluate(validationData,
+                                 //labels(cv::Rect(0,0,1,targetPerson.size())));
                                  labels(cv::Rect(0,targetPerson.size(),1,otherPeople.size())));
            cout << "Score: " << score << endl;
            if (bestScore < score) {
@@ -197,7 +200,7 @@ float SVMmodel::evaluate(Mat &validationData, const Mat &groundTruth)
             ++correctClassification;
     }
 
-    return correctClassification/N;
+    return correctClassification / float(N);
 }
 
 Mat SVMmodel::matVectorToMat(const vector<Mat> &data)

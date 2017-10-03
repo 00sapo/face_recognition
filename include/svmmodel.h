@@ -1,5 +1,5 @@
-#ifndef SVMMODEL_H
-#define SVMMODEL_H
+#ifndef FACE_SVMMODEL_H
+#define FACE_SVMMODEL_H
 
 #include <opencv2/ml.hpp>
 

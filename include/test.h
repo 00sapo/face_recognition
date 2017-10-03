@@ -56,7 +56,8 @@ namespace test {
             auto pairs = covar.computeCovarianceRepresentation(face, 3);
             vector<Mat> depth;
             for (auto &pair : pairs) {
-                depth.push_back(pair.second);
+                depth.push_back(pair.first);    // using grayscale image
+                //depth.push_back(pair.second);
             }
             depthCovariances.push_back(depth);
         }
@@ -64,14 +65,21 @@ namespace test {
         vector<Mat> others;
         for (int  i = 1; i <= 25; ++i) {
             for (auto &depth : depthCovariances[i]) {
-                others.push_back(depth);
+                Mat normalized;
+                cv::normalize(depth, normalized);
+                others.push_back(normalized);
             }
+        }
+
+        vector<Mat> person(depthCovariances[0].size());
+        for (int i = 0; i < depthCovariances[0].size(); ++i) {
+            cv::normalize(depthCovariances[0][i], person[i]);
         }
 
         cout << "Creating SVM model..." << endl;
         SVMmodel model;
         cout << "Training model..." << endl;
-        model.trainAuto(depthCovariances[0], others);
+        model.trainAuto(person, others);
         cout << "Done!" << endl;
 /*
         vector<float> results;
