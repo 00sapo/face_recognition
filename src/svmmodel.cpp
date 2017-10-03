@@ -1,4 +1,5 @@
 #include "svmmodel.h"
+#include "numeric"
 
 namespace ml = cv::ml;
 
@@ -107,32 +108,43 @@ SteinKernelParams SVMmodel::trainAuto(const vector<Mat>& targetPerson, const vec
 
     auto trainData = ml::TrainData::create(trainMatrix, ml::ROW_SAMPLE, labels);
 
-    double bestGamma, bestC;
+    vector<double> bestGamma, bestC;
     float bestScore = 0;
     for (auto gamma = gammaGrid.minVal; gamma < gammaGrid.maxVal; gamma *= gammaGrid.logStep) {
         setGamma(gamma);
         for (auto C = CGrid.minVal; C < CGrid.maxVal; C *= CGrid.logStep) {
-           std::cout << "C = " << C << "; gamma = " << gamma << std::endl;
-           setC(C);
-           cout << "Training..." << endl;
-           svm->train(trainData);
-           cout << "Done!" << endl;
-           auto score = evaluate(validationData,
-                                 //labels(cv::Rect(0,0,1,targetPerson.size())));
-                                 labels(cv::Rect(0,targetPerson.size(),1,otherPeople.size())));
-           cout << "Score: " << score << endl;
-           if (bestScore < score) {
-               bestGamma = gamma;
-               bestC = C;
-               bestScore = score;
-           }
+            std::cout << "C = " << C << "; gamma = " << gamma << std::endl;
+            setC(C);
+            cout << "Training..." << endl;
+            svm->train(trainData);
+            cout << "Done!" << endl;
+            auto score = evaluate(validationData,
+                //labels(cv::Rect(0,0,1,targetPerson.size())));
+                labels(cv::Rect(0, targetPerson.size(), 1, otherPeople.size())));
+            cout << "Score: " << score << endl;
+            if (bestScore < score) {
+                bestGamma = { gamma };
+                bestC = { C };
+                bestScore = score;
+            } else if (bestScore == score) {
+                bestC.push_back(C);
+                bestGamma.push_back(gamma);
+            }
         }
     }
+    double sum = std::accumulate(bestC.begin(), bestC.end(), 0.0);
+    double C = sum / bestC.size();
+    sum = std::accumulate(bestGamma.begin(), bestGamma.end(), 0.0);
+    double gamma = sum / bestGamma.size();
 
-    std::cout << "Best C: " << bestC << std::endl;
-    std::cout << "Best gamma: " << bestGamma << std::endl;
-    std::cout << "Best score: " << bestScore << std::endl;
-    return SteinKernelParams(bestC, bestGamma);
+    setC(C);
+    setGamma(gamma);
+    svm->train(trainData);
+    auto score = evaluate(validationData,
+        labels(cv::Rect(0, targetPerson.size(), 1, otherPeople.size())));
+
+    std::cout << "score obtained by avaraging best parameters: " << score << std::endl;
+    return SteinKernelParams(C, gamma);
 }
 
 bool SVMmodel::load(const std::string& filename)
