@@ -79,7 +79,7 @@ namespace test {
         }
 
         cout << "Creating SVM model..." << endl;
-        SVMmodel model;
+        SVMModel model;
         cout << "Training model..." << endl;
         auto optimalParams = model.trainAuto(person, others);
         cout << "Done!" << endl;

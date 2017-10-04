@@ -27,10 +27,10 @@ struct SteinKernelParams {
 /**
  * @brief The SVMmodel class is a Stein kernel SVM model
  */
-class SVMmodel {
+class SVMModel {
 public:
-    SVMmodel();
-    SVMmodel(const std::string& filename);
+    SVMModel();
+    SVMModel(const std::string& filename);
 
     float predict(cv::Mat& samples) const;
 
