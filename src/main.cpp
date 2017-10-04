@@ -15,7 +15,7 @@ void testFunctions()
 {
     //test::testSingletonSettings();
     //
-    //test::testFaceLoader();
+    //test::testImage4DLoader();
     //
     //test::testFindThreshold();
     //
@@ -23,9 +23,9 @@ void testFunctions()
     //
     //test::testKmeans();
     //
-    //test::testFaceDetection();
+    //face::test::testPreprocessing();
     //
-    test::testDetectFacePose();
+    //test::testLoadSpeed();
     //
     //test::testEulerAnglesToRotationMatrix();
     //
@@ -33,7 +33,13 @@ void testFunctions()
     //
     //test::testKmeans2();
     //
-    //test::covarianceTest();
+    //face::test::covarianceTest();
+    //
+    face::test::testSVM();
+    //
+    //face::test::covarianceTest();
+    //
+    //face::test::testBackgroundRemoval();
 
     cout << "\n\nTests finished!" << endl;
 }

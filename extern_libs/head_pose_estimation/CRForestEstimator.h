@@ -34,12 +34,12 @@ public:
                    float smaller_radius_ratio = 6.0, //for mean shift
                    bool verbose = false, //print out more info
                    int threshold = 400 //head threshold
-	);
+    ) const;
 
 
 private:
 
-	cv::Rect getBoundingBox(const cv::Mat& im3D);
+    cv::Rect getBoundingBox(const cv::Mat& im3D) const;
 
 	CRForest* crForest;
 

@@ -4,6 +4,8 @@
 
 using cv::Mat;
 
+namespace face {
+
 // ---------- constructors ----------
 
 Image4D::Image4D() : WIDTH(0), HEIGHT(0), DEPTH_IMG_RATIO(0)
@@ -17,22 +19,17 @@ Image4D::Image4D() : WIDTH(0), HEIGHT(0), DEPTH_IMG_RATIO(0)
     intrinsicMatrix.at<double>(2,2) = 1;
     intrinsicMatrix.at<double>(0,2) = WIDTH/2;
     intrinsicMatrix.at<double>(1,2) = HEIGHT/2;
-
-    //faceRegion = cv::Rect(0,0,1,1);
-    //meanDepth  = std::numeric_limits<float>::quiet_NaN();
 }
 
 
 Image4D::Image4D(Mat &image, Mat &depthMap, const Mat &intrinsicCameraMatrix)
-    : image(image), depthMap(depthMap), intrinsicMatrix(intrinsicCameraMatrix) {
-
+    : image(image), depthMap(depthMap)
+{
+    intrinsicCameraMatrix.copyTo(intrinsicMatrix);
     WIDTH  = depthMap.cols;
     HEIGHT = depthMap.rows;
 
     resizeImage();
-
-    //faceRegion = cv::Rect(0, 0, WIDTH, HEIGHT);
-    //meanDepth  = std::numeric_limits<float>::quiet_NaN();
 }
 
 
@@ -42,6 +39,12 @@ size_t Image4D::getWidth()  const { return WIDTH;  }
 size_t Image4D::getHeight() const { return HEIGHT; }
 size_t Image4D::getArea()   const { return WIDTH*HEIGHT;}
 float  Image4D::getDepthImageRatio() const { return DEPTH_IMG_RATIO; }
+Mat    Image4D::getIntrinsicMatrix() const
+{
+    Mat newIntrinsicMatrix;
+    intrinsicMatrix.copyTo(newIntrinsicMatrix);
+    return newIntrinsicMatrix;
+}
 
 Mat Image4D::get3DImage() const
 {
@@ -103,4 +106,6 @@ void Image4D::resizeImage()
     intrinsicMatrix.at<double>(1,2) *= DEPTH_IMG_RATIO;
 
     return;
+}
+
 }

@@ -1,436 +1,404 @@
-#ifndef TEST_H
-#define TEST_H
+#ifndef FACE_TEST_TEST_H
+#define FACE_TEST_TEST_H
 
+#include <chrono>
 #include <vector>
 
 #include <opencv2/highgui.hpp>
+#include <opencv2/ml.hpp>
 #include <opencv2/opencv.hpp>
 
+#include "covariancecomputer.h"
+#include "face.h"
 #include "image4d.h"
 #include "image4dloader.h"
-#include "facesegmenter.h"
 #include "lbp.h"
-#include "posemanager.h"
-#include "singletonsettings.h"
+#include "preprocessor.h"
+#include "settings.h"
+#include "svmmodel.h"
 
-using std::cout;
-using std::endl;
 using cv::Mat;
 using cv::waitKey;
+using std::cout;
+using std::endl;
+using std::string;
+using std::vector;
 
+namespace face {
 
 namespace test {
 
-cv::Vec3f randomEulerAngle()
-{
-    float r1 = float(rand()) / (float(RAND_MAX) / (2.0f * M_PI));
-    float r2 = float(rand()) / (float(RAND_MAX) / (2.0f * M_PI));
-    float r3 = float(rand()) / (float(RAND_MAX) / (2.0f * M_PI));
-    return { r1, r2, r3 };
-}
+    void testSVM()
+    {
+        string dirPath = "../RGBD_Face_dataset_training/";
+        Image4DLoader loader(dirPath, "000_.*");
 
-void testSingletonSettings()
-{
-    cout << "SingletonSettings test..." << endl;
-    auto& settings = SingletonSettings::getInstance();
-    cout << settings.getD() << endl
-         << settings.getK() << endl
-         << settings.getP() << endl
-         << settings.getR() << endl
-         << settings.getHeight() << endl
-         << settings.getWidth() << endl;
-    system("read -p 'Press [enter] to continue'");
-}
+        vector<vector<Image4D>> identities;
+        /* why not using a simple regex? */
+        for (int i = 0; i <= 25; ++i) {
+            string fileNameRegEx = i / 10 >= 1 ? "0" : "00";
+            fileNameRegEx += std::to_string(i) + "_.*";
 
-void testImage4DLoader()
-{
-    cout << "\n\nFace loader test..." << endl;
-    string dirPath = "../RGBD_Face_dataset_training/";
-    FaceLoader loader(dirPath, "014.*");
-    vector<Image4D> faceSequence(0);
-    if (!loader.get(faceSequence)) {
-        cout << "Error loading face!" << endl;
-        return;
-    }
-    cout << "\n\nFaces loaded!" << endl;
-
-    cv::namedWindow("image", cv::WINDOW_NORMAL);
-    for (const auto& face : faceSequence) {
-        imshow("image", face.image);
-        while (waitKey(0) != 'm') {
+            loader.setFileNameRegEx(fileNameRegEx);
+            identities.push_back(loader.get());
         }
 
-        //viewPointCloud(face.depthMap);
-        imshow("Depth map", face.depthMap);
-        waitKey(0);
-    }
-    system("read -p 'Press [enter] to continue'");
-}
+        Preprocessor preproc;
+        cout << "Preprocessing..." << endl;
 
-Pose testEulerAnglesToRotationMatrix()
-{
-    srand(time(NULL));
-    cv::Vec3f euler = randomEulerAngle();
-    PoseManager pm;
+        vector<vector<Face>> faces;
+        for (auto& id : identities) {
+            faces.push_back(preproc.preprocess(id));
+        }
 
-    Pose rotation = pm.eulerAnglesToRotationMatrix(euler);
+        CovarianceComputer covar;
+        cout << "Computing covariances for 000..." << endl;
+        vector<vector<Mat>> depthCovariances;
+        for (const auto& face : faces) {
+            auto pairs = covar.computeCovarianceRepresentation(face, 3);
+            vector<Mat> depth;
+            for (auto& pair : pairs) {
+                depth.push_back(pair.first); // using grayscale image
+                //depth.push_back(pair.second);
+            }
+            depthCovariances.push_back(depth);
+        }
 
-    cout << "Euler Angles:" << endl;
-    cout << euler << endl;
-    cout << "Rotation Matrix:" << endl;
-    cout << rotation << endl;
+        vector<Mat> others;
+        for (int i = 1; i <= 25; ++i) {
+            for (auto& depth : depthCovariances[i]) {
+                Mat normalized;
+                cv::normalize(depth, normalized);
+                others.push_back(normalized);
+            }
+        }
 
-    return rotation;
-}
+        vector<Mat> person(depthCovariances[0].size());
+        for (int i = 0; i < depthCovariances[0].size(); ++i) {
+            cv::normalize(depthCovariances[0][i], person[i]);
+        }
 
+        cout << "Creating SVM model..." << endl;
+        SVMmodel model;
+        cout << "Training model..." << endl;
+        auto optimalParams = model.trainAuto(person, others);
+        cout << "Done!" << endl;
+        cout << "C: " << optimalParams.C << endl;
+        cout << "gamma: " << optimalParams.gamma << endl;
 /*
-void testFindThreshold()
-{
-    cout << "\n\nFind threshold test..." << endl;
-    string dirPath = "../RGBD_Face_dataset_training/";
-    FaceLoader loader(dirPath, "014.*"); // example: loads only .png files starting with 014
+        vector<float> results;
 
-    Face face;
+        Mat sample(1,256, CV_32FC1);
+        auto iterNew = sample.begin<float>();
+        for (auto iter = depthCovar_000[0].begin<float>(); iter != depthCovar_000[0].end<float>(); ++iter, ++iterNew) {
+            *iterNew = *iter;
+        }
 
-    //    loader.setDownscalingRatio(0.5);
+        std::cout << model.predict(sample) << std::endl;
 
-    if (!loader.get(face)) {
-        cout << "Failed loading face" << endl;
-        return;
+        iterNew = sample.begin<float>();
+        for (auto iter = depthCovar_others[0].begin<float>(); iter != depthCovar_others[0].end<float>(); ++iter, ++iterNew) {
+            *iterNew = *iter;
+        }
+
+        std::cout << model.predict(sample) << std::endl;
+
+        for (auto i : results)
+            cout << i << endl;
+            */
     }
 
-    cout << "Face loaded!" << endl;
-
-    cout << "\nFiltering background..." << endl;
-
-    FaceSegmenter segmenter;
-    imshow("image", face.image);
-    while (waitKey(0) != 'm') {
+    cv::Vec3f randomEulerAngle()
+    {
+        float r1 = float(rand()) / (float(RAND_MAX) / (2.0f * M_PI));
+        float r2 = float(rand()) / (float(RAND_MAX) / (2.0f * M_PI));
+        float r3 = float(rand()) / (float(RAND_MAX) / (2.0f * M_PI));
+        return { r1, r2, r3 };
     }
 
-    cv::Rect roi(0,0,face.getWidth(), face.getHeight());
-    segmenter.removeBackground(face);
-
-    //cout << "Treshold found: " << segmenter.findTreshold() << endl;
-    imshow("image", face.image);
-    while (waitKey(0) != 'm') {
-    }
-    //viewPointCloud(face.depthMap);
-    imshow("Depth map", face.depthMap);
-    waitKey(0);
-
-    Mat depthMap = face.get3DImage();
-    imshow("Depth Map", depthMap);
-    waitKey(0);
-    system("read -p 'Press [enter] to continue'");
-}
-*/
-
-void testGetDepthMap()
-{
-    cout << "\n\nGet depth map test..." << endl;
-    string dirPath = "../RGBD_Face_dataset_training/";
-    FaceLoader loader(dirPath, "014.*"); // example: loads only .png files starting with 014
-
-    Image4D face;
-
-    if (!loader.get(face)) {
-        cout << "Failed loading face" << endl;
-        return;
+    void testSettings()
+    {
+        cout << "SingletonSettings test..." << endl;
+        auto& settings = Settings::getInstance();
+        cout << settings.getD() << endl
+             << settings.getK() << endl
+             << settings.getP() << endl
+             << settings.getR() << endl
+             << settings.getHeight() << endl
+             << settings.getWidth() << endl;
+        system("read -p 'Press [enter] to continue'");
     }
 
-    cout << "Face loaded!" << endl;
+    void testImage4DLoader()
+    {
+        cout << "\n\nFace loader test..." << endl;
+        string dirPath = "../RGBD_Face_dataset_training/";
+        Image4DLoader loader(dirPath, "014.*");
+        auto begin = std::chrono::high_resolution_clock::now();
+        auto faceSequence = loader.get();
+        if (faceSequence.empty()) {
+            cout << "Error loading face!" << endl;
+            return;
+        }
+        auto end = std::chrono::high_resolution_clock::now();
+        cout << "\n\nFaces loaded!" << endl;
+        cout << "Time elapsed: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "ms" << endl;
 
-    Mat depthMap = face.get3DImage();
+        cv::namedWindow("image", cv::WINDOW_NORMAL);
+        for (const auto& face : faceSequence) {
+            imshow("image", face.image);
+            while (waitKey(0) != 'm') {
+            }
 
-    imshow("Depth Map", depthMap);
-    waitKey(0);
-    system("read -p 'Press [enter] to continue'");
-}
-
-void testDetectFacePose()
-{
-    cout << "\n\nDetect face pose..." << endl;
-    FaceLoader loader("../RGBD_Face_dataset_training/", "002_08.*");
-
-    vector<Image4D> faces;
-    if (!loader.get(faces)) {
-        cout << "Failed loading face" << endl;
-        return;
+            //viewPointCloud(face.depthMap);
+            imshow("Depth map", face.depthMap);
+            waitKey(0);
+        }
+        system("read -p 'Press [enter] to continue'");
     }
 
-    cout << "Face loaded!" << endl;
+    Pose testEulerAnglesToRotationMatrix()
+    {
+        srand(time(NULL));
+        cv::Vec3f euler = randomEulerAngle();
 
-    for (auto& face : faces) {
-        cv::imshow("Face", face.image);
+        Pose rotation = CovarianceComputer::eulerAnglesToRotationMatrix(euler);
+
+        cout << "Euler Angles:" << endl;
+        cout << euler << endl;
+        cout << "Rotation Matrix:" << endl;
+        cout << rotation << endl;
+
+        return rotation;
+    }
+
+    void testGetDepthMap()
+    {
+        cout << "\n\nGet depth map test..." << endl;
+        string dirPath = "../RGBD_Face_dataset_training/";
+        Image4DLoader loader(dirPath, "014.*"); // example: loads only .png files starting with 014
+
+        Image4D face;
+
+        if (!loader.get(face)) {
+            cout << "Failed loading face" << endl;
+            return;
+        }
+
+        cout << "Face loaded!" << endl;
+
+        Mat depthMap = face.get3DImage();
+
+        imshow("Depth Map", depthMap);
         waitKey(0);
+        system("read -p 'Press [enter] to continue'");
     }
 
-    FaceSegmenter segmenter;
-    vector<cv::Rect> faceRegions;
-    segmenter.segment(faces, faceRegions);
+    void testPreprocessing()
+    {
+        cout << "\n\nDetect face pose..." << endl;
+        Image4DLoader loader("../RGBD_Face_dataset_training/", ".*");
+        auto image4d = loader.get();
 
-    cout << "Estimating face pose..." << endl;
-    PoseManager poseManager;
-    poseManager.cropFaces(faces, faceRegions);
+        Preprocessor prep;
+        auto begin = std::chrono::high_resolution_clock::now();
+        auto faces = prep.preprocess(image4d);
+        auto end = std::chrono::high_resolution_clock::now();
+        cout << "Time elapsed: " << std::chrono::duration_cast<std::chrono::seconds>(end - begin).count() << "s" << endl;
 
-    for (auto& face : faces) {
-        imshow("Cropped face", face.image);
-        cv::waitKey(0);
+        for (auto& face : faces) {
+            imshow("Cropped face", face.image);
+            cv::waitKey(0);
+        }
     }
 
-    system("read -p 'Press [enter] to continue'");
-}
+    void testBackgroundRemoval()
+    {
+        cout << "\n\nDetect face pose..." << endl;
+        Image4DLoader loader("../RGBD_Face_dataset_training/", "000.*");
 
-bool loadDepthImageCompressed(Mat& depthImg, const char* fname)
-{
-    // read the depth image
-    FILE* pFile = fopen(fname, "rb");
-    if (!pFile) {
-        std::cerr << "could not open file " << fname << endl;
-        return false;
+        auto images = loader.get();
+        if (images.empty()) {
+            cout << "Failed loading faces" << endl;
+            return;
+        }
+
+        cout << "Faces loaded!" << endl;
+
+        //        for (auto& image4d : images) {
+        //            imshow("Original image", image4d.depthMap);
+        //            cv::waitKey(0);
+        //        }
+
+        Preprocessor prep;
+        prep.segment(images);
+
+        for (auto& image4d : images) {
+            imshow("Original image", image4d.depthMap);
+            cv::waitKey(0);
+        }
+
+        system("read -p 'Press [enter] to continue'");
     }
 
-    int im_width = 0;
-    int im_height = 0;
-    bool success = true;
+    void testLoadSpeed()
+    {
+        cout << "\n\nTest load speed..." << endl;
+        Image4DLoader loader("../RGBD_Face_dataset_training/", ".*");
 
-    success &= (fread(&im_width, sizeof(int), 1, pFile) == 1); // read width of depthmap
-    success &= (fread(&im_height, sizeof(int), 1, pFile) == 1); // read height of depthmap
+        auto start = std::chrono::high_resolution_clock::now();
+        loader.get();
+        auto end = std::chrono::high_resolution_clock::now();
 
-    depthImg.create(im_height, im_width, CV_16SC1);
-    depthImg.setTo(0);
+        cout << "Faces loaded in " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()
+             << "ms" << endl;
 
-    int numempty;
-    int numfull;
-    int p = 0;
+        loader = Image4DLoader("../RGBD_Face_dataset_training/", ".*");
+        start = std::chrono::high_resolution_clock::now();
+        Image4D image;
+        while (loader.hasNext())
+            loader.get(image);
+        end = std::chrono::high_resolution_clock::now();
 
-    if (!depthImg.isContinuous()) {
-        std::cerr << "Image has the wrong size! (should be 640x480)" << endl;
-        return false;
+        cout << "Faces loaded in " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()
+             << "ms" << endl;
     }
 
-    int16_t* data = depthImg.ptr<int16_t>(0);
-    while (p < im_width * im_height) {
+    void testKmeans()
+    {
+        cout << "\n\nKmeans test..." << endl;
+        vector<float> depth;
 
-        success &= (fread(&numempty, sizeof(int), 1, pFile) == 1);
+        depth.push_back(1.543);
+        depth.push_back(1.563);
+        depth.push_back(1.547);
+        depth.push_back(1.743);
+        depth.push_back(5.543);
+        depth.push_back(5.673);
+        depth.push_back(1.915);
+        depth.push_back(1.543);
+        depth.push_back(5.563);
+        depth.push_back(4.743);
+        depth.push_back(6.542);
+        depth.push_back(1.246);
 
-        for (int i = 0; i < numempty; i++)
-            data[p + i] = 0;
+        Mat centers(1, 2, CV_32F);
+        std::vector<int> bestLabels;
+        cout << "Clustering..." << endl;
+        cv::TermCriteria criteria(cv::TermCriteria::EPS, 10, 1.0);
+        cv::kmeans(depth, 2, bestLabels, criteria, 3, cv::KMEANS_PP_CENTERS, centers);
+        cout << "Done!" << endl;
 
-        success &= (fread(&numfull, sizeof(int), 1, pFile) == 1);
-        success &= (fread(&data[p + numempty], sizeof(int16_t), numfull, pFile) == (unsigned int)numfull);
-        p += numempty + numfull;
+        cout << "Size: " << centers.size() << endl;
+        //std::cout << "Cols: " << centers.cols << std::endl;
+
+        cout << "Labels for points..." << endl;
+        for (uint i = 0; i < bestLabels.size(); ++i) {
+            cout << bestLabels.at(i) << endl;
+        }
+        cout << "Done!" << endl;
+
+        system("read -p 'Press [enter] to continue'");
     }
 
-    fclose(pFile);
+    void testKmeans2()
+    {
 
-    return success;
-}
+        Pose R0(0.123, 0.345, 0.987, 0.1842, 0.567, 0.832, 0.324, 0.431, 0.111);
+        Pose R1(0.7153, 0.3345, 0.3987, 0.91842, 0.5677, 0.7832, 0.5324, 0.4831, 0.6111);
+        Pose R2(0.5123, 0.5345, 0.1987, 0.19842, 0.2567, 0.8832, 0.2324, 0.6431, 0.2111);
+        Pose R3(0.3123, 0.4345, 0.5987, 0.91842, 0.3567, 0.8732, 0.9324, 0.8431, 0.9111);
+        Pose R4(0.6123, 0.5345, 0.4987, 0.5842, 0.1567, 0.1832, 0.1324, 0.9431, 0.7111);
+        Pose R5(0.9123, 0.2345, 0.3987, 0.11842, 0.4567, 0.1832, 0.7324, 0.5431, 0.111);
+        Pose R6(0.0123, 0.9345, 0.7987, 0.01842, 0.3567, 0.9832, 0.8324, 0.3431, 0.9111);
+        Pose R7(0.6123, 0.0345, 0.0987, 0.31842, 0.0567, 0.0832, 0.7324, 0.5431, 0.6111);
+        Pose R8(0.4123, 0.1345, 0.1987, 0.61842, 0.5567, 0.6832, 0.6324, 0.6431, 0.2111);
+        Pose R9(0.2123, 0.2345, 0.2987, 0.81842, 0.8567, 0.5832, 0.3324, 0.8431, 0.3111);
 
-void testDetectFacePose2()
-{
+        vector<Pose> data = { R0, R1, R2, R3, R4, R5, R6, R7, R8, R9 };
+        Mat centers;
 
-    Mat depthImage;
-    bool success = loadDepthImageCompressed(depthImage, "/home/alberto/Downloads/hpdb/01/frame_00003_depth.bin");
+        vector<int> bestLabels;
+        cout << "Clustering..." << endl;
+        cv::TermCriteria criteria(cv::TermCriteria::EPS, 10, 1.0);
+        cv::kmeans(data, 2, bestLabels, criteria, 3, cv::KMEANS_PP_CENTERS, centers);
+        cout << "Done!" << endl;
 
-    if (!success) {
-        cout << "Failed loading image" << endl;
-        return;
+        cout << "Size: " << centers.size() << endl;
+        cout << "Cols: " << centers.cols << endl;
+
+        cout << "Labels for points..." << endl;
+        for (uint i = 0; i < bestLabels.size(); ++i) {
+            cout << bestLabels.at(i) << endl;
+        }
+        cout << "Done!" << endl;
+
+        cout << endl;
+        cout << "Centers are: " << endl;
+        cout << centers << endl;
+        system("read -p 'Press [enter] to continue'");
+
+        cout << "\n\nTests finished!" << endl;
     }
 
-    Mat intrinsics(3, 3, CV_64FC1);
-    intrinsics.at<double>(0, 0) = 575.816;
-    intrinsics.at<double>(0, 1) = 0;
-    intrinsics.at<double>(0, 2) = 320,
-    intrinsics.at<double>(1, 0) = 0;
-    intrinsics.at<double>(1, 1) = 575.816;
-    intrinsics.at<double>(1, 2) = 240;
-    intrinsics.at<double>(2, 0) = 0;
-    intrinsics.at<double>(2, 1) = 0;
-    intrinsics.at<double>(2, 2) = 1;
-
-    Mat color(depthImage.rows,depthImage.cols, CV_8UC3); // used only because needed by Face constructor
-    Image4D face(color, depthImage, intrinsics);
-
-    std::cout << "Estimating face pose..." << std::endl;
-    PoseManager poseManager;
-    cv::Vec3f eulerAngles;
-    poseManager.estimateFacePose(face, eulerAngles);
-}
-
-/*
-void testFaceDetection()
-{
-    cout << "\n\nDetect faces test..." << endl;
-    string dirPath = "../RGBD_Face_dataset_training/";
-    FaceLoader loader(dirPath, "000_.*"); // example: loads only .png files starting with 014
-
-    Face face;
-
-    //    loader.setDownscalingRatio(0.5);
-
-    if (!loader.get(face)) {
-        cout << "Failed loading face" << endl;
-        return;
-    }
-
-    cout << "Face loaded!" << endl;
-
-    FaceSegmenter segmenter;
-    cv::Rect detectedFaceRegion;
-    if (segmenter.detectForegroundFace(face)) {
-        cv::rectangle(face.image, face.faceRegion, cv::Scalar(255, 255, 255), 5);
-
-        imshow("image", face.image);
-        waitKey(0);
-    } else {
-        std::cout << "No face detected!" << std::endl;
-    }
-
-    face.crop(detectedFaceRegion);
-    imshow("image", face.image);
-    waitKey(0);
-
-    imshow("Depth Map", face.depthMap);
-    waitKey(0);
-    system("read -p 'Press [enter] to continue'");
-}
-*/
-
-void testKmeans()
-{
-    cout << "\n\nKmeans test..." << endl;
-    vector<float> depth;
-
-    depth.push_back(1.543);
-    depth.push_back(1.563);
-    depth.push_back(1.547);
-    depth.push_back(1.743);
-    depth.push_back(5.543);
-    depth.push_back(5.673);
-    depth.push_back(1.915);
-    depth.push_back(1.543);
-    depth.push_back(5.563);
-    depth.push_back(4.743);
-    depth.push_back(6.542);
-    depth.push_back(1.246);
-
-    Mat centers(1, 2, CV_32F);
-    std::vector<int> bestLabels;
-    cout << "Clustering..." << endl;
-    cv::TermCriteria criteria(cv::TermCriteria::EPS, 10, 1.0);
-    cv::kmeans(depth, 2, bestLabels, criteria, 3, cv::KMEANS_PP_CENTERS, centers);
-    cout << "Done!" << endl;
-
-    cout << "Size: " << centers.size() << endl;
-    //std::cout << "Cols: " << centers.cols << std::endl;
-
-    cout << "Labels for points..." << endl;
-    for (uint i = 0; i < bestLabels.size(); ++i) {
-        cout << bestLabels.at(i) << endl;
-    }
-    cout << "Done!" << endl;
-
-    system("read -p 'Press [enter] to continue'");
-}
-
-void testKmeans2()
-{
-
-    Pose R0(0.123, 0.345, 0.987, 0.1842, 0.567, 0.832, 0.324, 0.431, 0.111);
-    Pose R1(0.7153, 0.3345, 0.3987, 0.91842, 0.5677, 0.7832, 0.5324, 0.4831, 0.6111);
-    Pose R2(0.5123, 0.5345, 0.1987, 0.19842, 0.2567, 0.8832, 0.2324, 0.6431, 0.2111);
-    Pose R3(0.3123, 0.4345, 0.5987, 0.91842, 0.3567, 0.8732, 0.9324, 0.8431, 0.9111);
-    Pose R4(0.6123, 0.5345, 0.4987, 0.5842, 0.1567, 0.1832, 0.1324, 0.9431, 0.7111);
-    Pose R5(0.9123, 0.2345, 0.3987, 0.11842, 0.4567, 0.1832, 0.7324, 0.5431, 0.111);
-    Pose R6(0.0123, 0.9345, 0.7987, 0.01842, 0.3567, 0.9832, 0.8324, 0.3431, 0.9111);
-    Pose R7(0.6123, 0.0345, 0.0987, 0.31842, 0.0567, 0.0832, 0.7324, 0.5431, 0.6111);
-    Pose R8(0.4123, 0.1345, 0.1987, 0.61842, 0.5567, 0.6832, 0.6324, 0.6431, 0.2111);
-    Pose R9(0.2123, 0.2345, 0.2987, 0.81842, 0.8567, 0.5832, 0.3324, 0.8431, 0.3111);
-
-    vector<Pose> data = { R0, R1, R2, R3, R4, R5, R6, R7, R8, R9 };
-    Mat centers;
-
-    vector<int> bestLabels;
-    cout << "Clustering..." << endl;
-    cv::TermCriteria criteria(cv::TermCriteria::EPS, 10, 1.0);
-    cv::kmeans(data, 2, bestLabels, criteria, 3, cv::KMEANS_PP_CENTERS, centers);
-    cout << "Done!" << endl;
-
-    cout << "Size: " << centers.size() << endl;
-    cout << "Cols: " << centers.cols << endl;
-
-    cout << "Labels for points..." << endl;
-    for (uint i = 0; i < bestLabels.size(); ++i) {
-        cout << bestLabels.at(i) << endl;
-    }
-    cout << "Done!" << endl;
-
-    cout << endl;
-    cout << "Centers are: " << endl;
-    cout << centers << endl;
-    system("read -p 'Press [enter] to continue'");
-
-    cout << "\n\nTests finished!" << endl;
-}
-
+    /*
 void testPoseClustering()
 {
     srand(time(NULL));
-    PoseManager pm = PoseManager();
+    PoseManager pm;
     for (int i = 0; i < 40; i++) {
-        Pose pose = pm.eulerAnglesToRotationMatrix(randomEulerAngle());
+        Pose pose = PoseManager::eulerAnglesToRotationMatrix(randomEulerAngle());
         pm.addPoseData(pose);
     }
 
     pm.clusterizePoses(4);
 
-    Pose pose = pm.eulerAnglesToRotationMatrix(randomEulerAngle());
+    Pose pose = PoseManager::eulerAnglesToRotationMatrix(randomEulerAngle());
     cout << "Nearest Center: " << endl;
     cout << pm.getNearestCenterId(pose) << endl;
 }
+*/
 
+    void covarianceTest()
+    {
+        cout << "\n\nDetect faces test..." << endl;
+        string dirPath = "../RGBD_Face_dataset_training/";
+        Image4DLoader loader(dirPath, "000_.*");
+        Preprocessor preproc;
+        CovarianceComputer covComp;
 
-void covarianceTest()
-{
-    cout << "\n\nDetect faces test..." << endl;
-    string dirPath = "../RGBD_Face_dataset_training/";
-    FaceLoader loader(dirPath, "000_.*"); // example: loads only .png files starting with 014
+        cout << "Loading images..." << endl;
+        auto images4d = loader.get();
+        cout << "Loaded " << images4d.size() << " images" << endl;
 
-    Image4D face;
-
-    //    loader.setDownscalingRatio(0.5);
-
-    //    if (!loader.get(face)) {
-    //        cout << "Failed loading face" << endl;
-    //        return;
-    //    }
-
-    //    cout << "Face loaded!" << endl;
-
-    std::vector<Mat> faceSet;
-
-    while (loader.get(face)) {
-        cout << "Face loaded!" << endl;
-        int croppedWidth = face.getWidth() / 4;
-        int croppedHeight = face.getHeight() / 4;
-        for (uint y = 0; y < face.getHeight(); y += croppedHeight) {
-            for (uint x = 0; x < face.getWidth(); x += croppedWidth) {
-                Mat cropped = face.image(cv::Rect(x, y, croppedWidth, croppedHeight));
-
-                faceSet.push_back(OLBPHist(cropped));
-            }
+        for (const auto& image4d : images4d) {
+            cv::imshow("Image", image4d.image);
+            cv::imshow("Depth map", image4d.depthMap);
+            cv::waitKey(0);
         }
+
+        cout << "Preprocessing 4D images..." << endl;
+        auto faces = preproc.preprocess(images4d);
+        cout << "Extracted " << faces.size() << " faces from 4D images" << endl;
+
+        for (const auto& face : faces) {
+            cv::imshow("Image", face.image);
+            cv::imshow("Depth map", face.depthMap);
+            cv::waitKey(0);
+        }
+
+        /*
+        cout << "Computing covariances..." << endl;
+        auto covariance = covComp.computeCovarianceRepresentation(faces, 3);
+
+        for (auto& cov : covariance) {
+            cv::imshow("Image", cov.first);
+            cv::imshow("Depth", cov.second);
+            cv::waitKey(0);
+        }
+        */
     }
 
-    Mat covar, mean;
-    int flags = cv::COVAR_NORMAL;
-    cv::calcCovarMatrix(faceSet.data(), faceSet.size(), covar, mean, flags, 6);
-    cout << "COVAR" << endl
-         << covar << endl
-         << "MEAN" << endl
-         << mean << endl;
-}
-}
+} // namespace test
+} // namespace face
 #endif // TEST_H

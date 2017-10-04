@@ -1,7 +1,10 @@
-#ifndef IMAGELOADER_HPP
-#define IMAGELOADER_HPP
+#ifndef FACE_IMAGELOADER_HPP
+#define FACE_IMAGELOADER_HPP
 
 #include <regex>
+#include <mutex>
+
+namespace face {
 
 class Image4D;
 
@@ -11,7 +14,7 @@ class Image4D;
  *        the filename to load using regular expressions and a
  *        downscaling ratio to reduce image size.
  */
-class FaceLoader {
+class Image4DLoader {
 public:
 
     static const std::string MATCH_ALL;
@@ -21,14 +24,14 @@ public:
      *
      * Loads from current directory images with extension .png, .jpg or .bmp
      */
-    FaceLoader();
+    Image4DLoader();
 
     /**
      * @brief ImageLoader constructor
      * @param dirPath: absolute path to the directory from which load the files
      * @param fileNameTempl: regular expression for the file names to load
      */
-    FaceLoader(const std::string& dirPath, const std::string& fileNameRegEx = MATCH_ALL);
+    Image4DLoader(const std::string& dirPath, const std::string& fileNameRegEx = MATCH_ALL);
 
     /**
      * @brief hasNext
@@ -36,9 +39,20 @@ public:
      */
     bool hasNext() const;
 
-    bool get(Image4D& face);
+    /**
+     * @brief get: loads the next image and cloud files available
+     * @param image4d: output image4d
+     * @return true if successfully loaded, false otherwise
+     */
+    bool get(Image4D& image4d);
 
-    bool get(std::vector<Image4D>& face);
+    /**
+     * @brief get: multithreaded version of get(Image4D& image4d).
+     *        Loads all files using a variable number of threads
+     *        depending on the number of available cores
+     * @return loaded files
+     */
+    std::vector<Image4D> get();
 
     /**
      * @brief setFileNameRegEx
@@ -74,7 +88,11 @@ private:
     bool loadFileNames(const std::string& dirPath);
 
     bool matchTemplate(const std::string& fileName);
+
+    void getMultiThr(std::vector<Image4D> &image4DSequence, int begin, int end, std::mutex &mutex) const;
+
 };
 
+}   // face
 
 #endif // IMAGELOADER_Hs
