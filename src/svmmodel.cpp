@@ -191,19 +191,47 @@ Mat SVMmodel::formatDataForTraining(const vector<Mat>& targetPerson,
 
 float SVMmodel::evaluate(Mat& validationData, const Mat& groundTruth)
 {
+
     assert(validationData.rows == groundTruth.rows && "Attention! Validation and ground truth arrays should be of the same size");
 
+    /* 1) Recall:       true positives (0 or 1 in this case) divided by all real positives
+   * (true positives + false negatives, exactly 1 in this case).
+   * 2) Precision:    true positives divided by all detected positives (true positives + false positives).
+   * 3) F-measure:    harmonic mean between precision and recall, so 2*1/(1/p+1/r)
+   *
+   * Note: in this case recall can be only 0 or 1 and, in general,
+   * if recall is 0 then precision is 0, if recall is 1 precision is 1/(1+false positives).
+   * So in this case F-measure will be:
+   * A) true positives = 1 => (2*false positives+2)/(false positives + 2)
+   * B) true positives = 0 => 0
+   *^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   *|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+   * NON È VERO SE SI USANO I CLUSTER DELLE POSE IN QUESTO MODO...
+   *
+   */
     const int N = validationData.rows;
-    int correctClassification = 0;
+    int truePositives = 0;
+    int falsePositives = 0;
+    int falseNegatives = 0;
+    int trueNegatives = 0;
     for (int i = 0; i < N; ++i) {
         auto row = validationData.row(i);
         auto prediction = predict(row);
         auto truth = float(groundTruth.at<int>(i, 0));
-        if (prediction == truth)
-            ++correctClassification;
+        if (prediction == 1) {
+            if (prediction == truth)
+                ++truePositives;
+            else
+                ++falsePositives;
+        } else if (prediction == -1) {
+            if (prediction == truth)
+                ++trueNegatives;
+            else
+                ++falseNegatives;
+        }
     }
 
-    return correctClassification / float(N);
+    return 2 * truePositives / (float)(truePositives + falseNegatives + falsePositives);
 }
 
 Mat SVMmodel::matVectorToMat(const vector<Mat>& data)
