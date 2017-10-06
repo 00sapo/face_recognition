@@ -11,6 +11,15 @@ using cv::Mat;
 namespace face {
 
 
+vector<string> generateLabels(int numOfLabels);
+Mat formatDataForTraining  (const MatMatrix &dataIn, vector<int> &indexes);
+Mat formatDataForPrediction(const vector<Mat> &data);
+
+
+// -----------------------------------------------------
+// ---------- FaceRecognizer member functions ----------
+// -----------------------------------------------------
+
 const string FaceRecognizer::unknownIdentity = "unknown_ID";
 
 FaceRecognizer::FaceRecognizer(int c) : c(c) { }
@@ -26,38 +35,42 @@ void FaceRecognizer::train(const FaceMatrix &trainingSamples, const vector<strin
     N = trainingSamples.size();
 
     // if not enough IDs automatically generate them
-    IDs = (N < samplIDs.size()) ? generateLabels(N) : samplIDs;
+    IDs = (N > samplIDs.size()) ? generateLabels(N) : samplIDs;
 
     grayscaleSVMs.resize(N);
     depthmapSVMs .resize(N);
+    for (auto &svmVector : grayscaleSVMs) svmVector.resize(c);
+    for (auto &svmVector : depthmapSVMs ) svmVector.resize(c);
 
     // compute normalized covariances, i.e. transform trainingSamples to feature vectors for the SVMs
     MatMatrix grayscaleCovar, depthmapCovar;
     getNormalizedCovariances(trainingSamples, grayscaleCovar, depthmapCovar);
 
     // convert data format to be ready for SVMs, i.e. from Mat vector to Mat
-    vector<cv::Range> grayscaleRanges, depthmapRanges;
-    auto grayscaleMat = formatDataForTraining(grayscaleCovar, grayscaleRanges);
-    auto depthmapMat  = formatDataForTraining(depthmapCovar,  depthmapRanges);
+    vector<int> grayscaleIndexes, depthmapIndexes;
+    auto grayscaleMat = formatDataForTraining(grayscaleCovar, grayscaleIndexes);
+    auto depthmapMat  = formatDataForTraining(depthmapCovar,  depthmapIndexes);
 
     // train SVMs for grayscale images
-    for (int id = 0; id < grayscaleRanges.size(); ++id) {
+    for (int id = 0; id < N; ++id) {
         vector<int> labels(grayscaleMat.rows, -1);
-        for (auto i = grayscaleRanges[id].start; i < grayscaleRanges[id].end; ++i) {
-            labels[i] = 1;
+        for (auto i = 0; i < c; ++i) {
+            int matrixRow = i + grayscaleIndexes[id];
+            labels[matrixRow] = 1;
+            grayscaleSVMs[id][i].trainAuto(grayscaleMat, labels);
+            labels[matrixRow] = -1;
         }
-
-        grayscaleSVMs[id].trainAuto(grayscaleMat, labels);
     }
 
     // train SVMs for depth images
-    for (int id = 0; id < depthmapRanges.size(); ++id) {
+    for (int id = 0; id < N; ++id) {
         vector<int> labels(depthmapMat.rows, -1);
-        for (auto i = depthmapRanges[id].start; i < depthmapRanges[id].end; ++i) {
-            labels[i] = 1;
+        for (auto i = 0; i < c; ++i) {
+            int matrixRow = i + depthmapIndexes[id];
+            labels[matrixRow] = 1;
+            depthmapSVMs[id][i].trainAuto(depthmapMat, labels);
+            labels[matrixRow] = -1;
         }
-
-        depthmapSVMs[id].trainAuto(depthmapMat, labels);
     }
 }
 
@@ -67,7 +80,6 @@ string FaceRecognizer::predict(const vector<Face> &identity) const
     getNormalizedCovariances(identity, grayscaleCovar, depthmapCovar);
     auto grayscaleData = formatDataForPrediction(grayscaleCovar);
     auto depthmapData  = formatDataForPrediction(depthmapCovar);
-
 
     // count votes for each identity
     vector<int> votes(N);
@@ -115,30 +127,12 @@ string FaceRecognizer::predict(const vector<Face> &identity) const
 
 bool FaceRecognizer::load(const string &fileName)
 {
-
+    throw std::runtime_error("Not implemented");
 }
 
 bool FaceRecognizer::save(const string &fileName)
 {
-
-}
-
-
-vector<string> FaceRecognizer::generateLabels(int numOfLabels)
-{
-    string id = "identity_";
-    vector<string> identities;
-
-    int numOfDigits = 0;
-    for (int N = numOfLabels; N > 0; N /= 10, ++numOfDigits);  // count number of digits
-
-    for (int i = 0; i < numOfLabels; ++i) {
-        std::stringstream stream;
-        stream << id << std::setfill('0') << std::setw(numOfDigits) << i;   // fixed length identity
-        identities.push_back(stream.str());
-    }
-
-    return identities;
+    throw std::runtime_error("Not implemented");
 }
 
 
@@ -174,9 +168,43 @@ void FaceRecognizer::getNormalizedCovariances(const FaceMatrix &identities,MatMa
     }
 }
 
-Mat FaceRecognizer::formatDataForTraining(const MatMatrix &dataIn, vector<cv::Range> &ranges) const
+
+
+
+// ---------------------------------------
+// ---------- Utility functions ----------
+// ---------------------------------------
+
+vector<string> generateLabels(int numOfLabels)
 {
-    ranges.clear();
+    string id = "identity_";
+    vector<string> identities;
+
+    int numOfDigits = 0;
+    for (int N = numOfLabels; N > 0; N /= 10, ++numOfDigits);  // count number of digits
+
+    for (int i = 0; i < numOfLabels; ++i) {
+        std::stringstream stream;
+        stream << id << std::setfill('0') << std::setw(numOfDigits) << i;   // fixed length identity
+        identities.push_back(stream.str());
+    }
+
+    return identities;
+}
+
+
+/**
+ * @brief formatDataForTraining transforms the input dataset in a suitable format to be used by
+ *        grayscaleSVMs and depthmapSVMs
+ * @param dataIn: vector of identities. For each identity it contains a vector of covariance matrixes
+ * @param dataOut: formatted data to be feed into SVMModel. It has one row for each Mat contained in dataIn
+ *        and a number of columns equal to Mat::rows x Mat::columns (assuming every Mat in dataIn
+ *        has the same dimensions)
+ * @return a vector with the ranges of rows belonging to each identity (with length = dataIn.size())
+ */
+Mat formatDataForTraining(const MatMatrix &dataIn, std::vector<int> &indexes)
+{
+    indexes.clear();
 
     // compute dataOut dimensions
     int height = 0;
@@ -202,13 +230,13 @@ Mat FaceRecognizer::formatDataForTraining(const MatMatrix &dataIn, vector<cv::Ra
         }
 
         // save the range of rows of dataOut belonging to this identity
-        ranges.emplace_back(start, rowIndex);
+        indexes.push_back(start);
     }
 
     return dataOut;
 }
 
-Mat FaceRecognizer::formatDataForPrediction(const vector<Mat> &data) const
+Mat formatDataForPrediction(const vector<Mat> &data)
 {
     const int height = data.size();
     const int width  = data[0].rows * data[0].cols;

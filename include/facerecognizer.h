@@ -20,7 +20,7 @@ public:
 
     static const std::string unknownIdentity;   // unknown identity label
 
-    FaceRecognizer(int c);
+    FaceRecognizer(int c = 3);
 
     FaceRecognizer(const std::string &fileName);
 
@@ -65,25 +65,11 @@ private:
     SVMSteinMatrix depthmapSVMs;   // thus resulting in a Nxc matrix where N is the number of identities
                                    // and c the number of head rotation subsets
 
-    std::vector<std::string> generateLabels(int numOfLabels);
-
     void getNormalizedCovariances(const std::vector<Face> &identity,
                                   std::vector<cv::Mat> &grayscaleCovarOut,
                                   std::vector<cv::Mat> &depthmapCovarOut) const;
     void getNormalizedCovariances(const FaceMatrix &identities, MatMatrix &grayscaleCovarOut, MatMatrix &depthmapCovarOut) const;
 
-    /**
-     * @brief formatDataForTraining transforms the input dataset in a suitable format to be used by
-     *        grayscaleSVMs and depthmapSVMs
-     * @param dataIn: vector of identities. For each identity it contains a vector of covariance matrixes
-     * @param dataOut: formatted data to be feed into SVMModel. It has one row for each Mat contained in dataIn
-     *        and a number of columns equal to Mat::rows x Mat::columns (assuming every Mat in dataIn
-     *        has the same dimensions)
-     * @return a vector with the ranges of rows belonging to each identity (with length = dataIn.size())
-     */
-    cv::Mat formatDataForTraining(const MatMatrix &dataIn, std::vector<cv::Range> &ranges) const;
-
-    cv::Mat formatDataForPrediction(const std::vector<cv::Mat> &data) const;
 };
 
 }   // namespace face

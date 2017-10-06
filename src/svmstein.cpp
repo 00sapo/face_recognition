@@ -141,13 +141,13 @@ SteinKernelParams SVMStein::trainAuto(const Mat &data, const vector<int> &labels
     return SteinKernelParams(C, gamma);
 }
 
-bool SVMStein::load(const std::string& filename)
+bool SVMStein::load(const std::string &filename)
 {
     svm = ml::SVM::load(filename);
     return svm != nullptr;
 }
 
-void SVMStein::save(const std::string& filename) const
+void SVMStein::save(const std::string &filename) const
 {
     svm->save(filename);
 }
