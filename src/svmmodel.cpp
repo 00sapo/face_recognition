@@ -118,7 +118,7 @@ SteinKernelParams SVMmodel::trainAuto(const vector<Mat>& targetPerson, const vec
             cout << "Training..." << endl;
             svm->train(trainData);
             cout << "Done!" << endl;
-            auto score = evaluate(validationData,
+            auto score = evaluateFMeasure(validationData,
                 //labels(cv::Rect(0,0,1,targetPerson.size())));
                 labels(cv::Rect(0, targetPerson.size(), 1, otherPeople.size())));
             cout << "Score: " << score << endl;
@@ -140,7 +140,7 @@ SteinKernelParams SVMmodel::trainAuto(const vector<Mat>& targetPerson, const vec
     setC(C);
     setGamma(gamma);
     svm->train(trainData);
-    auto score = evaluate(validationData,
+    auto score = evaluateFMeasure(validationData,
         labels(cv::Rect(0, targetPerson.size(), 1, otherPeople.size())));
 
     std::cout << "score obtained by avaraging best parameters: " << score << std::endl;
@@ -189,7 +189,7 @@ Mat SVMmodel::formatDataForTraining(const vector<Mat>& targetPerson,
     return matVectorToMat(trainingSamples);
 }
 
-float SVMmodel::evaluate(Mat& validationData, const Mat& groundTruth)
+float SVMmodel::evaluateFMeasure(Mat& validationData, const Mat& groundTruth)
 {
 
     assert(validationData.rows == groundTruth.rows && "Attention! Validation and ground truth arrays should be of the same size");

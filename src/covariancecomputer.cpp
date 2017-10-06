@@ -13,10 +13,10 @@ namespace face {
 
 CovarianceComputer::CovarianceComputer() {}
 
-vector<std::pair<Mat, Mat>> CovarianceComputer::computeCovarianceRepresentation(const vector<Face>& faces, int subsets) const
+vector<std::pair<Mat, Mat>> CovarianceComputer::computeCovarianceRepresentation(const vector<Face>& faces, int numSubsets) const
 {
     cout << "Clustering poses..." << endl;
-    auto centers = clusterizePoses(faces, subsets);
+    auto centers = clusterizePoses(faces, numSubsets);
     cout << "Assigning faces to clusters..." << endl;
     auto clusters = assignFacesToClusters(faces, centers);
 

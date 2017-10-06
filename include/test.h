@@ -34,7 +34,6 @@ namespace test {
         Image4DLoader loader(dirPath, "000_.*");
 
         vector<vector<Image4D>> identities;
-        /* why not using a simple regex? */
         for (int i = 0; i <= 25; ++i) {
             string fileNameRegEx = i / 10 >= 1 ? "0" : "00";
             fileNameRegEx += std::to_string(i) + "_.*";
@@ -52,40 +51,35 @@ namespace test {
         }
 
         CovarianceComputer covar;
-        cout << "Computing covariances for 000..." << endl;
-        vector<vector<Mat>> depthCovariances;
-        for (const auto& face : faces) {
-            auto pairs = covar.computeCovarianceRepresentation(face, 3);
-            vector<Mat> depth;
-            for (auto& pair : pairs) {
-                depth.push_back(pair.first); // using grayscale image
-                //depth.push_back(pair.second);
-            }
-            depthCovariances.push_back(depth);
-        }
-
-        vector<Mat> others;
+        int numPoseClusters = 3;
+        vector<Mat> trainingSet;
         for (int i = 1; i <= 25; ++i) {
-            for (auto& depth : depthCovariances[i]) {
+            vector<std::pair<Mat, Mat>> pairs = covar.computeCovarianceRepresentation(faces[i], numPoseClusters);
+            for (int j = 0; j <= numPoseClusters; j++) {
                 Mat normalized;
-                cv::normalize(depth, normalized);
-                others.push_back(normalized);
+                cv::normalize(pairs[j].first, normalized);
+                trainingSet.push_back(normalized);
             }
         }
 
-        vector<Mat> person(depthCovariances[0].size());
-        for (int i = 0; i < depthCovariances[0].size(); ++i) {
-            cv::normalize(depthCovariances[0][i], person[i]);
+        vector<std::pair<Mat, Mat>> pairs = covar.computeCovarianceRepresentation(faces[0], numPoseClusters);
+        for (int i = 1; i <= numPoseClusters; i++) {
+            Mat normalized;
+            cv::normalize(pairs[i].first, normalized);
+            trainingSet.push_back(normalized);
         }
+
+        Mat targetCovarMatrix;
+        cv::normalize(pairs[0].first, targetCovarMatrix);
 
         cout << "Creating SVM model..." << endl;
         SVMmodel model;
         cout << "Training model..." << endl;
-        auto optimalParams = model.trainAuto(person, others);
+        auto optimalParams = model.trainAuto(targetCovarMatrix, trainingSet);
         cout << "Done!" << endl;
         cout << "C: " << optimalParams.C << endl;
         cout << "gamma: " << optimalParams.gamma << endl;
-/*
+        /*
         vector<float> results;
 
         Mat sample(1,256, CV_32FC1);
