@@ -22,6 +22,7 @@ struct SteinKernelParams {
 
     float C;
     float gamma;
+    float fmeasure;
 };
 
 /**
@@ -46,7 +47,7 @@ public:
      * @param CGrid
      * @return
      */
-    SteinKernelParams trainAuto(const cv::Mat targetCovMatrix, const std::vector<cv::Mat>& otherPeople,
+    SteinKernelParams trainAuto(const cv::Mat targetCovarMat, const std::vector<cv::Mat>& trainingSet,
         const cv::ml::ParamGrid& gammaGrid = cv::ml::SVM::getDefaultGrid(cv::ml::SVM::GAMMA),
         const cv::ml::ParamGrid& CGrid = cv::ml::SVM::getDefaultGrid(cv::ml::SVM::C));
 
@@ -61,9 +62,6 @@ public:
 
 private:
     cv::Ptr<cv::ml::SVM> svm;
-
-    cv::Mat formatDataForTraining(const std::vector<cv::Mat>& targetPerson,
-        const std::vector<cv::Mat>& otherPeople) const;
 
     /**
      * @brief evaluates the trained svm accuracy

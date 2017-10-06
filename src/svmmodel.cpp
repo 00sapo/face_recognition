@@ -90,18 +90,17 @@ bool SVMmodel::train(const std::vector<cv::Mat>& targetPerson, const vector<Mat>
     return svm->train(trainData);
 }
 
-SteinKernelParams SVMmodel::trainAuto(const vector<Mat>& targetPerson, const vector<Mat>& otherPeople,
+SteinKernelParams SVMmodel::trainAuto(const Mat targetCovarMat, const vector<Mat>& trainingSet,
     const ml::ParamGrid& gammaGrid, const ml::ParamGrid& CGrid)
 {
-    auto trainMatrix = formatDataForTraining(targetPerson, otherPeople);
-    auto validationData = //trainMatrix(cv::Rect(0,0,trainMatrix.cols, targetPerson.size()));
-        trainMatrix(cv::Rect(0, targetPerson.size(), trainMatrix.cols, otherPeople.size()));
+    Mat trainMatrix = matVectorToMat(trainingSet);
+    Mat validationData = trainMatrix(cv::Rect(0, targetPerson.size(), trainMatrix.cols, otherPeople.size()));
 
     vector<int> labelsVector;
-    for (const auto& p : targetPerson) {
-        labelsVector.push_back(1);
-    }
-    for (const auto& o : otherPeople) {
+    // one 1 because the target covariance matrix is only 1
+    labelsVector.push_back(1);
+    // the others are all -1
+    for (const auto& o : trainingSet) {
         labelsVector.push_back(-1);
     }
     Mat labels(labelsVector, true);
@@ -172,21 +171,6 @@ void SVMmodel::setParams(const SteinKernelParams& params)
 {
     setC(params.C);
     setGamma(params.gamma);
-}
-
-Mat SVMmodel::formatDataForTraining(const vector<Mat>& targetPerson,
-    const vector<Mat>& otherPeople) const
-{
-    vector<Mat> trainingSamples;
-    trainingSamples.reserve(targetPerson.size() + otherPeople.size());
-    for (const auto& mat : targetPerson) {
-        trainingSamples.push_back(mat);
-    }
-    for (const auto& mat : otherPeople) {
-        trainingSamples.push_back(mat);
-    }
-
-    return matVectorToMat(trainingSamples);
 }
 
 float SVMmodel::evaluateFMeasure(Mat& validationData, const Mat& groundTruth)

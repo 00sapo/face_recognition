@@ -16,11 +16,13 @@
 #include "preprocessor.h"
 #include "settings.h"
 #include "svmmodel.h"
+#include <numeric>
 
 using cv::Mat;
 using cv::waitKey;
 using std::cout;
 using std::endl;
+using std::list;
 using std::string;
 using std::vector;
 
@@ -45,61 +47,74 @@ namespace test {
         Preprocessor preproc;
         cout << "Preprocessing..." << endl;
 
-        vector<vector<Face>> faces;
+        vector<vector<Face>> persons;
         for (auto& id : identities) {
-            faces.push_back(preproc.preprocess(id));
+            persons.push_back(preproc.preprocess(id));
         }
-
-        CovarianceComputer covar;
-        int numPoseClusters = 3;
         vector<Mat> trainingSet;
-        for (int i = 1; i <= 25; ++i) {
-            vector<std::pair<Mat, Mat>> pairs = covar.computeCovarianceRepresentation(faces[i], numPoseClusters);
-            for (int j = 0; j <= numPoseClusters; j++) {
-                Mat normalized;
-                cv::normalize(pairs[j].first, normalized);
-                trainingSet.push_back(normalized);
+        int numPoseClusters = 3;
+        CovarianceComputer covar;
+
+        vector<vector<std::list<const Face*>>> dataSet;
+        for (auto& faces : persons) {
+
+            cout << "Clustering poses..." << endl;
+            vector<Pose> centers = covar.clusterizePoses(faces, numPoseClusters);
+            cout << "Assigning faces to clusters..." << endl;
+            dataSet.push_back(covar.assignFacesToClusters(faces, centers));
+        }
+
+        cout << "Training SVM model for 1st cluter of 1st person using leave-one-out per each photo" << endl;
+        //leave-one-out for each cluster
+        Mat normalizedDepthCovar;
+        for (auto& person : dataSet) {
+
+            for (auto& cluster : person) {
+                Mat targetImageMatrix, targetDepthCovar;
+
+                for (list<const Face*>::iterator it = cluster.begin(); it != cluster.end(); it++) {
+                    const Face* face = *it;
+                    cluster.erase(it);
+
+                    vector<std::pair<Mat, Mat>> pairs = covar.computeCovarianceRepresentation(person);
+                    for (auto& pair : pairs) {
+                        trainingSet.push_back(pair.first);
+                    }
+
+                    covar.setToCovariance(std::list<const Face*>{ face }, targetImageMatrix, targetDepthCovar);
+                    cv::normalize(targetDepthCovar, normalizedDepthCovar);
+
+                    cout << "Creating SVM model..." << endl;
+                    SVMmodel model;
+                    cout << "Training model..." << endl;
+                    model.train(trainingSet, 0, 0); //1st person, 1st cluster
+                    //TODO: predict the normalizedDepthCovar and if it is right increase or decrease true/false positives/negatives
+                    cout << "Choosing best parameters" << endl;
+                    if (optimalParams.fmeasure >= bestParams[0].fmeasure)
+                        bestParams = vector<SteinKernelParams>{ optimalParams };
+                    else if (optimalParams.fmeasure == bestParams[0].fmeasure)
+                        bestParams.push_back(optimalParams);
+
+                    cluster.insert(it, face);
+                }
+
+                cout << "Model trained, computing mean of best parameters are the following" << endl;
+                double gamma = 0, C = 0;
+
+                for (auto& param : bestParams) {
+                    C += param.C;
+                    gamma += param.gamma;
+                }
+                SteinKernelParams best(C / bestParams.size(), gamma / bestParams.size());
+
+                std::cout << "score obtained by avaraging best parameters: <to be implemented>" << std::endl;
+                cout << "C: " << best.C << endl;
+                cout << "gamma: " << best.gamma << endl;
+                poseModelParams.push_back(best);
             }
+
+            models.push_back(poseModelParams);
         }
-
-        vector<std::pair<Mat, Mat>> pairs = covar.computeCovarianceRepresentation(faces[0], numPoseClusters);
-        for (int i = 1; i <= numPoseClusters; i++) {
-            Mat normalized;
-            cv::normalize(pairs[i].first, normalized);
-            trainingSet.push_back(normalized);
-        }
-
-        Mat targetCovarMatrix;
-        cv::normalize(pairs[0].first, targetCovarMatrix);
-
-        cout << "Creating SVM model..." << endl;
-        SVMmodel model;
-        cout << "Training model..." << endl;
-        auto optimalParams = model.trainAuto(targetCovarMatrix, trainingSet);
-        cout << "Done!" << endl;
-        cout << "C: " << optimalParams.C << endl;
-        cout << "gamma: " << optimalParams.gamma << endl;
-        /*
-        vector<float> results;
-
-        Mat sample(1,256, CV_32FC1);
-        auto iterNew = sample.begin<float>();
-        for (auto iter = depthCovar_000[0].begin<float>(); iter != depthCovar_000[0].end<float>(); ++iter, ++iterNew) {
-            *iterNew = *iter;
-        }
-
-        std::cout << model.predict(sample) << std::endl;
-
-        iterNew = sample.begin<float>();
-        for (auto iter = depthCovar_others[0].begin<float>(); iter != depthCovar_others[0].end<float>(); ++iter, ++iterNew) {
-            *iterNew = *iter;
-        }
-
-        std::cout << model.predict(sample) << std::endl;
-
-        for (auto i : results)
-            cout << i << endl;
-            */
     }
 
     cv::Vec3f randomEulerAngle()
