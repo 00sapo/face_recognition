@@ -10,16 +10,17 @@ SOURCES += src/main.cpp \
            src/preprocessor.cpp \
            src/settings.cpp \
            src/covariancecomputer.cpp \
-           src/svmmodel.cpp \
            src/facerecognizer.cpp \
+           src/svmstein.cpp \
            extern_libs/head_pose_estimation/CRForestEstimator.cpp \
            extern_libs/head_pose_estimation/CRTree.cpp
 
 INCLUDEPATH += include $$(OPENCV_INCLUDE)
 
 HEADERS += include/*.h \
+           include/svmstein.h \
            extern_libs/head_pose_estimation/CRForestEstimator.h \
-           extern_libs/head_pose_estimation/CRTree.h
+           extern_libs/head_pose_estimation/CRTree.h \
 
 DISTFILES += \
     camera_info.yaml

@@ -5,9 +5,14 @@
 
 #include "face.h"
 #include "covariancecomputer.h"
-#include "svmmodel.h"
+#include "svmstein.h"
+
 
 namespace face {
+
+using FaceMatrix     = std::vector<std::vector<face::Face>>;
+using MatMatrix      = std::vector<std::vector<cv::Mat>>;
+using SVMSteinMatrix = std::vector<std::vector<SVMStein>>;
 
 class FaceRecognizer
 {
@@ -15,7 +20,9 @@ public:
 
     static const std::string unknownIdentity;   // unknown identity label
 
-    FaceRecognizer();
+    FaceRecognizer(int c);
+
+    FaceRecognizer(const std::string &fileName);
 
 
     /**
@@ -24,7 +31,7 @@ public:
      * @param labels: labels to be assigned to each identity; these labels will be returned
      *                by FaceRecognizer::predict() when identifies a person
      */
-    void train(const std::vector<std::vector<Face>> &trainingSamples,
+    void train(const FaceMatrix &trainingSamples,
                const std::vector<std::string> &samplLabels = std::vector<std::string>());
 
     /**
@@ -50,14 +57,20 @@ public:
     bool save(const std::string &fileName);
 
 private:
-    const int c = 3;  // number of head rotation subsets for each identity
+    int c = 3;  // number of head rotation subsets for each identity
+    int N = 0;  // number of identities provided for training
     CovarianceComputer covarComputer;
     std::vector<std::string> IDs;  // labels associated to each identity in the same order as in grayscaleSVMs and depthmapSVMs
-    std::vector<std::vector<SVMModel>> grayscaleSVMs;   // a row for each identity and a column for each head rotation subset
-    std::vector<std::vector<SVMModel>> depthmapSVMs;    // thus resulting in a Nxc matrix where N is the number of identities
-                                                        // and c the number of head rotation subsets
+    SVMSteinMatrix grayscaleSVMs;  // a row for each identity and a column for each head rotation subset
+    SVMSteinMatrix depthmapSVMs;   // thus resulting in a Nxc matrix where N is the number of identities
+                                   // and c the number of head rotation subsets
 
     std::vector<std::string> generateLabels(int numOfLabels);
+
+    void getNormalizedCovariances(const std::vector<Face> &identity,
+                                  std::vector<cv::Mat> &grayscaleCovarOut,
+                                  std::vector<cv::Mat> &depthmapCovarOut) const;
+    void getNormalizedCovariances(const FaceMatrix &identities, MatMatrix &grayscaleCovarOut, MatMatrix &depthmapCovarOut) const;
 
     /**
      * @brief formatDataForTraining transforms the input dataset in a suitable format to be used by
@@ -68,7 +81,9 @@ private:
      *        has the same dimensions)
      * @return a vector with the ranges of rows belonging to each identity (with length = dataIn.size())
      */
-    std::vector<cv::Range> formatDataForTraining(const std::vector<std::vector<cv::Mat>> &dataIn, cv::Mat &dataOut) const;
+    cv::Mat formatDataForTraining(const MatMatrix &dataIn, std::vector<cv::Range> &ranges) const;
+
+    cv::Mat formatDataForPrediction(const std::vector<cv::Mat> &data) const;
 };
 
 }   // namespace face

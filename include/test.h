@@ -15,7 +15,7 @@
 #include "lbp.h"
 #include "preprocessor.h"
 #include "settings.h"
-#include "svmmodel.h"
+#include "facerecognizer.h"
 
 using cv::Mat;
 using cv::waitKey;
@@ -51,6 +51,10 @@ namespace test {
             faces.push_back(preproc.preprocess(id));
         }
 
+        FaceRecognizer faceRec;
+        faceRec.train(faces);
+
+        /*
         CovarianceComputer covar;
         cout << "Computing covariances for 000..." << endl;
         vector<vector<Mat>> depthCovariances;
@@ -79,7 +83,7 @@ namespace test {
         }
 
         cout << "Creating SVM model..." << endl;
-        SVMModel model;
+        SVMStein model;
         cout << "Training model..." << endl;
         auto optimalParams = model.trainAuto(person, others);
         cout << "Done!" << endl;
