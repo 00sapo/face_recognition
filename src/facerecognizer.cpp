@@ -15,7 +15,7 @@ const string FaceRecognizer::unknownIdentity = "unknown_ID";
 
 FaceRecognizer::FaceRecognizer(int c) : c(c) { }
 
-FaceRecognizer::FaceRecognizer(const string fileName)
+FaceRecognizer::FaceRecognizer(const string &fileName)
 {
     load(fileName);
 }
