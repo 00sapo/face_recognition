@@ -1,7 +1,6 @@
 #include "image4dloader.h"
 
-#include <boost/filesystem/operations.hpp>
-#include <boost/filesystem/path.hpp>
+#include <experimental/filesystem>
 
 #include <thread>
 
@@ -26,7 +25,7 @@ using std::endl;
 using std::string;
 using std::vector;
 
-namespace fs = boost::filesystem;
+namespace fs = std::experimental::filesystem;
 
 namespace face {
 
@@ -55,8 +54,8 @@ bool Image4DLoader::get(Image4D& image4d)
     if (!hasNext())
         return false;
 
-    const string& imageFile = imageFileNames.back();
-    const string& cloudFile = cloudFileNames.back();
+    const string &imageFile = imageFileNames.back();
+    const string &cloudFile = cloudFileNames.back();
 
     Mat image = cv::imread(imageFile, CV_LOAD_IMAGE_GRAYSCALE);
     if (image.empty()) {
@@ -98,8 +97,8 @@ void Image4DLoader::getMultiThr(vector<Image4D>& image4DSequence, int begin, int
     for (int i = begin; i < end; ++i) {
 
         // no locks required since reading a const reference
-        const string& imageFile = imageFileNames[i];
-        const string& cloudFile = cloudFileNames[i];
+        const string &imageFile = imageFileNames[i];
+        const string &cloudFile = cloudFileNames[i];
 
         Mat image = cv::imread(imageFile, CV_LOAD_IMAGE_GRAYSCALE);
         if (image.empty()) {
