@@ -45,10 +45,11 @@ namespace test {
         }
 
         Preprocessor preproc;
-        cout << "Preprocessing..." << endl;
 
+        int i = 0;
         vector<vector<Face>> persons;
         for (auto& id : identities) {
+            cout << "Preprocessing images of person " << i++ << endl;
             persons.push_back(preproc.preprocess(id));
         }
         vector<Mat> trainingSet;
@@ -56,15 +57,16 @@ namespace test {
         CovarianceComputer covar;
 
         vector<vector<std::list<const Face*>>> dataSet;
+        cout << "Clustering poses..." << endl;
         for (auto& faces : persons) {
 
-            cout << "Clustering poses..." << endl;
             vector<Pose> centers = covar.clusterizePoses(faces, numPoseClusters);
-            cout << "Assigning faces to clusters..." << endl;
             dataSet.push_back(covar.assignFacesToClusters(faces, centers));
         }
 
+        i = 0;
         for (auto& person : dataSet) {
+            cout << "Computing covariance for person " << i++ << endl;
             vector<std::pair<Mat, Mat>> pairs = covar.computeCovarianceRepresentation(person);
             for (auto& pair : pairs) {
                 trainingSet.push_back(pair.first);
@@ -80,7 +82,7 @@ namespace test {
         cout << "Creating SVM model..." << endl;
         SVMmodel model;
         cout << "Training model..." << endl;
-        vector<SteinKernelParams> bestParams;
+        vector<SteinKernelParams> bestParams = vector<SteinKernelParams>{ SteinKernelParams() };
         for (auto gamma = gammaGrid.minVal; gamma < gammaGrid.maxVal; gamma *= gammaGrid.logStep) {
             model.setGamma(gamma);
 
@@ -91,6 +93,8 @@ namespace test {
 
                 for (uint i = 0; i < dataSet.size(); i++) {
                     auto& person = dataSet[i];
+                    cout << "Training with person " << i << endl;
+                    auto begin = std::chrono::high_resolution_clock::now();
 
                     for (uint j = 0; j < person.size(); j++) {
                         auto& cluster = person[j];
@@ -102,7 +106,7 @@ namespace test {
                         Mat clusterCovariance = trainingSet.at(totalIndex);
                         for (list<const Face*>::iterator it = cluster.begin(); it != cluster.end(); it++) {
                             const Face* face = *it;
-                            cluster.erase(it);
+                            it = cluster.erase(it);
 
                             covar.setToCovariance(cluster, imageCovar, trainingSet.at(totalIndex));
                             covar.setToCovariance(std::list<const Face*>{ face }, imageCovar, depthCovar);
@@ -111,9 +115,7 @@ namespace test {
 
                             model.train(trainingSet, targetIndex); //1st person, 1st cluster
 
-                            targetDepthCovar.reshape(targetDepthCovar.cols * targetDepthCovar.rows, 0);
-                            cout << "type: " << targetDepthCovar.type() << endl;
-                            cout << "cols: " << targetDepthCovar.cols << endl;
+                            targetDepthCovar = targetDepthCovar.reshape(0, 1);
                             float prediction = model.predict(targetDepthCovar);
 
                             if (prediction == 1) {
@@ -138,17 +140,19 @@ namespace test {
                                 ++falseNegatives;
                             }
 
-                            cluster.insert(it, face);
+                            it = cluster.insert(it, face);
                         }
                         trainingSet.at(totalIndex) = clusterCovariance;
                     }
+                    auto end = std::chrono::high_resolution_clock::now();
+                    cout << "Time elapsed for person " << i << ": " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "ms" << endl;
                 }
                 float fmeasure = 2 * truePositives / (float)(truePositives + falseNegatives + falsePositives);
-                cout << "Choosing best parameters" << endl;
+                cout << "F-measure: " << fmeasure << " for gamma=" << gamma << " and C=" << C << endl;
                 if (fmeasure >= bestParams[0].fmeasure)
-                    bestParams = vector<SteinKernelParams>{ SteinKernelParams(C, gamma) };
+                    bestParams = vector<SteinKernelParams>{ SteinKernelParams(C, gamma, fmeasure) };
                 else if (fmeasure == bestParams[0].fmeasure)
-                    bestParams.push_back(SteinKernelParams(C, gamma));
+                    bestParams.push_back(SteinKernelParams(C, gamma, fmeasure));
             }
         }
 
@@ -159,11 +163,12 @@ namespace test {
             C += param.C;
             gamma += param.gamma;
         }
-        SteinKernelParams best(C / bestParams.size(), gamma / bestParams.size());
+        SteinKernelParams best(C / bestParams.size(), gamma / bestParams.size(), bestParams[0].fmeasure);
 
         std::cout << "score obtained by avaraging best parameters: <to be implemented>" << std::endl;
         cout << "C: " << best.C << endl;
         cout << "gamma: " << best.gamma << endl;
+        cout << "Fmeasure: " << best.fmeasure << endl;
     }
 
     cv::Vec3f randomEulerAngle()

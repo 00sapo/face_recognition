@@ -23,8 +23,6 @@ vector<std::pair<Mat, Mat>> CovarianceComputer::computeCovarianceRepresentation(
         Mat imgCovariance, depthCovariance;
 
         // compute covariance representation of the set
-        cout << "Set to covariance..." << endl;
-        /* Why not using OpenCV covariance computing function? */
         setToCovariance(cluster, imgCovariance, depthCovariance);
         covariances.emplace_back(imgCovariance, depthCovariance);
     }

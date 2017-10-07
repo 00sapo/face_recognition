@@ -12,11 +12,13 @@ struct SteinKernelParams {
     SteinKernelParams()
         : C(1)
         , gamma(1)
+        , fmeasure(0)
     {
     }
-    SteinKernelParams(float C, float gamma)
+    SteinKernelParams(float C, float gamma, float fmeasure)
         : C(C)
         , gamma(gamma)
+        , fmeasure(fmeasure)
     {
     }
 
