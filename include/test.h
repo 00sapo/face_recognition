@@ -66,55 +66,87 @@ namespace test {
 
         cout << "Training SVM model for 1st cluter of 1st person using leave-one-out per each photo" << endl;
         //leave-one-out for each cluster
-        Mat normalizedDepthCovar;
-        for (auto& person : dataSet) {
+        uint targetPerson = 0, targetCluster = 0;
+        uint targetIndex = targetPerson * numPoseClusters + targetCluster;
 
-            for (auto& cluster : person) {
-                Mat targetImageMatrix, targetDepthCovar;
+        const cv::ml::ParamGrid& gammaGrid = cv::ml::SVM::getDefaultGrid(cv::ml::SVM::GAMMA);
+        const cv::ml::ParamGrid& CGrid = cv::ml::SVM::getDefaultGrid(cv::ml::SVM::C);
+        cout << "Creating SVM model..." << endl;
+        SVMmodel model;
+        cout << "Training model..." << endl;
+        vector<SteinKernelParams> bestParams;
+        for (auto gamma = gammaGrid.minVal; gamma < gammaGrid.maxVal; gamma *= gammaGrid.logStep) {
+            model.setGamma(gamma);
 
-                for (list<const Face*>::iterator it = cluster.begin(); it != cluster.end(); it++) {
-                    const Face* face = *it;
-                    cluster.erase(it);
+            for (auto C = CGrid.minVal; C < CGrid.maxVal; C *= CGrid.logStep) {
+                std::cout << "C = " << C << "; gamma = " << gamma << std::endl;
+                model.setC(C);
+                int truePositives = 0, falsePositives = 0, trueNegatives = 0, falseNegatives = 0;
 
-                    vector<std::pair<Mat, Mat>> pairs = covar.computeCovarianceRepresentation(person);
-                    for (auto& pair : pairs) {
-                        trainingSet.push_back(pair.first);
+                for (uint i = 0; i < dataSet.size(); i++) {
+                    auto& person = dataSet[i];
+
+                    for (uint j = 0; j < person.size(); j++) {
+                        auto& cluster = person[j];
+
+                        Mat imageCovar, depthCovar;
+                        float truth = i * numPoseClusters + j == targetIndex ? 1 : -1;
+
+                        for (list<const Face*>::iterator it = cluster.begin(); it != cluster.end(); it++) {
+                            const Face* face = *it;
+                            cluster.erase(it);
+
+                            vector<std::pair<Mat, Mat>> pairs = covar.computeCovarianceRepresentation(person);
+                            for (auto& pair : pairs) {
+                                trainingSet.push_back(pair.first);
+                            }
+
+                            Mat targetDepthCovar;
+                            covar.setToCovariance(std::list<const Face*>{ face }, imageCovar, depthCovar);
+                            cv::normalize(depthCovar, targetDepthCovar);
+
+                            model.train(trainingSet, targetIndex); //1st person, 1st cluster
+
+                            targetDepthCovar = model.matVectorToMat(vector<Mat>{ targetDepthCovar });
+                            float prediction = model.predict(targetDepthCovar);
+
+                            if (prediction == 1) {
+                                if (prediction == truth)
+                                    ++truePositives;
+                                else
+                                    ++falsePositives;
+                            } else if (prediction == -1) {
+                                if (prediction == truth)
+                                    ++trueNegatives;
+                                else
+                                    ++falseNegatives;
+                            }
+
+                            cluster.insert(it, face);
+                        }
                     }
-
-                    covar.setToCovariance(std::list<const Face*>{ face }, targetImageMatrix, targetDepthCovar);
-                    cv::normalize(targetDepthCovar, normalizedDepthCovar);
-
-                    cout << "Creating SVM model..." << endl;
-                    SVMmodel model;
-                    cout << "Training model..." << endl;
-                    model.train(trainingSet, 0, 0); //1st person, 1st cluster
-                    //TODO: predict the normalizedDepthCovar and if it is right increase or decrease true/false positives/negatives
-                    cout << "Choosing best parameters" << endl;
-                    if (optimalParams.fmeasure >= bestParams[0].fmeasure)
-                        bestParams = vector<SteinKernelParams>{ optimalParams };
-                    else if (optimalParams.fmeasure == bestParams[0].fmeasure)
-                        bestParams.push_back(optimalParams);
-
-                    cluster.insert(it, face);
                 }
-
-                cout << "Model trained, computing mean of best parameters are the following" << endl;
-                double gamma = 0, C = 0;
-
-                for (auto& param : bestParams) {
-                    C += param.C;
-                    gamma += param.gamma;
-                }
-                SteinKernelParams best(C / bestParams.size(), gamma / bestParams.size());
-
-                std::cout << "score obtained by avaraging best parameters: <to be implemented>" << std::endl;
-                cout << "C: " << best.C << endl;
-                cout << "gamma: " << best.gamma << endl;
-                poseModelParams.push_back(best);
+                float fmeasure = 2 * truePositives / (float)(truePositives + falseNegatives + falsePositives);
+                cout << "Choosing best parameters" << endl;
+                if (fmeasure >= bestParams[0].fmeasure)
+                    bestParams = vector<SteinKernelParams>{ SteinKernelParams(C, gamma) };
+                else if (fmeasure == bestParams[0].fmeasure)
+                    bestParams.push_back(SteinKernelParams(C, gamma));
             }
-
-            models.push_back(poseModelParams);
         }
+
+        cout << "Model trained, computing mean of best parameters are the following" << endl;
+        double gamma = 0, C = 0;
+
+        for (auto& param : bestParams) {
+            C += param.C;
+            gamma += param.gamma;
+        }
+        SteinKernelParams best(C / bestParams.size(), gamma / bestParams.size());
+
+        std::cout << "score obtained by avaraging best parameters: <to be implemented>" << std::endl;
+        cout << "C: " << best.C << endl;
+        cout << "gamma: " << best.gamma << endl;
     }
 
     cv::Vec3f randomEulerAngle()
