@@ -28,6 +28,11 @@ namespace face {
 
 namespace test {
 
+    void testSVMLoad()
+    {
+        FaceRecognizer rec("/home/alberto/Desktop/svms");
+    }
+
     void testSVM()
     {
         string dirPath = "../RGBD_Face_dataset_training/";
@@ -54,62 +59,8 @@ namespace test {
         FaceRecognizer faceRec;
         faceRec.train(faces);
 
-        /*
-        CovarianceComputer covar;
-        cout << "Computing covariances for 000..." << endl;
-        vector<vector<Mat>> depthCovariances;
-        for (const auto& face : faces) {
-            auto pairs = covar.computeCovarianceRepresentation(face, 3);
-            vector<Mat> depth;
-            for (auto& pair : pairs) {
-                depth.push_back(pair.first); // using grayscale image
-                //depth.push_back(pair.second);
-            }
-            depthCovariances.push_back(depth);
-        }
+        faceRec.save("/home/alberto/Desktop/svms");
 
-        vector<Mat> others;
-        for (int i = 1; i <= 25; ++i) {
-            for (auto& depth : depthCovariances[i]) {
-                Mat normalized;
-                cv::normalize(depth, normalized);
-                others.push_back(normalized);
-            }
-        }
-
-        vector<Mat> person(depthCovariances[0].size());
-        for (int i = 0; i < depthCovariances[0].size(); ++i) {
-            cv::normalize(depthCovariances[0][i], person[i]);
-        }
-
-        cout << "Creating SVM model..." << endl;
-        SVMStein model;
-        cout << "Training model..." << endl;
-        auto optimalParams = model.trainAuto(person, others);
-        cout << "Done!" << endl;
-        cout << "C: " << optimalParams.C << endl;
-        cout << "gamma: " << optimalParams.gamma << endl;
-/*
-        vector<float> results;
-
-        Mat sample(1,256, CV_32FC1);
-        auto iterNew = sample.begin<float>();
-        for (auto iter = depthCovar_000[0].begin<float>(); iter != depthCovar_000[0].end<float>(); ++iter, ++iterNew) {
-            *iterNew = *iter;
-        }
-
-        std::cout << model.predict(sample) << std::endl;
-
-        iterNew = sample.begin<float>();
-        for (auto iter = depthCovar_others[0].begin<float>(); iter != depthCovar_others[0].end<float>(); ++iter, ++iterNew) {
-            *iterNew = *iter;
-        }
-
-        std::cout << model.predict(sample) << std::endl;
-
-        for (auto i : results)
-            cout << i << endl;
-            */
     }
 
     cv::Vec3f randomEulerAngle()

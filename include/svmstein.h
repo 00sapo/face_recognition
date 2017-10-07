@@ -48,7 +48,7 @@ public:
     float getDistanceFromHyperplane(const cv::Mat &sample) const;
 
     // FIXME: change signature to match trainAuto() usage
-    bool train(const std::vector<cv::Mat>& targetPerson, const std::vector<cv::Mat>& otherPeople);
+    bool train(const cv::Mat &data, const std::vector<int> &labelsVector);
 
     /**
      * @brief trainAuto automatically chooses the best values for C and sigma parameters
@@ -64,21 +64,6 @@ public:
                                 const cv::ml::ParamGrid& gammaGrid = cv::ml::SVM::getDefaultGrid(cv::ml::SVM::GAMMA),
                                 const cv::ml::ParamGrid& CGrid = cv::ml::SVM::getDefaultGrid(cv::ml::SVM::C));
 
-    bool load(const std::string& filename);
-    void save(const std::string& filename) const;
-
-    void setC(float C);
-    void setGamma(float gamma);
-    void setParams(const SteinKernelParams& params);
-
-    static cv::Mat matVectorToMat(const std::vector<cv::Mat>& data);
-
-private:
-    cv::Ptr<cv::ml::SVM> svm;
-
-    cv::Mat formatDataForTraining(const std::vector<cv::Mat>& targetPerson,
-        const std::vector<cv::Mat>& otherPeople) const;
-
     /**
      * @brief evaluates the trained svm accuracy
      * @param validationData: Nxp CV_32FC1 matrix, where N is the number of samples
@@ -88,6 +73,18 @@ private:
      * @return percentage of correct classifications (between 0 and 1)
      */
     float evaluate(const cv::Mat &validationData, const cv::Mat& groundTruth);
+
+
+    bool load(const std::string& filename);
+    void save(const std::string& filename) const;
+
+    void setC(float C);
+    void setGamma(float gamma);
+    void setParams(const SteinKernelParams& params);
+
+private:
+    cv::Ptr<cv::ml::SVM> svm;
+
 };
 
 } // namespace face

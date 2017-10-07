@@ -47,14 +47,14 @@ public:
      * @param fileName: path of the folder containing the pretrained models
      * @return true if succedes
      */
-    bool load(const std::string &fileName);
+    bool load(const std::string &directoryName);
 
     /**
      * @brief saves a trained model
      * @param fileName: path to save the model to
      * @return true if saved as expected
      */
-    bool save(const std::string &fileName);
+    bool save(const std::string &directoryName);
 
 private:
     int c = 3;  // number of head rotation subsets for each identity

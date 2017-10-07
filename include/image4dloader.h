@@ -44,7 +44,7 @@ public:
      * @param image4d: output image4d
      * @return true if successfully loaded, false otherwise
      */
-    bool get(Image4D& image4d);
+    virtual bool get(Image4D& image4d);
 
     /**
      * @brief get: multithreaded version of get(Image4D& image4d).
@@ -52,7 +52,7 @@ public:
      *        depending on the number of available cores
      * @return loaded files
      */
-    std::vector<Image4D> get();
+    virtual std::vector<Image4D> get();
 
     /**
      * @brief setFileNameRegEx
@@ -73,6 +73,10 @@ public:
     float getLeafSize() const;
     void setLeafSize(float value);
 
+protected:
+    std::vector<std::string> imageFileNames;
+    std::vector<std::string> cloudFileNames;
+
 private:
     /**
      * @brief leafSize: not working for now. If it is setted, the images will be filtered with a Voxel Grid filter of this leaf size.
@@ -82,8 +86,6 @@ private:
 
     std::string currentPath;
     std::regex fileTemplate;
-    std::vector<std::string> imageFileNames;
-    std::vector<std::string> cloudFileNames;
 
     bool loadFileNames(const std::string& dirPath);
 

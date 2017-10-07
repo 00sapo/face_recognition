@@ -35,7 +35,9 @@ void testFunctions()
     //
     //face::test::covarianceTest();
     //
-    face::test::testSVM();
+    //face::test::testSVM();
+    //
+    face::test::testSVMLoad();
     //
     //face::test::covarianceTest();
     //

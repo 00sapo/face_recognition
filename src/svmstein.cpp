@@ -84,17 +84,9 @@ float SVMStein::getDistanceFromHyperplane(const cv::Mat &sample) const
     return res.at<float>(0);
 }
 
-bool SVMStein::train(const std::vector<cv::Mat>& targetPerson, const vector<Mat>& otherPeople)
+bool SVMStein::train(const Mat &data, const vector<int> &labelsVector)
 {
-    auto trainMatrix = formatDataForTraining(targetPerson, otherPeople);
-    vector<int> labelsVector;
-    for (const auto& p : targetPerson) {
-        labelsVector.push_back(1);
-    }
-    for (const auto& o : otherPeople) {
-        labelsVector.push_back(-1);
-    }
-    auto trainData = ml::TrainData::create(trainMatrix, ml::ROW_SAMPLE, Mat(labelsVector, true));
+    auto trainData = ml::TrainData::create(data, ml::ROW_SAMPLE, Mat(labelsVector, true));
     return svm->train(trainData);
 }
 
@@ -168,20 +160,6 @@ void SVMStein::setParams(const SteinKernelParams& params)
     setGamma(params.gamma);
 }
 
-Mat SVMStein::formatDataForTraining(const vector<Mat>& targetPerson,
-    const vector<Mat>& otherPeople) const
-{
-    vector<Mat> trainingSamples;
-    trainingSamples.reserve(targetPerson.size() + otherPeople.size());
-    for (const auto& mat : targetPerson) {
-        trainingSamples.push_back(mat);
-    }
-    for (const auto& mat : otherPeople) {
-        trainingSamples.push_back(mat);
-    }
-
-    return matVectorToMat(trainingSamples);
-}
 
 float SVMStein::evaluate(const Mat &validationData, const Mat &groundTruth)
 {
@@ -200,19 +178,5 @@ float SVMStein::evaluate(const Mat &validationData, const Mat &groundTruth)
     return correctClassification / float(N);
 }
 
-Mat SVMStein::matVectorToMat(const vector<Mat>& data)
-{
-    const int height = data.size();
-    const int width = data[0].rows * data[0].cols;
-    Mat matrix(height, width, data[0].type());
-    for (auto i = 0; i < height; ++i) {
-        auto iter = data[i].begin<float>();
-        for (auto j = 0; j < width; ++j, ++iter) {
-            matrix.at<float>(i, j) = *iter;
-        }
-    }
-
-    return matrix;
-}
 
 } // namespace face

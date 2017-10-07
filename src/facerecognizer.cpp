@@ -1,10 +1,15 @@
 #include "facerecognizer.h"
 
 #include <iomanip>
+#include <experimental/filesystem>
+
 #include <opencv2/opencv.hpp>
 
 using std::vector;
 using std::string;
+
+namespace fs = std::experimental::filesystem;
+
 using cv::Mat;
 
 
@@ -29,7 +34,7 @@ FaceRecognizer::FaceRecognizer(const string &fileName)
     load(fileName);
 }
 
-// FIXME: change training to support c head rotations subsets
+
 void FaceRecognizer::train(const FaceMatrix &trainingSamples, const vector<string> &samplIDs)
 {
     N = trainingSamples.size();
@@ -83,17 +88,15 @@ string FaceRecognizer::predict(const vector<Face> &identity) const
 
     // count votes for each identity
     vector<int> votes(N);
-    int maxVotes = -1, maxIndex = -1;
+    int maxVotes = -1;
     for (auto i = 0; i < N; ++i) {
         int vote = 0;
         for (auto j = 0; j < c; ++j) {
             if (grayscaleSVMs[i][j].predict(grayscaleData.row(j)) == 1) ++vote;
             if (depthmapSVMs [i][j].predict(depthmapData .row(j)) == 1) ++vote;
         }
-        if (vote > maxVotes) {
-            maxVotes = vote;
-            maxIndex = i;
-        }
+        if (vote > maxVotes) maxVotes = vote;
+
         votes[i] = vote;
     }
 
@@ -125,14 +128,73 @@ string FaceRecognizer::predict(const vector<Face> &identity) const
     return IDs[bestIndex];
 }
 
-bool FaceRecognizer::load(const string &fileName)
+bool FaceRecognizer::load(const string &directoryName)
 {
-    throw std::runtime_error("Not implemented");
+    IDs.clear();
+    grayscaleSVMs.clear();
+    depthmapSVMs .clear();
+
+    int numOfIdentities = 0;
+    for (const auto &subdir : fs::directory_iterator(directoryName)) {
+        ++numOfIdentities;
+        vector<fs::path> dirElements;
+        for (const auto &dirElement : fs::directory_iterator(subdir)) {
+            dirElements.push_back(dirElement);
+        }
+        std::sort(dirElements.begin(), dirElements.end());
+
+        vector<SVMStein> graySVMs, depthSVMs;
+        for (const auto &elem : dirElements) {
+            std::cout << "Loading " << elem << std::endl;
+            try {
+            if (elem.filename().string().find("grayscale") == 0)
+                graySVMs.emplace_back(elem.string());
+            else if (elem.filename().string().find("depthmap") == 0)
+                depthSVMs.emplace_back(elem.string());
+            else
+                std::cout << "Unrecognized directory element: " << elem;
+            }
+            catch (const cv::Exception &ex) {
+                std::cout << ex.what() << std::endl;
+            }
+        }
+        c = dirElements.size();
+        grayscaleSVMs.push_back(std::move(graySVMs ));
+        depthmapSVMs .push_back(std::move(depthSVMs));
+        std::cout << "Finished loading identity " << subdir.path().filename().string() << std::endl;
+        IDs.push_back(subdir.path().filename().string());
+    }
 }
 
-bool FaceRecognizer::save(const string &fileName)
+bool FaceRecognizer::save(const string &directoryName)
 {
-    throw std::runtime_error("Not implemented");
+    // create root directory
+    fs::path rootDir(directoryName);
+    if (!fs::create_directory(rootDir)) {
+        std::cerr << "Unable to create directory " << directoryName << std::endl;
+        return false;
+    }
+
+    for (auto i = 0; i < N; ++i) {  // for each identity...
+        // create its own subdir
+        auto subDir = rootDir / IDs[i];
+        if (!fs::create_directory(subDir)) {
+            std::cerr << "Unable to create directory " << directoryName << std::endl;
+            return false;
+        }
+
+        for (auto j = 0; j < c; ++j) {  // for each head rotation subset...
+            // save svm
+            std::stringstream grayscaleStr, depthmapStr;
+            grayscaleStr << "grayscale_" << std::setfill('0') << std::setw(3) << j;   // fixed length identity
+            depthmapStr  << "depthmap_"  << std::setfill('0') << std::setw(3) << j;   // fixed length identity
+            string grayscaleFileName = (subDir / grayscaleStr.str()).string();
+            string depthmapFileName  = (subDir / depthmapStr .str()).string();
+            grayscaleSVMs[i][j].save(grayscaleFileName);
+            depthmapSVMs [i][j].save(depthmapFileName );
+        }
+    }
+
 }
 
 
