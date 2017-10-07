@@ -64,6 +64,12 @@ namespace test {
             dataSet.push_back(covar.assignFacesToClusters(faces, centers));
         }
 
+        for (auto& person : dataSet) {
+            vector<std::pair<Mat, Mat>> pairs = covar.computeCovarianceRepresentation(person);
+            for (auto& pair : pairs) {
+                trainingSet.push_back(pair.first);
+            }
+        }
         cout << "Training SVM model for 1st cluter of 1st person using leave-one-out per each photo" << endl;
         //leave-one-out for each cluster
         uint targetPerson = 0, targetCluster = 0;
@@ -90,24 +96,24 @@ namespace test {
                         auto& cluster = person[j];
 
                         Mat imageCovar, depthCovar;
-                        float truth = i * numPoseClusters + j == targetIndex ? 1 : -1;
+                        uint totalIndex = i * numPoseClusters + j;
+                        float truth = totalIndex == targetIndex ? 1 : -1;
 
+                        Mat clusterCovariance = trainingSet.at(totalIndex);
                         for (list<const Face*>::iterator it = cluster.begin(); it != cluster.end(); it++) {
                             const Face* face = *it;
                             cluster.erase(it);
 
-                            vector<std::pair<Mat, Mat>> pairs = covar.computeCovarianceRepresentation(person);
-                            for (auto& pair : pairs) {
-                                trainingSet.push_back(pair.first);
-                            }
-
-                            Mat targetDepthCovar;
+                            covar.setToCovariance(cluster, imageCovar, trainingSet.at(totalIndex));
                             covar.setToCovariance(std::list<const Face*>{ face }, imageCovar, depthCovar);
+                            Mat targetDepthCovar;
                             cv::normalize(depthCovar, targetDepthCovar);
 
                             model.train(trainingSet, targetIndex); //1st person, 1st cluster
 
-                            targetDepthCovar = model.matVectorToMat(vector<Mat>{ targetDepthCovar });
+                            targetDepthCovar.reshape(targetDepthCovar.cols * targetDepthCovar.rows, 0);
+                            cout << "type: " << targetDepthCovar.type() << endl;
+                            cout << "cols: " << targetDepthCovar.cols << endl;
                             float prediction = model.predict(targetDepthCovar);
 
                             if (prediction == 1) {
@@ -118,12 +124,23 @@ namespace test {
                             } else if (prediction == -1) {
                                 if (prediction == truth)
                                     ++trueNegatives;
-                                else
-                                    ++falseNegatives;
+                                else if (prediction == 1) {
+                                    if (prediction == truth)
+                                        ++truePositives;
+                                    else
+                                        ++falsePositives;
+                                } else if (prediction == -1) {
+                                    if (prediction == truth)
+                                        ++trueNegatives;
+                                    else
+                                        ++falseNegatives;
+                                }
+                                ++falseNegatives;
                             }
 
                             cluster.insert(it, face);
                         }
+                        trainingSet.at(totalIndex) = clusterCovariance;
                     }
                 }
                 float fmeasure = 2 * truePositives / (float)(truePositives + falseNegatives + falsePositives);
