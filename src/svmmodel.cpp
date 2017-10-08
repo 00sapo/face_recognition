@@ -71,21 +71,17 @@ SVMmodel::SVMmodel(const std::string& filename)
 
 float SVMmodel::predict(Mat& samples) const
 {
-    Mat res;
-    svm->predict(samples, res);
-    return res.at<float>(0);
+    return svm->predict(samples);
 }
 
 bool SVMmodel::train(const std::vector<cv::Mat>& trainingSet, int targetIndex)
 {
-    auto trainMatrix = matVectorToMat(trainingSet);
-    vector<int> labelsVector;
-    for (int i = 0; i < trainingSet.size(); i++) {
-        int label = i == targetIndex ? 1 : -1;
-        labelsVector.push_back(label);
-    }
-    auto trainData = ml::TrainData::create(trainMatrix, ml::ROW_SAMPLE, Mat(labelsVector, true));
-    return svm->train(trainData);
+    Mat trainMatrix = matVectorToMat(trainingSet);
+    vector<int> labelsVector(trainingSet.size(), -1);
+    labelsVector.at(targetIndex) = 1;
+
+    //    auto trainData = ml::TrainData::create(trainMatrix, ml::ROW_SAMPLE, Mat(labelsVector, true));
+    return svm->train(trainMatrix, ml::ROW_SAMPLE, labelsVector);
 }
 
 SteinKernelParams SVMmodel::trainAuto(const vector<Mat>& trainingSet, const int targetIndex, Mat targetDepthCovar,

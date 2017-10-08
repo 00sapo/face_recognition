@@ -33,7 +33,8 @@ namespace test {
     void testSVM()
     {
         string dirPath = "../RGBD_Face_dataset_training/";
-        Image4DLoader loader(dirPath, "000_.*");
+        Image4DLoader loader;
+        loader.setCurrentPath(dirPath);
 
         vector<vector<Image4D>> identities;
         for (int i = 0; i <= 25; ++i) {
@@ -54,6 +55,7 @@ namespace test {
         }
         vector<Mat> trainingSet;
         int numPoseClusters = 3;
+
         CovarianceComputer covar;
 
         vector<vector<std::list<const Face*>>> dataSet;
@@ -83,10 +85,10 @@ namespace test {
         SVMmodel model;
         cout << "Training model..." << endl;
         vector<SteinKernelParams> bestParams = vector<SteinKernelParams>{ SteinKernelParams() };
-        for (auto gamma = gammaGrid.minVal; gamma < gammaGrid.maxVal; gamma *= gammaGrid.logStep) {
+        for (auto gamma = gammaGrid.maxVal; gamma > gammaGrid.minVal; gamma /= gammaGrid.logStep) {
             model.setGamma(gamma);
 
-            for (auto C = CGrid.minVal; C < CGrid.maxVal; C *= CGrid.logStep) {
+            for (auto C = CGrid.maxVal; C > CGrid.minVal; C /= CGrid.logStep) {
                 std::cout << "C = " << C << "; gamma = " << gamma << std::endl;
                 model.setC(C);
                 int truePositives = 0, falsePositives = 0, trueNegatives = 0, falseNegatives = 0;
@@ -99,7 +101,7 @@ namespace test {
                     for (uint j = 0; j < person.size(); j++) {
                         auto& cluster = person[j];
 
-                        Mat imageCovar, depthCovar;
+                        Mat imageCovar, targetDepthCovar;
                         uint totalIndex = i * numPoseClusters + j;
                         float truth = totalIndex == targetIndex ? 1 : -1;
 
@@ -108,12 +110,11 @@ namespace test {
                             const Face* face = *it;
                             it = cluster.erase(it);
 
+                            //THE FOLLOWING TWO INSTRUCTIONS TAKE THE MAIN PART OF THE TIME SPENT
                             covar.setToCovariance(cluster, imageCovar, trainingSet.at(totalIndex));
-                            covar.setToCovariance(std::list<const Face*>{ face }, imageCovar, depthCovar);
-                            Mat targetDepthCovar;
-                            cv::normalize(depthCovar, targetDepthCovar);
+                            covar.setToCovariance(std::list<const Face*>{ face }, imageCovar, targetDepthCovar);
 
-                            model.train(trainingSet, targetIndex); //1st person, 1st cluster
+                            model.train(trainingSet, targetIndex);
 
                             targetDepthCovar = targetDepthCovar.reshape(0, 1);
                             float prediction = model.predict(targetDepthCovar);
@@ -126,18 +127,8 @@ namespace test {
                             } else if (prediction == -1) {
                                 if (prediction == truth)
                                     ++trueNegatives;
-                                else if (prediction == 1) {
-                                    if (prediction == truth)
-                                        ++truePositives;
-                                    else
-                                        ++falsePositives;
-                                } else if (prediction == -1) {
-                                    if (prediction == truth)
-                                        ++trueNegatives;
-                                    else
-                                        ++falseNegatives;
-                                }
-                                ++falseNegatives;
+                                else
+                                    ++falsePositives;
                             }
 
                             it = cluster.insert(it, face);
