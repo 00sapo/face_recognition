@@ -164,6 +164,8 @@ bool FaceRecognizer::load(const string &directoryName)
         std::cout << "Finished loading identity " << subdir.path().filename().string() << std::endl;
         IDs.push_back(subdir.path().filename().string());
     }
+
+    N = numOfIdentities;
 }
 
 bool FaceRecognizer::save(const string &directoryName)
