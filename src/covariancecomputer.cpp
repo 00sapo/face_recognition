@@ -3,6 +3,8 @@
 #include "face.h"
 #include "lbp.h"
 
+#include <covariancecomputer.h>
+
 using cv::Mat;
 using std::cout;
 using std::endl;
@@ -13,20 +15,14 @@ namespace face {
 
 CovarianceComputer::CovarianceComputer() {}
 
-vector<std::pair<Mat, Mat>> CovarianceComputer::computeCovarianceRepresentation(const vector<Face>& faces, int numSubsets) const
+vector<std::pair<Mat, Mat>> CovarianceComputer::computeCovarianceRepresentation(vector<std::list<const Face*>>& clusters) const
 {
-    cout << "Clustering poses..." << endl;
-    auto centers = clusterizePoses(faces, numSubsets);
-    cout << "Assigning faces to clusters..." << endl;
-    auto clusters = assignFacesToClusters(faces, centers);
 
     vector<std::pair<Mat, Mat>> covariances;
     for (const auto& cluster : clusters) {
         Mat imgCovariance, depthCovariance;
 
         // compute covariance representation of the set
-        cout << "Set to covariance..." << endl;
-        /* Why not using OpenCV covariance computing function? */
         setToCovariance(cluster, imgCovariance, depthCovariance);
         covariances.emplace_back(imgCovariance, depthCovariance);
     }
@@ -82,9 +78,9 @@ vector<Pose> CovarianceComputer::clusterizePoses(const vector<Face>& faces, int 
     return ctrs;
 }
 
-vector<vector<const Face*>> CovarianceComputer::assignFacesToClusters(const vector<Face>& faces, const vector<Pose>& centers) const
+vector<std::list<const Face*>> CovarianceComputer::assignFacesToClusters(const vector<Face>& faces, const vector<Pose>& centers) const
 {
-    vector<vector<const Face*>> clusters(centers.size());
+    vector<std::list<const Face*>> clusters(centers.size());
     for (const auto& face : faces) {
         int index = getNearestCenterId(face.getRotationMatrix(), centers);
         clusters[index].push_back(&face);
@@ -106,7 +102,7 @@ int CovarianceComputer::getNearestCenterId(const Pose& pose, const vector<Pose>&
     return index;
 }
 
-void CovarianceComputer::setToCovariance(const vector<const Face*>& set, Mat& imageCovariance, Mat& depthCovariance) const
+void CovarianceComputer::setToCovariance(const std::list<const Face*>& set, Mat& imageCovariance, Mat& depthCovariance) const
 {
     const int SET_SIZE = set.size();
     if (SET_SIZE == 0) {
@@ -126,14 +122,15 @@ void CovarianceComputer::setToCovariance(const vector<const Face*>& set, Mat& im
     }
 
     // for each face in the set...
-    for (int i = 0; i < SET_SIZE; ++i) {
+    int i = 0;
+    for (auto& face : set) {
 
-        if (set[i]->image.empty() || set[i]->depthMap.empty())
+        if (face->image.empty() || face->depthMap.empty())
             std::cout << "ERROR! Empty image!!" << std::endl;
 
         // compute 4x4 blocks size
-        const auto HEIGHT = set[i]->getHeight();
-        const auto WIDTH = set[i]->getWidth();
+        const auto HEIGHT = face->getHeight();
+        const auto WIDTH = face->getWidth();
 
         const int BLOCK_H = HEIGHT / 4;
         const int BLOCK_W = WIDTH / 4;
@@ -144,8 +141,8 @@ void CovarianceComputer::setToCovariance(const vector<const Face*>& set, Mat& im
 
                 // crop block region
                 cv::Rect roi(x, y, BLOCK_W, BLOCK_H);
-                Mat image = set[i]->image(roi);
-                Mat depth = set[i]->depthMap(roi);
+                Mat image = face->image(roi);
+                Mat depth = face->depthMap(roi);
 
                 // compute LBP of the block
                 auto imageHist = OLBPHist(image);
@@ -158,6 +155,7 @@ void CovarianceComputer::setToCovariance(const vector<const Face*>& set, Mat& im
                 depthMean.at<float>(p + 4 * q, i) = mean(depthHist)[0];
             }
         }
+        i++;
     }
 
     imageCovariance = Mat(16, 16, CV_32FC1);
@@ -174,6 +172,12 @@ void CovarianceComputer::setToCovariance(const vector<const Face*>& set, Mat& im
             depthCovariance.at<float>(p, q) = depthValue / SET_SIZE;
         }
     }
+
+    Mat normalized;
+    cv::normalize(imageCovariance, normalized);
+    imageCovariance = normalized;
+    cv::normalize(depthCovariance, normalized);
+    depthCovariance = normalized;
 
     return;
 }

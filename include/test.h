@@ -16,11 +16,13 @@
 #include "preprocessor.h"
 #include "settings.h"
 #include "svmmodel.h"
+#include <numeric>
 
 using cv::Mat;
 using cv::waitKey;
 using std::cout;
 using std::endl;
+using std::list;
 using std::string;
 using std::vector;
 
@@ -43,63 +45,120 @@ namespace test {
         }
 
         Preprocessor preproc;
-        cout << "Preprocessing..." << endl;
 
-        vector<vector<Face>> faces;
+        int i = 0;
+        vector<vector<Face>> persons;
         for (auto& id : identities) {
-            faces.push_back(preproc.preprocess(id));
+            cout << "Preprocessing images of person " << i++ << endl;
+            persons.push_back(preproc.preprocess(id));
         }
+        vector<Mat> trainingSet;
+        int numPoseClusters = 3;
 
         CovarianceComputer covar;
-        int numPoseClusters = 3;
-        vector<Mat> trainingSet;
-        for (int i = 1; i <= 25; ++i) {
-            vector<std::pair<Mat, Mat>> pairs = covar.computeCovarianceRepresentation(faces[i], numPoseClusters);
-            for (int j = 0; j <= numPoseClusters; j++) {
-                Mat normalized;
-                cv::normalize(pairs[j].first, normalized);
-                trainingSet.push_back(normalized);
+
+        vector<vector<std::list<const Face*>>> dataSet;
+        cout << "Clustering poses..." << endl;
+        for (auto& faces : persons) {
+
+            vector<Pose> centers = covar.clusterizePoses(faces, numPoseClusters);
+            dataSet.push_back(covar.assignFacesToClusters(faces, centers));
+        }
+
+        i = 0;
+        for (auto& person : dataSet) {
+            cout << "Computing covariance for person " << i++ << endl;
+            vector<std::pair<Mat, Mat>> pairs = covar.computeCovarianceRepresentation(person);
+            for (auto& pair : pairs) {
+                trainingSet.push_back(pair.first);
             }
         }
+        cout << "Training SVM model for 1st cluter of 1st person using leave-one-out per each photo" << endl;
+        //leave-one-out for each cluster
+        uint targetPerson = 0, targetCluster = 0;
+        uint targetIndex = targetPerson * numPoseClusters + targetCluster;
 
-        vector<std::pair<Mat, Mat>> pairs = covar.computeCovarianceRepresentation(faces[0], numPoseClusters);
-        for (int i = 1; i <= numPoseClusters; i++) {
-            Mat normalized;
-            cv::normalize(pairs[i].first, normalized);
-            trainingSet.push_back(normalized);
-        }
-
-        Mat targetCovarMatrix;
-        cv::normalize(pairs[0].first, targetCovarMatrix);
-
+        const cv::ml::ParamGrid& gammaGrid = cv::ml::SVM::getDefaultGrid(cv::ml::SVM::GAMMA);
+        const cv::ml::ParamGrid& CGrid = cv::ml::SVM::getDefaultGrid(cv::ml::SVM::C);
         cout << "Creating SVM model..." << endl;
         SVMmodel model;
         cout << "Training model..." << endl;
-        auto optimalParams = model.trainAuto(targetCovarMatrix, trainingSet);
-        cout << "Done!" << endl;
-        cout << "C: " << optimalParams.C << endl;
-        cout << "gamma: " << optimalParams.gamma << endl;
-        /*
-        vector<float> results;
+        vector<SteinKernelParams> bestParams = vector<SteinKernelParams>{ SteinKernelParams() };
+        for (auto gamma = gammaGrid.maxVal; gamma > gammaGrid.minVal; gamma /= gammaGrid.logStep) {
+            model.setGamma(gamma);
 
-        Mat sample(1,256, CV_32FC1);
-        auto iterNew = sample.begin<float>();
-        for (auto iter = depthCovar_000[0].begin<float>(); iter != depthCovar_000[0].end<float>(); ++iter, ++iterNew) {
-            *iterNew = *iter;
+            for (auto C = CGrid.maxVal; C > CGrid.minVal; C /= CGrid.logStep) {
+                std::cout << "C = " << C << "; gamma = " << gamma << std::endl;
+                model.setC(C);
+                int truePositives = 0, falsePositives = 0, trueNegatives = 0, falseNegatives = 0;
+
+                for (uint i = 0; i < dataSet.size(); i++) {
+                    auto& person = dataSet[i];
+                    cout << "Training with person " << i << endl;
+                    auto begin = std::chrono::high_resolution_clock::now();
+
+                    for (uint j = 0; j < person.size(); j++) {
+                        auto& cluster = person[j];
+
+                        Mat imageCovar, targetDepthCovar;
+                        uint totalIndex = i * numPoseClusters + j;
+                        float truth = totalIndex == targetIndex ? 1 : -1;
+
+                        Mat clusterCovariance = trainingSet.at(totalIndex);
+                        for (list<const Face*>::iterator it = cluster.begin(); it != cluster.end(); it++) {
+                            const Face* face = *it;
+                            it = cluster.erase(it);
+
+                            //THE FOLLOWING TWO INSTRUCTIONS TAKE THE MAIN PART OF THE TIME SPENT
+                            covar.setToCovariance(cluster, imageCovar, trainingSet.at(totalIndex));
+                            covar.setToCovariance(std::list<const Face*>{ face }, imageCovar, targetDepthCovar);
+
+                            model.train(trainingSet, targetIndex);
+
+                            targetDepthCovar = targetDepthCovar.reshape(0, 1);
+                            float prediction = model.predict(targetDepthCovar);
+
+                            if (prediction == 1) {
+                                if (prediction == truth)
+                                    ++truePositives;
+                                else
+                                    ++falsePositives;
+                            } else if (prediction == -1) {
+                                if (prediction == truth)
+                                    ++trueNegatives;
+                                else
+                                    ++falsePositives;
+                            }
+
+                            it = cluster.insert(it, face);
+                        }
+                        trainingSet.at(totalIndex) = clusterCovariance;
+                    }
+                    auto end = std::chrono::high_resolution_clock::now();
+                    cout << "Time elapsed for person " << i << ": " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "ms" << endl;
+                }
+                float fmeasure = 2 * truePositives / (float)(truePositives + falseNegatives + falsePositives);
+                cout << "F-measure: " << fmeasure << " for gamma=" << gamma << " and C=" << C << endl;
+                if (fmeasure >= bestParams[0].fmeasure)
+                    bestParams = vector<SteinKernelParams>{ SteinKernelParams(C, gamma, fmeasure) };
+                else if (fmeasure == bestParams[0].fmeasure)
+                    bestParams.push_back(SteinKernelParams(C, gamma, fmeasure));
+            }
         }
 
-        std::cout << model.predict(sample) << std::endl;
+        cout << "Model trained, computing mean of best parameters are the following" << endl;
+        double gamma = 0, C = 0;
 
-        iterNew = sample.begin<float>();
-        for (auto iter = depthCovar_others[0].begin<float>(); iter != depthCovar_others[0].end<float>(); ++iter, ++iterNew) {
-            *iterNew = *iter;
+        for (auto& param : bestParams) {
+            C += param.C;
+            gamma += param.gamma;
         }
+        SteinKernelParams best(C / bestParams.size(), gamma / bestParams.size(), bestParams[0].fmeasure);
 
-        std::cout << model.predict(sample) << std::endl;
-
-        for (auto i : results)
-            cout << i << endl;
-            */
+        std::cout << "score obtained by avaraging best parameters: <to be implemented>" << std::endl;
+        cout << "C: " << best.C << endl;
+        cout << "gamma: " << best.gamma << endl;
+        cout << "Fmeasure: " << best.fmeasure << endl;
     }
 
     cv::Vec3f randomEulerAngle()

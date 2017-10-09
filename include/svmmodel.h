@@ -12,16 +12,19 @@ struct SteinKernelParams {
     SteinKernelParams()
         : C(1)
         , gamma(1)
+        , fmeasure(0)
     {
     }
-    SteinKernelParams(float C, float gamma)
+    SteinKernelParams(float C, float gamma, float fmeasure)
         : C(C)
         , gamma(gamma)
+        , fmeasure(fmeasure)
     {
     }
 
     float C;
     float gamma;
+    float fmeasure;
 };
 
 /**
@@ -32,9 +35,22 @@ public:
     SVMmodel();
     SVMmodel(const std::string& filename);
 
+    /**
+     * @brief predict predict the labels of samples contained in the input parameter
+     * @param samples samples to test, if they are matrix put them in row-major order
+     * @return
+     */
     float predict(cv::Mat& samples) const;
 
-    bool train(const std::vector<cv::Mat>& targetPerson, const std::vector<cv::Mat>& otherPeople);
+    /**
+     * @brief train train the SVM using the training set specified
+     * @param trainingSet the training set to use for training
+     * @param person the index of the person to identify
+     * @param cluster the index of the cluster to identify
+     * @param numPoseCluster the number of centers used for pose clustering
+     * @return
+     */
+    bool train(const std::vector<cv::Mat>& trainingSet, int targetIndex);
 
     /**
      * @brief trainAuto automatically chooses the best values for C and sigma parameters
@@ -46,7 +62,7 @@ public:
      * @param CGrid
      * @return
      */
-    SteinKernelParams trainAuto(const cv::Mat targetCovMatrix, const std::vector<cv::Mat>& otherPeople,
+    SteinKernelParams trainAuto(const std::vector<cv::Mat>& trainingSet, const int targetIndexconst, cv::Mat targetDepthCovar,
         const cv::ml::ParamGrid& gammaGrid = cv::ml::SVM::getDefaultGrid(cv::ml::SVM::GAMMA),
         const cv::ml::ParamGrid& CGrid = cv::ml::SVM::getDefaultGrid(cv::ml::SVM::C));
 
@@ -57,13 +73,16 @@ public:
     void setGamma(float gamma);
     void setParams(const SteinKernelParams& params);
 
+    /**
+     * @brief matVectorToMat converts a vector of Mat in a single Mat in which
+     * every row represents a Mat in row-major order
+     * @param data a vector of Mat
+     * @return a Mat representing the input vector of Mat
+     */
     static cv::Mat matVectorToMat(const std::vector<cv::Mat>& data);
 
 private:
     cv::Ptr<cv::ml::SVM> svm;
-
-    cv::Mat formatDataForTraining(const std::vector<cv::Mat>& targetPerson,
-        const std::vector<cv::Mat>& otherPeople) const;
 
     /**
      * @brief evaluates the trained svm accuracy
@@ -73,7 +92,7 @@ private:
      *        classification labels (1 or -1)
      * @return percentage of correct classifications (between 0 and 1)
      */
-    float evaluateFMeasure(cv::Mat& validationData, const cv::Mat& groundTruth);
+    float evaluateFMeasure(cv::Mat& targetDepthCovar, const int targetIndex);
 };
 
 } // namespace face

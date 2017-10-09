@@ -50,10 +50,8 @@ vector<Face> Preprocessor::preprocess(vector<Image4D>& images)
 void Preprocessor::segment(std::vector<Image4D>& images)
 {
 
-    std::cout << "segmenting..." << std::endl;
     // for each image...
     for (auto& image : images) {
-        std::cout << "segmenting image " << image.name << std::endl;
         segment(image);
     }
 
@@ -64,12 +62,10 @@ vector<Face> Preprocessor::cropFaces(vector<Image4D>& images)
 {
     const auto SIZE = images.size();
 
-    std::cout << "cropping faces..." << std::endl;
     vector<Face> croppedFaces;
     croppedFaces.reserve(SIZE);
 
     for (auto& face : images) {
-        std::cout << "cropping faces " << face.name << std::endl;
         Vec3f position, eulerAngles;
         cropFace(face, position, eulerAngles);
         croppedFaces.emplace_back(face, position, eulerAngles);

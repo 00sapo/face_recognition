@@ -71,42 +71,24 @@ SVMmodel::SVMmodel(const std::string& filename)
 
 float SVMmodel::predict(Mat& samples) const
 {
-    Mat res;
-    svm->predict(samples, res);
-    return res.at<float>(0);
+    return svm->predict(samples);
 }
 
-bool SVMmodel::train(const std::vector<cv::Mat>& targetPerson, const vector<Mat>& otherPeople)
+bool SVMmodel::train(const std::vector<cv::Mat>& trainingSet, int targetIndex)
 {
-    auto trainMatrix = formatDataForTraining(targetPerson, otherPeople);
-    vector<int> labelsVector;
-    for (const auto& p : targetPerson) {
-        labelsVector.push_back(1);
-    }
-    for (const auto& o : otherPeople) {
-        labelsVector.push_back(-1);
-    }
-    auto trainData = ml::TrainData::create(trainMatrix, ml::ROW_SAMPLE, Mat(labelsVector, true));
-    return svm->train(trainData);
+    Mat trainMatrix = matVectorToMat(trainingSet);
+    vector<int> labelsVector(trainingSet.size(), -1);
+    labelsVector.at(targetIndex) = 1;
+
+    //    auto trainData = ml::TrainData::create(trainMatrix, ml::ROW_SAMPLE, Mat(labelsVector, true));
+    return svm->train(trainMatrix, ml::ROW_SAMPLE, labelsVector);
 }
 
-SteinKernelParams SVMmodel::trainAuto(const vector<Mat>& targetPerson, const vector<Mat>& otherPeople,
+SteinKernelParams SVMmodel::trainAuto(const vector<Mat>& trainingSet, const int targetIndex, Mat targetDepthCovar,
     const ml::ParamGrid& gammaGrid, const ml::ParamGrid& CGrid)
 {
-    auto trainMatrix = formatDataForTraining(targetPerson, otherPeople);
-    auto validationData = //trainMatrix(cv::Rect(0,0,trainMatrix.cols, targetPerson.size()));
-        trainMatrix(cv::Rect(0, targetPerson.size(), trainMatrix.cols, otherPeople.size()));
-
-    vector<int> labelsVector;
-    for (const auto& p : targetPerson) {
-        labelsVector.push_back(1);
-    }
-    for (const auto& o : otherPeople) {
-        labelsVector.push_back(-1);
-    }
-    Mat labels(labelsVector, true);
-
-    auto trainData = ml::TrainData::create(trainMatrix, ml::ROW_SAMPLE, labels);
+    /*
+    cout << "Training with leave-one-out targetIndex=" << targetIndex << endl;
 
     vector<double> bestGamma, bestC;
     float bestScore = 0;
@@ -115,12 +97,8 @@ SteinKernelParams SVMmodel::trainAuto(const vector<Mat>& targetPerson, const vec
         for (auto C = CGrid.minVal; C < CGrid.maxVal; C *= CGrid.logStep) {
             std::cout << "C = " << C << "; gamma = " << gamma << std::endl;
             setC(C);
-            cout << "Training..." << endl;
-            svm->train(trainData);
-            cout << "Done!" << endl;
-            auto score = evaluateFMeasure(validationData,
-                //labels(cv::Rect(0,0,1,targetPerson.size())));
-                labels(cv::Rect(0, targetPerson.size(), 1, otherPeople.size())));
+            train(trainingSet, targetIndex);
+            float fscore = evaluateFMeasure(targetDepthCovar, targetIndex);
             cout << "Score: " << score << endl;
             if (bestScore < score) {
                 bestGamma = { gamma };
@@ -145,6 +123,7 @@ SteinKernelParams SVMmodel::trainAuto(const vector<Mat>& targetPerson, const vec
 
     std::cout << "score obtained by avaraging best parameters: " << score << std::endl;
     return SteinKernelParams(C, gamma);
+    */
 }
 
 bool SVMmodel::load(const std::string& filename)
@@ -174,25 +153,8 @@ void SVMmodel::setParams(const SteinKernelParams& params)
     setGamma(params.gamma);
 }
 
-Mat SVMmodel::formatDataForTraining(const vector<Mat>& targetPerson,
-    const vector<Mat>& otherPeople) const
+float SVMmodel::evaluateFMeasure(Mat& targetDepthCovar, const int targetIndex)
 {
-    vector<Mat> trainingSamples;
-    trainingSamples.reserve(targetPerson.size() + otherPeople.size());
-    for (const auto& mat : targetPerson) {
-        trainingSamples.push_back(mat);
-    }
-    for (const auto& mat : otherPeople) {
-        trainingSamples.push_back(mat);
-    }
-
-    return matVectorToMat(trainingSamples);
-}
-
-float SVMmodel::evaluateFMeasure(Mat& validationData, const Mat& groundTruth)
-{
-
-    assert(validationData.rows == groundTruth.rows && "Attention! Validation and ground truth arrays should be of the same size");
 
     /* 1) Recall:       true positives (0 or 1 in this case) divided by all real positives
    * (true positives + false negatives, exactly 1 in this case).
@@ -208,30 +170,23 @@ float SVMmodel::evaluateFMeasure(Mat& validationData, const Mat& groundTruth)
    *|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
    * NON È VERO SE SI USANO I CLUSTER DELLE POSE IN QUESTO MODO...
    *
-   */
-    const int N = validationData.rows;
-    int truePositives = 0;
-    int falsePositives = 0;
-    int falseNegatives = 0;
-    int trueNegatives = 0;
-    for (int i = 0; i < N; ++i) {
-        auto row = validationData.row(i);
-        auto prediction = predict(row);
-        auto truth = float(groundTruth.at<int>(i, 0));
-        if (prediction == 1) {
-            if (prediction == truth)
-                ++truePositives;
-            else
-                ++falsePositives;
-        } else if (prediction == -1) {
-            if (prediction == truth)
-                ++trueNegatives;
-            else
-                ++falseNegatives;
-        }
+   *
+    targetDepthCovar.reshape(targetDepthCovar.rows * targetDepthCovar.cols, 0);
+    float prediction = predict(targetDepthCovar);
+    int truePositives = 0, falsePositives = 0, trueNegatives = 0, falseNegatives = 0;
+    if (prediction == 1) {
+        if (prediction == truth)
+            ++truePositives;
+        else
+            ++falsePositives;
+    } else if (prediction == -1) {
+        if (prediction == truth)
+            ++trueNegatives;
+        else
+            ++falseNegatives;
     }
-
-    return 2 * truePositives / (float)(truePositives + falseNegatives + falsePositives);
+    float fmeasure = 2 * truePositives / (float)(truePositives + falseNegatives + falsePositives);
+    */
 }
 
 Mat SVMmodel::matVectorToMat(const vector<Mat>& data)
