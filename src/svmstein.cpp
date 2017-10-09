@@ -71,9 +71,7 @@ SVMStein::SVMStein(const std::string& filename)
 
 float SVMStein::predict(const Mat &samples) const
 {
-    Mat res;
-    svm->predict(samples, res);
-    return res.at<float>(0);
+    return svm->predict(samples);
 }
 
 
@@ -106,8 +104,7 @@ SteinKernelParams SVMStein::trainAuto(const Mat &data, const vector<int> &labels
             setC(C);
             cout << "Training..." << endl;
             svm->train(trainData);
-            cout << "Done!" << endl;
-            auto score = evaluate(data, labels);
+            float fscore = evaluateFMeasure(targetDepthCovar, targetIndex);
             cout << "Score: " << score << endl;
             if (bestScore < score) {
                 bestGamma = { gamma };
@@ -127,7 +124,8 @@ SteinKernelParams SVMStein::trainAuto(const Mat &data, const vector<int> &labels
     setC(C);
     setGamma(gamma);
     svm->train(trainData);
-    auto score = evaluate(data, labels);
+    auto score = evaluateFMeasure(validationData,
+        labels(cv::Rect(0, targetPerson.size(), 1, otherPeople.size())));
 
     std::cout << "score obtained by avaraging best parameters: " << score << std::endl;
     return SteinKernelParams(C, gamma);
@@ -160,22 +158,40 @@ void SVMStein::setParams(const SteinKernelParams& params)
     setGamma(params.gamma);
 }
 
-
-float SVMStein::evaluate(const Mat &validationData, const Mat &groundTruth)
+float SVMStein::evaluateFMeasure(Mat& targetDepthCovar, const int targetIndex)
 {
-    assert(validationData.rows == groundTruth.rows && "Attention! Validation and ground truth arrays should be of the same size");
 
-    const int N = validationData.rows;
-    int correctClassification = 0;
-    for (int i = 0; i < N; ++i) {
-        const auto row = validationData.row(i);
-        auto prediction = predict(row);
-        auto truth = float(groundTruth.at<int>(i, 0));
+    /* 1) Recall:       true positives (0 or 1 in this case) divided by all real positives
+   * (true positives + false negatives, exactly 1 in this case).
+   * 2) Precision:    true positives divided by all detected positives (true positives + false positives).
+   * 3) F-measure:    harmonic mean between precision and recall, so 2*1/(1/p+1/r)
+   *
+   * Note: in this case recall can be only 0 or 1 and, in general,
+   * if recall is 0 then precision is 0, if recall is 1 precision is 1/(1+false positives).
+   * So in this case F-measure will be:
+   * A) true positives = 1 => (2*false positives+2)/(false positives + 2)
+   * B) true positives = 0 => 0
+   *^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   *|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+   * NON È VERO SE SI USANO I CLUSTER DELLE POSE IN QUESTO MODO...
+   *
+   *
+    targetDepthCovar.reshape(targetDepthCovar.rows * targetDepthCovar.cols, 0);
+    float prediction = predict(targetDepthCovar);
+    int truePositives = 0, falsePositives = 0, trueNegatives = 0, falseNegatives = 0;
+    if (prediction == 1) {
         if (prediction == truth)
-            ++correctClassification;
+            ++truePositives;
+        else
+            ++falsePositives;
+    } else if (prediction == -1) {
+        if (prediction == truth)
+            ++trueNegatives;
+        else
+            ++falseNegatives;
     }
-
-    return correctClassification / float(N);
+    float fmeasure = 2 * truePositives / (float)(truePositives + falseNegatives + falsePositives);
+    */
 }
 
 

@@ -1,8 +1,8 @@
 #ifndef FACE_IMAGELOADER_HPP
 #define FACE_IMAGELOADER_HPP
 
-#include <regex>
 #include <mutex>
+#include <regex>
 
 namespace face {
 
@@ -16,7 +16,6 @@ class Image4D;
  */
 class Image4DLoader {
 public:
-
     static const std::string MATCH_ALL;
 
     /**
@@ -91,10 +90,9 @@ private:
 
     bool matchTemplate(const std::string& fileName);
 
-    void getMultiThr(std::vector<Image4D> &image4DSequence, int begin, int end, std::mutex &mutex) const;
-
+    void getMultiThr(std::vector<Image4D>& image4DSequence, int begin, int end, std::mutex& mutex) const;
 };
 
-}   // face
+} // face
 
 #endif // IMAGELOADER_Hs

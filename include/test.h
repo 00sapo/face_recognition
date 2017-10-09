@@ -21,6 +21,7 @@ using cv::Mat;
 using cv::waitKey;
 using std::cout;
 using std::endl;
+using std::list;
 using std::string;
 using std::vector;
 
@@ -39,7 +40,6 @@ namespace test {
         Image4DLoader loader(dirPath, "000_.*");
 
         vector<vector<Image4D>> identities;
-        /* why not using a simple regex? */
         for (int i = 0; i <= 25; ++i) {
             string fileNameRegEx = i / 10 >= 1 ? "0" : "00";
             fileNameRegEx += std::to_string(i) + "_.*";
@@ -49,12 +49,16 @@ namespace test {
         }
 
         Preprocessor preproc;
-        cout << "Preprocessing..." << endl;
 
-        vector<vector<Face>> faces;
+        int i = 0;
+        vector<vector<Face>> persons;
         for (auto& id : identities) {
-            faces.push_back(preproc.preprocess(id));
+            cout << "Preprocessing images of person " << i++ << endl;
+            persons.push_back(preproc.preprocess(id));
         }
+        vector<Mat> trainingSet;
+        int numPoseClusters = 3;
+
 
         FaceRecognizer faceRec;
         faceRec.train(faces);

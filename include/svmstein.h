@@ -12,16 +12,19 @@ struct SteinKernelParams {
     SteinKernelParams()
         : C(1)
         , gamma(1)
+        , fmeasure(0)
     {
     }
-    SteinKernelParams(float C, float gamma)
+    SteinKernelParams(float C, float gamma, float fmeasure)
         : C(C)
         , gamma(gamma)
+        , fmeasure(fmeasure)
     {
     }
 
     float C;
     float gamma;
+    float fmeasure;
 };
 
 /**
@@ -82,9 +85,26 @@ public:
     void setGamma(float gamma);
     void setParams(const SteinKernelParams& params);
 
+    /**
+     * @brief matVectorToMat converts a vector of Mat in a single Mat in which
+     * every row represents a Mat in row-major order
+     * @param data a vector of Mat
+     * @return a Mat representing the input vector of Mat
+     */
+    static cv::Mat matVectorToMat(const std::vector<cv::Mat>& data);
+
 private:
     cv::Ptr<cv::ml::SVM> svm;
 
+    /**
+     * @brief evaluates the trained svm accuracy
+     * @param validationData: Nxp CV_32FC1 matrix, where N is the number of samples
+     *        and p is the number of features
+     * @param groundTruth: 1xN CV_32FC1 matrix containing ground truth
+     *        classification labels (1 or -1)
+     * @return percentage of correct classifications (between 0 and 1)
+     */
+    float evaluateFMeasure(cv::Mat& targetDepthCovar, const int targetIndex);
 };
 
 } // namespace face
