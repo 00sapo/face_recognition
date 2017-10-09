@@ -4,7 +4,6 @@
 #include <vector>
 
 #include "face.h"
-#include "covariancecomputer.h"
 #include "svmstein.h"
 
 
@@ -59,7 +58,6 @@ public:
 private:
     int c = 3;  // number of head rotation subsets for each identity
     int N = 0;  // number of identities provided for training
-    CovarianceComputer covarComputer;
     std::vector<std::string> IDs;  // labels associated to each identity in the same order as in grayscaleSVMs and depthmapSVMs
     SVMSteinMatrix grayscaleSVMs;  // a row for each identity and a column for each head rotation subset
     SVMSteinMatrix depthmapSVMs;   // thus resulting in a Nxc matrix where N is the number of identities

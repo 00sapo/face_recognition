@@ -5,6 +5,8 @@
 
 #include <opencv2/opencv.hpp>
 
+#include "covariancecomputer.h"
+
 using std::vector;
 using std::string;
 
@@ -81,6 +83,7 @@ void FaceRecognizer::train(const FaceMatrix &trainingSamples, const vector<strin
         vector<int> labels(depthmapMat.rows, -1);
         for (auto i = 0; i < c; ++i) {
             int matrixRow = i + depthmapIndexes[id];
+            int index = removeElement(rowsToRemove, i);
             labels[matrixRow] = 1;
             depthmapSVMs[id][i].trainAuto(depthmapMat, labels);
             labels[matrixRow] = -1;
@@ -216,7 +219,7 @@ void FaceRecognizer::getNormalizedCovariances(const vector<Face> &identity,
     grayscaleCovarOut.clear();
     depthmapCovarOut .clear();
 
-    auto pairs = covarComputer.computeCovarianceRepresentation(identity, c);
+    auto pairs = covariance::computeCovarianceRepresentation(identity, c);
     for (const auto &pair : pairs) {
         Mat normalizedGrayscale, normalizedDepthmap;
         cv::normalize(pair.first , normalizedGrayscale);

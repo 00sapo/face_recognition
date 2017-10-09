@@ -301,7 +301,6 @@ void testPoseClustering()
         string dirPath = "../RGBD_Face_dataset_training/";
         Image4DLoader loader(dirPath, "000_.*");
         Preprocessor preproc;
-        CovarianceComputer covComp;
 
         cout << "Loading images..." << endl;
         auto images4d = loader.get();
@@ -323,16 +322,14 @@ void testPoseClustering()
             cv::waitKey(0);
         }
 
-        /*
         cout << "Computing covariances..." << endl;
-        auto covariance = covComp.computeCovarianceRepresentation(faces, 3);
+        auto covariance = covariance::computeCovarianceRepresentation(faces, 3);
 
         for (auto& cov : covariance) {
             cv::imshow("Image", cov.first);
             cv::imshow("Depth", cov.second);
             cv::waitKey(0);
         }
-        */
     }
 
 } // namespace test

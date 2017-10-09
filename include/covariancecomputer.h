@@ -2,23 +2,21 @@
 #define FACE_COVARIANCECOMPUTER_H
 
 #include <vector>
-#include <iostream>
-
-#include "extern_libs/head_pose_estimation/CRForestEstimator.h"
+#include <opencv2/opencv.hpp>
 
 namespace face {
 
-class Face;
-
 using Pose = cv::Matx<float, 9, 1>;
 
+class Face;
 
-/*
- * TODO: Covariance computer class could be static, it is simply a collection of functions
+
+/**
+ * @brief A collection of functions related to compute a covariance matrix representation
+ *        from a Face set. computeCovarianceRepresentation() does the job, all the other
+ *        functions are used by it.
  */
-class CovarianceComputer {
-public:
-    CovarianceComputer();
+namespace covariance {
 
     /**
      * @brief computeCovarianceRepresentation: extracts a covariance matrix based representation
@@ -29,7 +27,7 @@ public:
      * @param subsets: number of desired clusters
      * @return a pair of covariance matrixes for each cluster
      */
-    std::vector<std::pair<cv::Mat, cv::Mat>> computeCovarianceRepresentation(const std::vector<Face> &faces, int subsets) const;
+    std::vector<std::pair<cv::Mat, cv::Mat>> computeCovarianceRepresentation(const std::vector<Face> &faces, int subsets);
 
 
     /**
@@ -38,7 +36,7 @@ public:
      * @param numCenters: num of centers/clusters
      * @return a vector containing clusters centers
      */
-    std::vector<Pose> clusterizePoses(const std::vector<Face>& faces, int numCenters) const;
+    std::vector<Pose> clusterizePoses(const std::vector<Face> &faces, int numCenters);
 
     /**
      * @brief assignFacesToClusters assigns every face to the nearest cluster center (using L2 metric)
@@ -47,27 +45,19 @@ public:
      * @return vector containing in each position a list of faces assigned to that cluster
      */
     std::vector<std::vector<const Face*>> assignFacesToClusters(const std::vector<Face> &faces,
-                                                                const std::vector<Pose> &centers) const;
+                                                                const std::vector<Pose> &centers);
 
     /**
-     * @brief setToCovariance: computes the normalized covariance matrix representation of an image set
+     * @brief setToCovariance: computes the covariance matrix representation of an image set
      * @param set: face set
      * @param imageCovariance: output covariance matrix for the images in the set
      * @param depthCovariance: output covariance matric for the depth maps in the set
      */
     void setToCovariance(const std::vector<const Face*> &set,
-                         cv::Mat& imageCovariance,
-                         cv::Mat& depthCovariance) const;
+                         cv::Mat &imageCovariance,
+                         cv::Mat &depthCovariance);
 
-private:
-    /**
-     * @brief getNearestCenterId
-     * @param poseEstimation
-     * @return id of the nearest center to the input pose estimation
-     */
-    int getNearestCenterId(const Pose& pose, const std::vector<Pose>& centers) const;
-
-};
+} // namespace covariance
 
 } // namespace face
 

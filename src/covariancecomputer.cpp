@@ -15,9 +15,18 @@ namespace face {
 using MatMatrix = vector<vector<Mat>>;
 
 
-CovarianceComputer::CovarianceComputer() {}
+namespace covariance {
 
-vector<std::pair<Mat, Mat>> CovarianceComputer::computeCovarianceRepresentation(const vector<Face> &faces, int subsets) const
+/**
+ * @brief getNearestCenterId
+ * @param poseEstimation
+ * @return id of the nearest center to the input pose estimation
+ */
+int getNearestCenterId(const Pose& pose, const std::vector<Pose>& centers);
+
+
+
+vector<std::pair<Mat, Mat>> computeCovarianceRepresentation(const vector<Face> &faces, int subsets)
 {
     cout << "Clustering poses..." << endl;
     auto centers = clusterizePoses(faces, subsets);
@@ -38,7 +47,7 @@ vector<std::pair<Mat, Mat>> CovarianceComputer::computeCovarianceRepresentation(
 }
 
 
-vector<Pose> CovarianceComputer::clusterizePoses(const vector<Face> &faces, int numCenters) const
+vector<Pose> clusterizePoses(const vector<Face> &faces, int numCenters)
 {
     if (faces.size() < numCenters)
         return vector<Pose>(0);
@@ -71,7 +80,7 @@ vector<Pose> CovarianceComputer::clusterizePoses(const vector<Face> &faces, int 
     return ctrs;
 }
 
-vector<vector<const Face*>> CovarianceComputer::assignFacesToClusters(const vector<Face> &faces, const vector<Pose> &centers) const
+vector<vector<const Face*>> assignFacesToClusters(const vector<Face> &faces, const vector<Pose> &centers)
 {
     vector<vector<const Face*>> clusters(centers.size());
     for (const auto &face : faces) {
@@ -81,7 +90,7 @@ vector<vector<const Face*>> CovarianceComputer::assignFacesToClusters(const vect
     return clusters;
 }
 
-int CovarianceComputer::getNearestCenterId(const Pose &pose, const vector<Pose> &centers) const
+int getNearestCenterId(const Pose &pose, const vector<Pose> &centers)
 {
     float min = std::numeric_limits<float>::max();
     int index = 0;
@@ -95,7 +104,7 @@ int CovarianceComputer::getNearestCenterId(const Pose &pose, const vector<Pose> 
     return index;
 }
 
-void CovarianceComputer::setToCovariance(const vector<const Face*> &set, Mat &imageCovariance, Mat &depthCovariance) const
+void setToCovariance(const vector<const Face*> &set, Mat &imageCovariance, Mat &depthCovariance)
 {
     const int SET_SIZE = set.size();
     if (SET_SIZE == 0) {
@@ -171,5 +180,7 @@ void CovarianceComputer::setToCovariance(const vector<const Face*> &set, Mat &im
 
     return;
 }
+
+} // namespace covariance
 
 } // namespace face
