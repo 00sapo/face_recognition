@@ -169,12 +169,6 @@ void CovarianceComputer::setToCovariance(const vector<const Face*> &set, Mat &im
         }
     }
 
-    Mat normalized;
-    cv::normalize(imageCovariance, normalized);
-    imageCovariance = normalized;
-    cv::normalize(depthCovariance, normalized);
-    depthCovariance = normalized;
-
     return;
 }
 
