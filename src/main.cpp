@@ -37,6 +37,8 @@ void testFunctions()
     //
     face::test::testSVM();
     //
+    //face::test::testSVMLoad();
+    //
     //face::test::covarianceTest();
     //
     //face::test::testBackgroundRemoval();

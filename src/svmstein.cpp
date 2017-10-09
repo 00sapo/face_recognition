@@ -1,12 +1,12 @@
-#include "svmmodel.h"
+#include "svmstein.h"
 #include "numeric"
 
 namespace ml = cv::ml;
 
-using cv::Mat;
-using std::cout;
-using std::endl;
 using std::vector;
+using std::string;
+using cv::Mat;
+
 
 namespace face {
 
@@ -53,7 +53,7 @@ public:
     float gamma;
 };
 
-SVMmodel::SVMmodel()
+SVMStein::SVMStein()
 {
     svm = ml::SVM::create();
 
@@ -63,32 +63,35 @@ SVMmodel::SVMmodel()
     svm->setTermCriteria(cv::TermCriteria(cv::TermCriteria::MAX_ITER, 100, 1e-6));
 }
 
-SVMmodel::SVMmodel(const std::string& filename)
+SVMStein::SVMStein(const string &filename)
 {
     if (!load(filename))
         std::cout << "Error. Failed loading pretrained SVM model." << std::endl;
 }
 
-float SVMmodel::predict(Mat& samples) const
+float SVMStein::predict(const Mat &samples) const
 {
     return svm->predict(samples);
 }
 
-bool SVMmodel::train(const std::vector<cv::Mat>& trainingSet, int targetIndex)
-{
-    Mat trainMatrix = matVectorToMat(trainingSet);
-    vector<int> labelsVector(trainingSet.size(), -1);
-    labelsVector.at(targetIndex) = 1;
 
-    //    auto trainData = ml::TrainData::create(trainMatrix, ml::ROW_SAMPLE, Mat(labelsVector, true));
-    return svm->train(trainMatrix, ml::ROW_SAMPLE, labelsVector);
+float SVMStein::getDistanceFromHyperplane(const Mat &sample) const
+{
+    Mat res;
+    svm->predict(sample, res, ml::StatModel::RAW_OUTPUT);
+    return res.at<float>(0);
 }
 
-SteinKernelParams SVMmodel::trainAuto(const vector<Mat>& trainingSet, const int targetIndex, Mat targetDepthCovar,
-    const ml::ParamGrid& gammaGrid, const ml::ParamGrid& CGrid)
+bool SVMStein::train(const Mat &data, const vector<int> &labelsVector)
 {
-    /*
-    cout << "Training with leave-one-out targetIndex=" << targetIndex << endl;
+    auto trainData = ml::TrainData::create(data, ml::ROW_SAMPLE, Mat(labelsVector, true));
+    return svm->train(trainData);
+}
+
+SteinKernelParams SVMStein::trainAuto(const Mat &data, const vector<int> &labelsVector,
+                                      const ml::ParamGrid &gammaGrid, const ml::ParamGrid &CGrid)
+{
+    auto trainData = ml::TrainData::create(data, ml::ROW_SAMPLE, Mat(labelsVector, true));
 
     vector<double> bestGamma, bestC;
     float bestScore = 0;
@@ -97,14 +100,15 @@ SteinKernelParams SVMmodel::trainAuto(const vector<Mat>& trainingSet, const int 
         for (auto C = CGrid.minVal; C < CGrid.maxVal; C *= CGrid.logStep) {
             std::cout << "C = " << C << "; gamma = " << gamma << std::endl;
             setC(C);
-            train(trainingSet, targetIndex);
-            float fscore = evaluateFMeasure(targetDepthCovar, targetIndex);
-            cout << "Score: " << score << endl;
-            if (bestScore < score) {
+            std::cout << "Training..." << std::endl;
+            svm->train(trainData);
+            float fscore = evaluateFMeasure(data, labelsVector);
+            std::cout << "Score: " << fscore << std::endl;
+            if (bestScore < fscore) {
                 bestGamma = { gamma };
                 bestC = { C };
-                bestScore = score;
-            } else if (bestScore == score) {
+                bestScore = fscore;
+            } else if (bestScore == fscore) {
                 bestC.push_back(C);
                 bestGamma.push_back(gamma);
             }
@@ -118,45 +122,45 @@ SteinKernelParams SVMmodel::trainAuto(const vector<Mat>& trainingSet, const int 
     setC(C);
     setGamma(gamma);
     svm->train(trainData);
-    auto score = evaluateFMeasure(validationData,
-        labels(cv::Rect(0, targetPerson.size(), 1, otherPeople.size())));
+    auto fscore = evaluateFMeasure(data, labelsVector);
 
-    std::cout << "score obtained by avaraging best parameters: " << score << std::endl;
+    std::cout << "score obtained by avaraging best parameters: " << fscore << std::endl;
     return SteinKernelParams(C, gamma);
-    */
 }
 
-bool SVMmodel::load(const std::string& filename)
+bool SVMStein::load(const string &filename)
 {
     svm = ml::SVM::load(filename);
+    svm->setType(ml::SVM::CUSTOM);
     return svm != nullptr;
 }
 
-void SVMmodel::save(const std::string& filename) const
+void SVMStein::save(const string &filename) const
 {
+    svm->setType(ml::SVM::POLY);
     svm->save(filename);
 }
 
-void SVMmodel::setC(float C)
+void SVMStein::setC(float C)
 {
     svm->setC(C);
 }
 
-void SVMmodel::setGamma(float gamma)
+void SVMStein::setGamma(float gamma)
 {
     svm->setCustomKernel(new SteinKernel(gamma));
 }
 
-void SVMmodel::setParams(const SteinKernelParams& params)
+void SVMStein::setParams(const SteinKernelParams& params)
 {
     setC(params.C);
     setGamma(params.gamma);
 }
 
-float SVMmodel::evaluateFMeasure(Mat& targetDepthCovar, const int targetIndex)
+float SVMStein::evaluateFMeasure(const Mat &data, const vector<int> &labels)
 {
-
-    /* 1) Recall:       true positives (0 or 1 in this case) divided by all real positives
+  /*
+   * 1) Recall:       true positives (0 or 1 in this case) divided by all real positives
    * (true positives + false negatives, exactly 1 in this case).
    * 2) Precision:    true positives divided by all detected positives (true positives + false positives).
    * 3) F-measure:    harmonic mean between precision and recall, so 2*1/(1/p+1/r)
@@ -169,39 +173,26 @@ float SVMmodel::evaluateFMeasure(Mat& targetDepthCovar, const int targetIndex)
    *^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    *|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
    * NON È VERO SE SI USANO I CLUSTER DELLE POSE IN QUESTO MODO...
-   *
-   *
-    targetDepthCovar.reshape(targetDepthCovar.rows * targetDepthCovar.cols, 0);
-    float prediction = predict(targetDepthCovar);
-    int truePositives = 0, falsePositives = 0, trueNegatives = 0, falseNegatives = 0;
-    if (prediction == 1) {
-        if (prediction == truth)
-            ++truePositives;
-        else
-            ++falsePositives;
-    } else if (prediction == -1) {
-        if (prediction == truth)
-            ++trueNegatives;
-        else
-            ++falseNegatives;
-    }
-    float fmeasure = 2 * truePositives / (float)(truePositives + falseNegatives + falsePositives);
-    */
-}
+   */
 
-Mat SVMmodel::matVectorToMat(const vector<Mat>& data)
-{
-    const int height = data.size();
-    const int width = data[0].rows * data[0].cols;
-    Mat matrix(height, width, data[0].type());
-    for (auto i = 0; i < height; ++i) {
-        auto iter = data[i].begin<float>();
-        for (auto j = 0; j < width; ++j, ++iter) {
-            matrix.at<float>(i, j) = *iter;
+    int truePositives = 0, falsePositives = 0, trueNegatives = 0, falseNegatives = 0;
+    for (auto i = 0; i < data.rows; ++i) {
+        float prediction = predict(data.row(i));
+        if (prediction == 1) {
+            if (prediction == labels[i])
+                ++truePositives;
+            else
+                ++falsePositives;
+        } else if (prediction == -1) {
+            if (prediction == labels[i])
+                ++trueNegatives;
+            else
+                ++falseNegatives;
         }
     }
 
-    return matrix;
+    return 2 * truePositives / (float)(truePositives + falseNegatives + falsePositives);
 }
+
 
 } // namespace face

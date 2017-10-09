@@ -3,8 +3,6 @@
 #include "face.h"
 #include "lbp.h"
 
-#include <covariancecomputer.h>
-
 using cv::Mat;
 using std::cout;
 using std::endl;
@@ -13,16 +11,25 @@ using std::vector;
 
 namespace face {
 
+
+using MatMatrix = vector<vector<Mat>>;
+
+
 CovarianceComputer::CovarianceComputer() {}
 
-vector<std::pair<Mat, Mat>> CovarianceComputer::computeCovarianceRepresentation(vector<std::list<const Face*>>& clusters) const
+vector<std::pair<Mat, Mat>> CovarianceComputer::computeCovarianceRepresentation(const vector<Face> &faces, int subsets) const
 {
+    cout << "Clustering poses..." << endl;
+    auto centers = clusterizePoses(faces, subsets);
+    cout << "Assigning faces to clusters..." << endl;
+    auto clusters = assignFacesToClusters(faces, centers);
 
     vector<std::pair<Mat, Mat>> covariances;
     for (const auto& cluster : clusters) {
         Mat imgCovariance, depthCovariance;
 
         // compute covariance representation of the set
+        cout << "Set to covariance..." << endl;
         setToCovariance(cluster, imgCovariance, depthCovariance);
         covariances.emplace_back(imgCovariance, depthCovariance);
     }
@@ -30,22 +37,8 @@ vector<std::pair<Mat, Mat>> CovarianceComputer::computeCovarianceRepresentation(
     return covariances;
 }
 
-Pose CovarianceComputer::eulerAnglesToRotationMatrix(const cv::Vec3f& theta)
-{
-    // Calculate rotation about x axis
-    float cosx = cos(theta[0]);
-    float senx = sin(theta[0]);
-    float cosy = cos(theta[1]);
-    float seny = sin(theta[1]);
-    float cosz = cos(theta[2]);
-    float senz = sin(theta[2]);
 
-    return Pose(cosy * cosz, cosx * senz + senx * seny * cosz, senx * senz - cosx * seny * cosz,
-        -cosy * senz, cosx * cosz - senx * seny * senz, senx * cosz + cosx * seny * senz,
-        seny, -senx * cosy, cosx * cosy);
-}
-
-vector<Pose> CovarianceComputer::clusterizePoses(const vector<Face>& faces, int numCenters) const
+vector<Pose> CovarianceComputer::clusterizePoses(const vector<Face> &faces, int numCenters) const
 {
     if (faces.size() < numCenters)
         return vector<Pose>(0);
@@ -72,23 +65,23 @@ vector<Pose> CovarianceComputer::clusterizePoses(const vector<Face>& faces, int 
     vector<Pose> ctrs;
     for (int i = 0; i < centers.rows; ++i) {
         ctrs.emplace_back(centers.at<float>(i, 0), centers.at<float>(i, 1), centers.at<float>(i, 2),
-            centers.at<float>(i, 3), centers.at<float>(i, 4), centers.at<float>(i, 5),
-            centers.at<float>(i, 6), centers.at<float>(i, 7), centers.at<float>(i, 8));
+                          centers.at<float>(i, 3), centers.at<float>(i, 4), centers.at<float>(i, 5),
+                          centers.at<float>(i, 6), centers.at<float>(i, 7), centers.at<float>(i, 8));
     }
     return ctrs;
 }
 
-vector<std::list<const Face*>> CovarianceComputer::assignFacesToClusters(const vector<Face>& faces, const vector<Pose>& centers) const
+vector<vector<const Face*>> CovarianceComputer::assignFacesToClusters(const vector<Face> &faces, const vector<Pose> &centers) const
 {
-    vector<std::list<const Face*>> clusters(centers.size());
-    for (const auto& face : faces) {
+    vector<vector<const Face*>> clusters(centers.size());
+    for (const auto &face : faces) {
         int index = getNearestCenterId(face.getRotationMatrix(), centers);
         clusters[index].push_back(&face);
     }
     return clusters;
 }
 
-int CovarianceComputer::getNearestCenterId(const Pose& pose, const vector<Pose>& centers) const
+int CovarianceComputer::getNearestCenterId(const Pose &pose, const vector<Pose> &centers) const
 {
     float min = std::numeric_limits<float>::max();
     int index = 0;
@@ -102,7 +95,7 @@ int CovarianceComputer::getNearestCenterId(const Pose& pose, const vector<Pose>&
     return index;
 }
 
-void CovarianceComputer::setToCovariance(const std::list<const Face*>& set, Mat& imageCovariance, Mat& depthCovariance) const
+void CovarianceComputer::setToCovariance(const vector<const Face*> &set, Mat &imageCovariance, Mat &depthCovariance) const
 {
     const int SET_SIZE = set.size();
     if (SET_SIZE == 0) {
@@ -111,8 +104,8 @@ void CovarianceComputer::setToCovariance(const std::list<const Face*>& set, Mat&
         return;
     }
 
-    vector<vector<Mat>> imageBlocks(16);
-    vector<vector<Mat>> depthBlocks(16);
+    MatMatrix imageBlocks(16);
+    MatMatrix depthBlocks(16);
     Mat imageMean(16, SET_SIZE, CV_32FC1);
     Mat depthMean(16, SET_SIZE, CV_32FC1);
 
@@ -123,14 +116,14 @@ void CovarianceComputer::setToCovariance(const std::list<const Face*>& set, Mat&
 
     // for each face in the set...
     int i = 0;
-    for (auto& face : set) {
+    for (auto &face : set) {
 
         if (face->image.empty() || face->depthMap.empty())
             std::cout << "ERROR! Empty image!!" << std::endl;
 
         // compute 4x4 blocks size
         const auto HEIGHT = face->getHeight();
-        const auto WIDTH = face->getWidth();
+        const auto WIDTH  = face->getWidth();
 
         const int BLOCK_H = HEIGHT / 4;
         const int BLOCK_W = WIDTH / 4;
@@ -155,12 +148,15 @@ void CovarianceComputer::setToCovariance(const std::list<const Face*>& set, Mat&
                 depthMean.at<float>(p + 4 * q, i) = mean(depthHist)[0];
             }
         }
-        i++;
+        ++i;
     }
 
     imageCovariance = Mat(16, 16, CV_32FC1);
     depthCovariance = Mat(16, 16, CV_32FC1);
 
+    // Computing covariances.
+    // OpenCV cv::calcCovarMatrix() could be used but it's very hard to obtain the same result
+    // because data representation shold be changed requiring extra coding and runtime work
     for (int p = 0; p < 16; ++p) {
         for (int q = 0; q < 16; ++q) {
             float imageValue = 0, depthValue = 0;
@@ -172,12 +168,6 @@ void CovarianceComputer::setToCovariance(const std::list<const Face*>& set, Mat&
             depthCovariance.at<float>(p, q) = depthValue / SET_SIZE;
         }
     }
-
-    Mat normalized;
-    cv::normalize(imageCovariance, normalized);
-    imageCovariance = normalized;
-    cv::normalize(depthCovariance, normalized);
-    depthCovariance = normalized;
 
     return;
 }
