@@ -42,14 +42,11 @@ Preprocessor::Preprocessor(const string& faceDetectorPath, const string& poseEst
 vector<Face> Preprocessor::preprocess(vector<Image4D>& images)
 {
     segment(images);
-    auto faces = cropFaces(images);
-
-    return faces;
+    return cropFaces(images);
 }
 
 void Preprocessor::segment(std::vector<Image4D>& images)
 {
-
     // for each image...
     for (auto& image : images) {
         segment(image);
@@ -80,19 +77,15 @@ void Preprocessor::segment(Image4D& image4d)
 {
     cv::Rect boundingBox;
     // ... detect foreground face...
-    if (!detectForegroundFace(image4d, boundingBox)) {
-        //        std::cout << "No face detected!"
-        //                  << " Applying fixed threshold." << std::endl;
+    if (!detectForegroundFace(image4d, boundingBox))
         removeBackgroundFixed(image4d, 1600);
-    } else {
-
+    else
         removeBackgroundDynamic(image4d, boundingBox);
-    }
 
     return;
 }
 
-bool Preprocessor::detectForegroundFace(const Image4D& face, cv::Rect& boundingBox)
+bool Preprocessor::detectForegroundFace(const Image4D &face, cv::Rect &boundingBox)
 {
     if (!faceDetectorAvailable) {
         std::cout << "Error! Face detector unavailable!" << std::endl;
@@ -108,16 +101,16 @@ bool Preprocessor::detectForegroundFace(const Image4D& face, cv::Rect& boundingB
 
     // take face in foregound (the one with bigger bounding box)
     boundingBox = *std::max_element(faces.begin(), faces.end(),
-        [](const cv::Rect& r1, const cv::Rect& r2) { return r1.area() < r2.area(); });
+        [](const cv::Rect &r1, const cv::Rect &r2) { return r1.area() < r2.area(); });
 
     return true;
 }
 
-void Preprocessor::removeBackgroundDynamic(Image4D& face, const cv::Rect& boundingBox) const
+void Preprocessor::removeBackgroundDynamic(Image4D &face, const cv::Rect &boundingBox) const
 {
     // take non-nan, non-zero points
     vector<float> depth;
-    auto lambda = [&depth](int x, int y, const uint16_t& dpt) {
+    auto lambda = [&depth](int x, int y, const uint16_t &dpt) {
         if (!std::isnan(dpt) && dpt != 0)
             depth.push_back(dpt);
     };
@@ -142,7 +135,7 @@ void Preprocessor::removeBackgroundDynamic(Image4D& face, const cv::Rect& boundi
     const int MIN_X = boundingBox.x - boundingBox.width;
     const int MAX_X = boundingBox.x + 2 * boundingBox.width;
 
-    face.depthMap.forEach<uint16_t>([&](uint16_t& p, const int* pos) {
+    face.depthMap.forEach<uint16_t>([&](uint16_t &p, const int *pos) {
         if (float(p) > threshold || std::isnan(p) || pos[1] < MIN_X || pos[1] > MAX_X)
             p = 0;
     });
@@ -150,9 +143,9 @@ void Preprocessor::removeBackgroundDynamic(Image4D& face, const cv::Rect& boundi
     return;
 }
 
-void Preprocessor::removeBackgroundFixed(Image4D& face, uint16_t threshold) const
+void Preprocessor::removeBackgroundFixed(Image4D &face, uint16_t threshold) const
 {
-    face.depthMap.forEach<uint16_t>([threshold](uint16_t& p, const int* pos) {
+    face.depthMap.forEach<uint16_t>([threshold](uint16_t &p, const int *pos) {
         if (p > threshold || std::isnan(p))
             p = 0;
     });
@@ -160,7 +153,7 @@ void Preprocessor::removeBackgroundFixed(Image4D& face, uint16_t threshold) cons
     return;
 }
 
-void Preprocessor::removeOutliers(Image4D& image4d, float threshold) const
+void Preprocessor::removeOutliers(Image4D &image4d) const
 {
     // TODO: a full resolution booleanDepthMap is probably too much
     //       maybe the same result is achievable with a sampling of a pixel every 4 or 8
@@ -184,13 +177,11 @@ void Preprocessor::removeOutliers(Image4D& image4d, float threshold) const
 
     int x = stats.at<int>(index, cv::CC_STAT_LEFT);
     int y = stats.at<int>(index, cv::CC_STAT_TOP);
-    int width = stats.at<int>(index, cv::CC_STAT_WIDTH);
+    int width  = stats.at<int>(index, cv::CC_STAT_WIDTH);
     int height = stats.at<int>(index, cv::CC_STAT_HEIGHT);
     cv::Rect roi(x, y, width, height);
 
-    //image4d.crop(roi);
-
-    image4d.depthMap.forEach<uint16_t>([&](uint16_t& depth, const int* pos) {
+    image4d.depthMap.forEach<uint16_t>([&](uint16_t &depth, const int *pos) {
         if (!roi.contains(cv::Point(pos[1], pos[0])))
             depth = 0;
     });
@@ -198,19 +189,11 @@ void Preprocessor::removeOutliers(Image4D& image4d, float threshold) const
 
 bool Preprocessor::cropFace(Image4D& image4d, Vec3f& position, Vec3f& eulerAngles) const
 {
-    //cv::imshow("Pre", image4d.depthMap);
-    //cv::waitKey(0);
     removeOutliers(image4d);
-    //cv::imshow("Post", image4d.depthMap);
-    //cv::waitKey(0);
 
     if (!estimateFacePose(image4d, position, eulerAngles)) {
         return false;
     }
-
-    //    std::cout << "Face detected!" << std::endl;
-    //    std::cout << "Position: " << position[0] << "," << position[1] << "," << position[2] << std::endl;
-    //    std::cout << "Euler angles: " << eulerAngles[0] << "," << eulerAngles[1] << "," << eulerAngles[2] << std::endl;
 
     const auto HEIGHT = image4d.getHeight();
     const auto WIDTH = image4d.getWidth();
@@ -299,18 +282,15 @@ bool Preprocessor::estimateFacePose(const Image4D& image4d, cv::Vec3f& position,
     estimator.estimate(img3D, means, clusters, votes, stride, maxVariance,
         probTH, largerRadiusRatio, smallerRadiusRatio, verbose, threshold);
 
-    if (means.empty()) {
-        //        std::cout << "Detection and pose estimation failed!" << std::endl;
+    if (means.empty())
         return false;
-    }
 
-    auto& pose = means[0];
+    auto &pose = means[0];
 
     position = { -pose[1] + image4d.getHeight() / 2,
-        pose[0] + image4d.getWidth() / 2,
-        pose[2] };
+                  pose[0] + image4d.getWidth()  / 2,
+                  pose[2] };
 
-    //    std::cout << "Angles: " << pose[3] << "," << pose[4] << "," << pose[5] << std::endl;
     eulerAngles = { pose[3], pose[4], pose[5] };
 
     return true;

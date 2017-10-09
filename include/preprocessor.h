@@ -87,7 +87,7 @@ private:
      * @param image4d
      * @param threshold: max allowed distance
      */
-    void removeOutliers(Image4D &image4d, float threshold = 300) const;
+    void removeOutliers(Image4D &image4d) const;
 
     /**
      * @brief cropFace: crops face region taking into account face orientation

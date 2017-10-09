@@ -3,10 +3,10 @@
 
 namespace ml = cv::ml;
 
-using cv::Mat;
-using std::cout;
-using std::endl;
 using std::vector;
+using std::string;
+using cv::Mat;
+
 
 namespace face {
 
@@ -63,7 +63,7 @@ SVMStein::SVMStein()
     svm->setTermCriteria(cv::TermCriteria(cv::TermCriteria::MAX_ITER, 100, 1e-6));
 }
 
-SVMStein::SVMStein(const std::string& filename)
+SVMStein::SVMStein(const string &filename)
 {
     if (!load(filename))
         std::cout << "Error. Failed loading pretrained SVM model." << std::endl;
@@ -75,7 +75,7 @@ float SVMStein::predict(const Mat &samples) const
 }
 
 
-float SVMStein::getDistanceFromHyperplane(const cv::Mat &sample) const
+float SVMStein::getDistanceFromHyperplane(const Mat &sample) const
 {
     Mat res;
     svm->predict(sample, res, ml::StatModel::RAW_OUTPUT);
@@ -89,11 +89,9 @@ bool SVMStein::train(const Mat &data, const vector<int> &labelsVector)
 }
 
 SteinKernelParams SVMStein::trainAuto(const Mat &data, const vector<int> &labelsVector,
-                                      const ml::ParamGrid& gammaGrid, const ml::ParamGrid& CGrid)
+                                      const ml::ParamGrid &gammaGrid, const ml::ParamGrid &CGrid)
 {
-    Mat labels(labelsVector, true);
-
-    auto trainData = ml::TrainData::create(data, ml::ROW_SAMPLE, labels);
+    auto trainData = ml::TrainData::create(data, ml::ROW_SAMPLE, Mat(labelsVector, true));
 
     vector<double> bestGamma, bestC;
     float bestScore = 0;
@@ -102,10 +100,10 @@ SteinKernelParams SVMStein::trainAuto(const Mat &data, const vector<int> &labels
         for (auto C = CGrid.minVal; C < CGrid.maxVal; C *= CGrid.logStep) {
             std::cout << "C = " << C << "; gamma = " << gamma << std::endl;
             setC(C);
-            cout << "Training..." << endl;
+            std::cout << "Training..." << std::endl;
             svm->train(trainData);
             float fscore = evaluateFMeasure(data, labelsVector);
-            cout << "Score: " << fscore << endl;
+            std::cout << "Score: " << fscore << std::endl;
             if (bestScore < fscore) {
                 bestGamma = { gamma };
                 bestC = { C };
@@ -130,14 +128,16 @@ SteinKernelParams SVMStein::trainAuto(const Mat &data, const vector<int> &labels
     return SteinKernelParams(C, gamma);
 }
 
-bool SVMStein::load(const std::string &filename)
+bool SVMStein::load(const string &filename)
 {
     svm = ml::SVM::load(filename);
+    svm->setType(ml::SVM::CUSTOM);
     return svm != nullptr;
 }
 
-void SVMStein::save(const std::string &filename) const
+void SVMStein::save(const string &filename) const
 {
+    svm->setType(ml::SVM::POLY);
     svm->save(filename);
 }
 
