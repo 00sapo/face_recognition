@@ -9,22 +9,10 @@ class SteinKernel;
 
 struct SteinKernelParams {
 
-    SteinKernelParams()
-        : C(1)
-        , gamma(1)
-        , fmeasure(0)
-    {
-    }
-    SteinKernelParams(float C, float gamma, float fmeasure)
-        : C(C)
-        , gamma(gamma)
-        , fmeasure(fmeasure)
-    {
-    }
+    SteinKernelParams(float C = 1, float gamma = 1) { }
 
     float C;
     float gamma;
-    float fmeasure;
 };
 
 /**
@@ -33,7 +21,7 @@ struct SteinKernelParams {
 class SVMStein {
 public:
     SVMStein();
-    SVMStein(const std::string& filename);
+    SVMStein(const std::string &filename);
 
     /**
      * @brief predict gives the calss of an input sample
@@ -50,7 +38,7 @@ public:
      */
     float getDistanceFromHyperplane(const cv::Mat &sample) const;
 
-    // FIXME: change signature to match trainAuto() usage
+
     bool train(const cv::Mat &data, const std::vector<int> &labelsVector);
 
     /**
@@ -104,7 +92,7 @@ private:
      *        classification labels (1 or -1)
      * @return percentage of correct classifications (between 0 and 1)
      */
-    float evaluateFMeasure(cv::Mat& targetDepthCovar, const int targetIndex);
+    float evaluateFMeasure(const cv::Mat &data, const std::vector<int> &labels);
 };
 
 } // namespace face

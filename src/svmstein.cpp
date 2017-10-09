@@ -104,13 +104,13 @@ SteinKernelParams SVMStein::trainAuto(const Mat &data, const vector<int> &labels
             setC(C);
             cout << "Training..." << endl;
             svm->train(trainData);
-            float fscore = evaluateFMeasure(targetDepthCovar, targetIndex);
-            cout << "Score: " << score << endl;
-            if (bestScore < score) {
+            float fscore = evaluateFMeasure(data, labelsVector);
+            cout << "Score: " << fscore << endl;
+            if (bestScore < fscore) {
                 bestGamma = { gamma };
                 bestC = { C };
-                bestScore = score;
-            } else if (bestScore == score) {
+                bestScore = fscore;
+            } else if (bestScore == fscore) {
                 bestC.push_back(C);
                 bestGamma.push_back(gamma);
             }
@@ -124,10 +124,9 @@ SteinKernelParams SVMStein::trainAuto(const Mat &data, const vector<int> &labels
     setC(C);
     setGamma(gamma);
     svm->train(trainData);
-    auto score = evaluateFMeasure(validationData,
-        labels(cv::Rect(0, targetPerson.size(), 1, otherPeople.size())));
+    auto fscore = evaluateFMeasure(data, labelsVector);
 
-    std::cout << "score obtained by avaraging best parameters: " << score << std::endl;
+    std::cout << "score obtained by avaraging best parameters: " << fscore << std::endl;
     return SteinKernelParams(C, gamma);
 }
 
@@ -158,10 +157,10 @@ void SVMStein::setParams(const SteinKernelParams& params)
     setGamma(params.gamma);
 }
 
-float SVMStein::evaluateFMeasure(Mat& targetDepthCovar, const int targetIndex)
+float SVMStein::evaluateFMeasure(const Mat &data, const vector<int> &labels)
 {
-
-    /* 1) Recall:       true positives (0 or 1 in this case) divided by all real positives
+  /*
+   * 1) Recall:       true positives (0 or 1 in this case) divided by all real positives
    * (true positives + false negatives, exactly 1 in this case).
    * 2) Precision:    true positives divided by all detected positives (true positives + false positives).
    * 3) F-measure:    harmonic mean between precision and recall, so 2*1/(1/p+1/r)
@@ -174,24 +173,25 @@ float SVMStein::evaluateFMeasure(Mat& targetDepthCovar, const int targetIndex)
    *^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    *|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
    * NON È VERO SE SI USANO I CLUSTER DELLE POSE IN QUESTO MODO...
-   *
-   *
-    targetDepthCovar.reshape(targetDepthCovar.rows * targetDepthCovar.cols, 0);
-    float prediction = predict(targetDepthCovar);
+   */
+
     int truePositives = 0, falsePositives = 0, trueNegatives = 0, falseNegatives = 0;
-    if (prediction == 1) {
-        if (prediction == truth)
-            ++truePositives;
-        else
-            ++falsePositives;
-    } else if (prediction == -1) {
-        if (prediction == truth)
-            ++trueNegatives;
-        else
-            ++falseNegatives;
+    for (auto i = 0; i < data.rows; ++i) {
+        float prediction = predict(data.row(i));
+        if (prediction == 1) {
+            if (prediction == labels[i])
+                ++truePositives;
+            else
+                ++falsePositives;
+        } else if (prediction == -1) {
+            if (prediction == labels[i])
+                ++trueNegatives;
+            else
+                ++falseNegatives;
+        }
     }
-    float fmeasure = 2 * truePositives / (float)(truePositives + falseNegatives + falsePositives);
-    */
+
+    return 2 * truePositives / (float)(truePositives + falseNegatives + falsePositives);
 }
 
 

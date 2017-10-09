@@ -27,6 +27,9 @@ using std::vector;
 
 namespace face {
 
+
+using Image4DMatrix = std::vector<std::vector<Image4D>>;
+
 namespace test {
 
     void testSVMLoad()
@@ -39,7 +42,7 @@ namespace test {
         string dirPath = "../RGBD_Face_dataset_training/";
         Image4DLoader loader(dirPath, "000_.*");
 
-        vector<vector<Image4D>> identities;
+        Image4DMatrix identities;
         for (int i = 0; i <= 25; ++i) {
             string fileNameRegEx = i / 10 >= 1 ? "0" : "00";
             fileNameRegEx += std::to_string(i) + "_.*";
@@ -51,33 +54,22 @@ namespace test {
         Preprocessor preproc;
 
         int i = 0;
-        vector<vector<Face>> persons;
+        FaceMatrix peoples;
         for (auto& id : identities) {
             cout << "Preprocessing images of person " << i++ << endl;
-            persons.push_back(preproc.preprocess(id));
+            peoples.push_back(preproc.preprocess(id));
         }
-        vector<Mat> trainingSet;
-        int numPoseClusters = 3;
-
 
         FaceRecognizer faceRec;
-        faceRec.train(faces);
+        faceRec.train(peoples);
 
         faceRec.save("/home/alberto/Desktop/svms");
 
     }
 
-    cv::Vec3f randomEulerAngle()
-    {
-        float r1 = float(rand()) / (float(RAND_MAX) / (2.0f * M_PI));
-        float r2 = float(rand()) / (float(RAND_MAX) / (2.0f * M_PI));
-        float r3 = float(rand()) / (float(RAND_MAX) / (2.0f * M_PI));
-        return { r1, r2, r3 };
-    }
-
     void testSettings()
     {
-        cout << "SingletonSettings test..." << endl;
+        cout << "Settings test..." << endl;
         auto& settings = Settings::getInstance();
         cout << settings.getD() << endl
              << settings.getK() << endl
@@ -114,21 +106,6 @@ namespace test {
             waitKey(0);
         }
         system("read -p 'Press [enter] to continue'");
-    }
-
-    Pose testEulerAnglesToRotationMatrix()
-    {
-        srand(time(NULL));
-        cv::Vec3f euler = randomEulerAngle();
-
-        Pose rotation = CovarianceComputer::eulerAnglesToRotationMatrix(euler);
-
-        cout << "Euler Angles:" << endl;
-        cout << euler << endl;
-        cout << "Rotation Matrix:" << endl;
-        cout << rotation << endl;
-
-        return rotation;
     }
 
     void testGetDepthMap()

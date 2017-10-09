@@ -56,7 +56,16 @@ void FaceRecognizer::train(const FaceMatrix &trainingSamples, const vector<strin
     auto grayscaleMat = formatDataForTraining(grayscaleCovar, grayscaleIndexes);
     auto depthmapMat  = formatDataForTraining(depthmapCovar,  depthmapIndexes);
 
+
     // train SVMs for grayscale images
+
+    /*
+     * TODO: When training svm[id][i] all head rotation subsets for identity id
+     *       are considered, giving label -1 to all but subset i. A better approach
+     *       would exclude all subsets of identity id that are not subset i.
+     *       In this way we have a better chance of avoiding overfitting (remember
+     *       we are given only 1 positive sample).
+     */
     for (int id = 0; id < N; ++id) {
         vector<int> labels(grayscaleMat.rows, -1);
         for (auto i = 0; i < c; ++i) {
