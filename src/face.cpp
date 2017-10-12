@@ -9,7 +9,7 @@ namespace face {
 Face::Face() : Image4D() { }
 
 Face::Face(const Image4D &image, const cv::Vec3f &position, const cv::Vec3f &eulerAngles)
-    : Image4D(image), position(position), eulerAngles(eulerAngles) { }
+    : Image4D(image), eulerAngles(eulerAngles), position(position) { }
 
 Pose Face::getRotationMatrix() const
 {

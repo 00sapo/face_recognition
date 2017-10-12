@@ -3,15 +3,19 @@
 
 #include <vector>
 
-#include "face.h"
+#include <opencv2/opencv.hpp>
+
 #include "svmstein.h"
 
 
 namespace face {
 
+class Face;
+
 using FaceMatrix     = std::vector<std::vector<face::Face>>;
 using MatMatrix      = std::vector<std::vector<cv::Mat>>;
 using SVMSteinMatrix = std::vector<std::vector<SVMStein>>;
+
 
 class FaceRecognizer
 {
@@ -56,6 +60,12 @@ public:
     bool save(const std::string &directoryName);
 
 private:
+
+    enum class ImgType {
+        grayscale,
+        depthmap
+    };
+
     int c = 3;  // number of head rotation subsets for each identity
     int N = 0;  // number of identities provided for training
     std::vector<std::string> IDs;  // labels associated to each identity in the same order as in grayscaleSVMs and depthmapSVMs
@@ -63,11 +73,9 @@ private:
     SVMSteinMatrix depthmapSVMs;   // thus resulting in a Nxc matrix where N is the number of identities
                                    // and c the number of head rotation subsets
 
-    void getNormalizedCovariances(const std::vector<Face> &identity,
-                                  std::vector<cv::Mat> &grayscaleCovarOut,
-                                  std::vector<cv::Mat> &depthmapCovarOut) const;
-    void getNormalizedCovariances(const FaceMatrix &identities, MatMatrix &grayscaleCovarOut, MatMatrix &depthmapCovarOut) const;
-
+    void trainSVMs(cv::Mat &data, const std::vector<int> &indexes, ImgType svmToTrain);
+    cv::Mat removeRows(cv::Mat &data, cv::Mat &removed, int id, int subset) const;
+    cv::Mat insertRows(cv::Mat &data, cv::Mat &removed, int id, int subset) const;
 };
 
 }   // namespace face

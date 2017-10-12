@@ -9,7 +9,7 @@ class SteinKernel;
 
 struct SteinKernelParams {
 
-    SteinKernelParams(float C = 1, float gamma = 1) { }
+    SteinKernelParams(float C = 1, float gamma = 1) : C(C), gamma(gamma) { }
 
     float C;
     float gamma;

@@ -94,7 +94,7 @@ int getNearestCenterId(const Pose &pose, const vector<Pose> &centers)
 {
     float min = std::numeric_limits<float>::max();
     int index = 0;
-    for (int i = 0; i < centers.size(); ++i) {
+    for (size_t i = 0; i < centers.size(); ++i) {
         float norm = cv::norm(centers[i], pose, cv::NORM_L2);
         if (norm < min) {
             min = norm;
@@ -138,8 +138,8 @@ void setToCovariance(const vector<const Face*> &set, Mat &imageCovariance, Mat &
         const int BLOCK_W = WIDTH / 4;
 
         // for each of the 16 blocks of the face...
-        for (int y = 0, q = 0; y <= HEIGHT - BLOCK_H; y += BLOCK_H, ++q) {
-            for (int x = 0, p = 0; x <= WIDTH - BLOCK_W; x += BLOCK_W, ++p) {
+        for (size_t y = 0, q = 0; y <= HEIGHT - BLOCK_H; y += BLOCK_H, ++q) {
+            for (size_t x = 0, p = 0; x <= WIDTH - BLOCK_W; x += BLOCK_W, ++p) {
 
                 // crop block region
                 cv::Rect roi(x, y, BLOCK_W, BLOCK_H);

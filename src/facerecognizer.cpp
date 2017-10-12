@@ -5,27 +5,33 @@
 
 #include <opencv2/opencv.hpp>
 
+#include "face.h"
 #include "covariancecomputer.h"
 
 using std::vector;
 using std::string;
+using cv::Mat;
 
 namespace fs = std::experimental::filesystem;
 
-using cv::Mat;
+
+namespace face
+{
 
 
-namespace face {
-
-
+// utility functions
 vector<string> generateLabels(int numOfLabels);
-Mat formatDataForTraining  (const MatMatrix &dataIn, vector<int> &indexes);
+Mat formatDataForTraining  (const MatMatrix &data, vector<int> &indexes);
 Mat formatDataForPrediction(const vector<Mat> &data);
+void getNormalizedCovariances(const vector<Face> &identity, int subsets, vector<Mat> &grayscaleCovarOut,
+                              vector<Mat> &depthmapCovarOut);
+void getNormalizedCovariances(const FaceMatrix &identities, int subsets, MatMatrix &grayscaleCovarOut,
+                              MatMatrix &depthmapCovarOut);
 
 
-// -----------------------------------------------------
-// ---------- FaceRecognizer member functions ----------
-// -----------------------------------------------------
+// --------------------------------------------------
+// ------------- FaceRecognizer members -------------
+// --------------------------------------------------
 
 const string FaceRecognizer::unknownIdentity = "unknown_ID";
 
@@ -51,50 +57,25 @@ void FaceRecognizer::train(const FaceMatrix &trainingSamples, const vector<strin
 
     // compute normalized covariances, i.e. transform trainingSamples to feature vectors for the SVMs
     MatMatrix grayscaleCovar, depthmapCovar;
-    getNormalizedCovariances(trainingSamples, grayscaleCovar, depthmapCovar);
+    getNormalizedCovariances(trainingSamples, c, grayscaleCovar, depthmapCovar);
 
     // convert data format to be ready for SVMs, i.e. from Mat vector to Mat
     vector<int> grayscaleIndexes, depthmapIndexes;
     auto grayscaleMat = formatDataForTraining(grayscaleCovar, grayscaleIndexes);
     auto depthmapMat  = formatDataForTraining(depthmapCovar,  depthmapIndexes);
 
-
     // train SVMs for grayscale images
+    trainSVMs(grayscaleMat, grayscaleIndexes, ImgType::grayscale);
 
-    /*
-     * TODO: When training svm[id][i] all head rotation subsets for identity id
-     *       are considered, giving label -1 to all but subset i. A better approach
-     *       would exclude all subsets of identity id that are not subset i.
-     *       In this way we have a better chance of avoiding overfitting (remember
-     *       we are given only 1 positive sample).
-     */
-    for (int id = 0; id < N; ++id) {
-        vector<int> labels(grayscaleMat.rows, -1);
-        for (auto i = 0; i < c; ++i) {
-            int matrixRow = i + grayscaleIndexes[id];
-            labels[matrixRow] = 1;
-            grayscaleSVMs[id][i].trainAuto(grayscaleMat, labels);
-            labels[matrixRow] = -1;
-        }
-    }
+    // train SVMs for depthmap images
+    trainSVMs(depthmapMat,  depthmapIndexes,  ImgType::depthmap );
 
-    // train SVMs for depth images
-    for (int id = 0; id < N; ++id) {
-        vector<int> labels(depthmapMat.rows, -1);
-        for (auto i = 0; i < c; ++i) {
-            int matrixRow = i + depthmapIndexes[id];
-            int index = removeElement(rowsToRemove, i);
-            labels[matrixRow] = 1;
-            depthmapSVMs[id][i].trainAuto(depthmapMat, labels);
-            labels[matrixRow] = -1;
-        }
-    }
 }
 
 string FaceRecognizer::predict(const vector<Face> &identity) const
 {
     vector<Mat> grayscaleCovar, depthmapCovar;
-    getNormalizedCovariances(identity, grayscaleCovar, depthmapCovar);
+    getNormalizedCovariances(identity, c, grayscaleCovar, depthmapCovar);
     auto grayscaleData = formatDataForPrediction(grayscaleCovar);
     auto depthmapData  = formatDataForPrediction(depthmapCovar);
 
@@ -178,6 +159,8 @@ bool FaceRecognizer::load(const string &directoryName)
     }
 
     N = numOfIdentities;
+
+    return true;
 }
 
 bool FaceRecognizer::save(const string &directoryName)
@@ -209,43 +192,91 @@ bool FaceRecognizer::save(const string &directoryName)
         }
     }
 
+    return true;
 }
 
-
-void FaceRecognizer::getNormalizedCovariances(const vector<Face> &identity,
-                                              vector<Mat> &grayscaleCovarOut,
-                                              vector<Mat> &depthmapCovarOut) const
+void FaceRecognizer::trainSVMs(Mat &data, const vector<int> &indexes, ImgType svmToTrain)
 {
-    grayscaleCovarOut.clear();
-    depthmapCovarOut .clear();
-
-    auto pairs = covariance::computeCovarianceRepresentation(identity, c);
-    for (const auto &pair : pairs) {
-        Mat normalizedGrayscale, normalizedDepthmap;
-        cv::normalize(pair.first , normalizedGrayscale);
-        cv::normalize(pair.second, normalizedDepthmap );
-        grayscaleCovarOut.push_back(normalizedGrayscale);
-        depthmapCovarOut .push_back(normalizedDepthmap );
+    /*
+     * FIXME: This approach seems to work but there's a problem with matrixes allocation
+     *        and deallocation. Maybe is worth trying instaintiating a Mat instead of
+     *        taking a submat
+     */
+    auto &svms = (svmToTrain == ImgType::grayscale) ? grayscaleSVMs : depthmapSVMs;
+    for (int id = 0; id < 1/*N*/; ++id) {
+        vector<int> labels(data.rows - c + 1, -1);
+        for (auto i = 0; i < c; ++i) {
+            int matrixRow = i + indexes[id];
+            labels[matrixRow] = 1;
+            Mat removed;
+            auto rowsLeft = removeRows(data, removed, id, c);
+            svms[id][i].trainAuto(rowsLeft, labels);
+            data = insertRows(rowsLeft, removed, id, c);
+            labels[matrixRow] = -1;
+        }
     }
 }
 
-
-void FaceRecognizer::getNormalizedCovariances(const FaceMatrix &identities,MatMatrix &grayscaleCovarOut,
-                                              MatMatrix &depthmapCovarOut) const
+// FIXME: problem with the last identity
+// FIXME: removeRows() and insertRows() are not clear in what they do
+//        find a better way to express intentions
+Mat FaceRecognizer::removeRows(Mat &data, Mat &removed, int id, int subset) const
 {
-    grayscaleCovarOut.clear();
-    depthmapCovarOut .clear();
+    Mat rowsLeft = data(cv::Rect(0, 0, data.cols, data.rows - c + 1));
+    removed = data(cv::Rect(0, data.rows - c + 1, data.cols, c - 1));
 
-    for (const auto& identity : identities) {
-        vector<Mat> grayscaleCovar, depthmapCovar;
-        getNormalizedCovariances(identity, grayscaleCovar, depthmapCovar);
-        grayscaleCovarOut.push_back(std::move(grayscaleCovar));
-        depthmapCovarOut .push_back(std::move(depthmapCovar ));
+    // swap rows above row id*c + subset
+    for (auto i = 0; i < subset; ++i) {
+        auto rowIndex = i + id*c;
+        for (int j = 0; j < removed.cols; ++j) {
+            auto tmp = rowsLeft.at<float>(rowIndex, j);
+            rowsLeft.at<float>(rowIndex, j) = removed.at<float>(i, j);
+            removed.at<float>(i,j) = tmp;
+        }
     }
+
+    // swap rows below row id*c + subset
+    for (auto i = subset+1; i < c; ++i) {
+        auto rowIndex = i + id*c;
+        for (int j = 0; j < removed.cols; ++j) {
+            auto tmp = rowsLeft.at<float>(rowIndex, j);
+            // i-1 because we skipped a row in rows left but not in removed
+            rowsLeft.at<float>(rowIndex, j) = removed.at<float>(i-1, j);
+            removed.at<float>(i-1,j) = tmp;
+        }
+    }
+
+    return rowsLeft;
 }
 
+// FIXME: problem with the last identity
+// FIXME: removeRows() and insertRows() are not clear in what they do
+//        find a better way to express intentions
+Mat FaceRecognizer::insertRows(Mat &data, Mat &removed, int id, int subset) const
+{
+    // swap rows above row id*c + subset
+    for (auto i = 0; i < subset; ++i) {
+        auto rowIndex = i + id*subset;
+        for (int j = 0; j < removed.cols; ++j) {
+            auto tmp = data.at<float>(rowIndex, j);
+            data.at<float>(rowIndex, j) = removed.at<float>(i, j);
+            removed.at<float>(i,j) = tmp;
+        }
+    }
 
+    // swap rows below row id*c + subset
+    for (auto i = subset+1; i < subset; ++i) {
+        auto rowIndex = i + id*subset;
+        for (int j = 0; j < removed.cols; ++j) {
+            auto tmp = data.at<float>(rowIndex, j);
+            // i-1 because we skipped a row in rows left but not in removed
+            data.at<float>(rowIndex, j) = removed.at<float>(i-1, j);
+            removed.at<float>(i-1,j) = tmp;
+        }
+    }
 
+    return data;
+}
 
 // ---------------------------------------
 // ---------- Utility functions ----------
@@ -272,30 +303,31 @@ vector<string> generateLabels(int numOfLabels)
 /**
  * @brief formatDataForTraining transforms the input dataset in a suitable format to be used by
  *        grayscaleSVMs and depthmapSVMs
- * @param dataIn: vector of identities. For each identity it contains a vector of covariance matrixes
- * @param dataOut: formatted data to be feed into SVMModel. It has one row for each Mat contained in dataIn
- *        and a number of columns equal to Mat::rows x Mat::columns (assuming every Mat in dataIn
- *        has the same dimensions)
- * @return a vector with the ranges of rows belonging to each identity (with length = dataIn.size())
+ * @param data: vector of identities. For each identity it contains a vector of covariance matrixes
+ * @param indexes: a vector with the starting rows indexes for each identity (with length = dataIn.size())
+ *
+ * @return formatted data to be feed into SVMModel. It has one row for each Mat contained in dataIn
+ *         and a number of columns equal to Mat::rows x Mat::columns (assuming every Mat in dataIn
+ *         has the same dimensions)
  */
-Mat formatDataForTraining(const MatMatrix &dataIn, std::vector<int> &indexes)
+Mat formatDataForTraining(const MatMatrix &data, std::vector<int> &indexes)
 {
     indexes.clear();
 
     // compute dataOut dimensions
     int height = 0;
-    for (const auto &identity : dataIn) {
+    for (const auto &identity : data) {
         height += identity.size();
     }
-    const int width = dataIn[0][0].rows * dataIn[0][0].cols; // assuming all Mat in dataIn have the same dimensions
-    Mat dataOut(height, width, dataIn[0][0].type());
+    const int width = data[0][0].rows * data[0][0].cols; // assuming all Mat in dataIn have the same dimensions
+    Mat dataOut(height, width, data[0][0].type());
 
     // every Mat in dataIn is converted to a row of dataOut
     int rowIndex = 0;
-    for (auto i = 0; i < dataIn.size(); ++i) { // for each vector in dataIn (i.e. for each identity)..
-        const auto &identity = dataIn[i];
+    for (size_t i = 0; i < data.size(); ++i) { // for each vector in dataIn (i.e. for each identity)..
+        const auto &identity = data[i];
         int start = rowIndex; // keep track of the first row index of current identity
-        for (auto j = 0; j < identity.size(); ++j) { // for each Mat belonging to this identity...
+        for (size_t j = 0; j < identity.size(); ++j) { // for each Mat belonging to this identity...
 
             // convert the Mat in a row of DataOut
             auto iter = identity[j].begin<float>();
@@ -327,6 +359,37 @@ Mat formatDataForPrediction(const vector<Mat> &data)
     }
 
     return dataOut;
+}
+
+void getNormalizedCovariances(const vector<Face> &identity, int subsets, vector<Mat> &grayscaleCovarOut,
+                              vector<Mat> &depthmapCovarOut)
+{
+    grayscaleCovarOut.clear();
+    depthmapCovarOut .clear();
+
+    auto pairs = covariance::computeCovarianceRepresentation(identity, subsets);
+    for (const auto &pair : pairs) {
+        Mat normalizedGrayscale, normalizedDepthmap;
+        cv::normalize(pair.first , normalizedGrayscale);
+        cv::normalize(pair.second, normalizedDepthmap );
+        grayscaleCovarOut.push_back(normalizedGrayscale);
+        depthmapCovarOut .push_back(normalizedDepthmap );
+    }
+}
+
+
+void getNormalizedCovariances(const FaceMatrix &identities, int subsets, MatMatrix &grayscaleCovarOut,
+                              MatMatrix &depthmapCovarOut)
+{
+    grayscaleCovarOut.clear();
+    depthmapCovarOut .clear();
+
+    for (const auto& identity : identities) {
+        vector<Mat> grayscaleCovar, depthmapCovar;
+        getNormalizedCovariances(identity, subsets, grayscaleCovar, depthmapCovar);
+        grayscaleCovarOut.push_back(std::move(grayscaleCovar));
+        depthmapCovarOut .push_back(std::move(depthmapCovar ));
+    }
 }
 
 

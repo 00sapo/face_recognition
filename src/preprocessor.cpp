@@ -227,7 +227,7 @@ bool Preprocessor::cropFace(Image4D& image4d, Vec3f& position, Vec3f& eulerAngle
     const int MAX_Y = faceROI.y + faceROI.height - 30; // stay 30px higher to avoid shoulders
 
     int xTop = 0;
-    for (int i = 0; i < WIDTH; ++i) { // look for first non-empty column from left
+    for (size_t i = 0; i < WIDTH; ++i) { // look for first non-empty column from left
         int nonzeroPixels = 0;
         for (int j = faceROI.y; j < MAX_Y; ++j) {
             if (image4d.depthMap.at<uint16_t>(j, i) != 0)
