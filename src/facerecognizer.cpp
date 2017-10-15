@@ -197,11 +197,6 @@ bool FaceRecognizer::save(const string &directoryName)
 
 void FaceRecognizer::trainSVMs(Mat &data, const vector<int> &indexes, ImgType svmToTrain)
 {
-    /*
-     * FIXME: This approach seems to work but there's a problem with matrixes allocation
-     *        and deallocation. Maybe is worth trying instaintiating a Mat instead of
-     *        taking a submat
-     */
     auto &svms = (svmToTrain == ImgType::grayscale) ? grayscaleSVMs : depthmapSVMs;
     for (int id = 0; id < 1/*N*/; ++id) {
         vector<int> labels(data.rows - c + 1, -1);
@@ -209,9 +204,9 @@ void FaceRecognizer::trainSVMs(Mat &data, const vector<int> &indexes, ImgType sv
             int matrixRow = i + indexes[id];
             labels[matrixRow] = 1;
             Mat removed;
-            auto rowsLeft = removeRows(data, removed, id, c);
+            auto rowsLeft = removeRows(data, removed, id, i);
             svms[id][i].trainAuto(rowsLeft, labels);
-            data = insertRows(rowsLeft, removed, id, c);
+            insertRows(data, removed, id, i);
             labels[matrixRow] = -1;
         }
     }
@@ -222,45 +217,42 @@ void FaceRecognizer::trainSVMs(Mat &data, const vector<int> &indexes, ImgType sv
 //        find a better way to express intentions
 Mat FaceRecognizer::removeRows(Mat &data, Mat &removed, int id, int subset) const
 {
-    Mat rowsLeft = data(cv::Rect(0, 0, data.cols, data.rows - c + 1));
-    removed = data(cv::Rect(0, data.rows - c + 1, data.cols, c - 1));
+    removed = Mat(c - 1, data.cols, data.type());
 
     // swap rows above row id*c + subset
     for (auto i = 0; i < subset; ++i) {
         auto rowIndex = i + id*c;
+        auto rowToWrite = data.rows - c + i;
         for (int j = 0; j < removed.cols; ++j) {
-            auto tmp = rowsLeft.at<float>(rowIndex, j);
-            rowsLeft.at<float>(rowIndex, j) = removed.at<float>(i, j);
-            removed.at<float>(i,j) = tmp;
+            removed.at<float>(i,j) = data.at<float>(rowIndex, j);
+            data.at<float>(rowIndex, j) = data.at<float>(rowToWrite, j);
         }
     }
 
     // swap rows below row id*c + subset
     for (auto i = subset+1; i < c; ++i) {
-        auto rowIndex = i + id*c;
+        auto rowToSave  = i + id*c;
+        auto rowToWrite = data.rows - c + i;
         for (int j = 0; j < removed.cols; ++j) {
-            auto tmp = rowsLeft.at<float>(rowIndex, j);
             // i-1 because we skipped a row in rows left but not in removed
-            rowsLeft.at<float>(rowIndex, j) = removed.at<float>(i-1, j);
-            removed.at<float>(i-1,j) = tmp;
+            removed.at<float>(i-1,j) = data.at<float>(rowToSave, j);
+            data.at<float>(rowToSave, j) = data.at<float>(rowToWrite, j);
         }
     }
 
-    return rowsLeft;
+    return data(cv::Rect(0, 0, data.cols, data.rows - c + 1));
 }
 
 // FIXME: problem with the last identity
 // FIXME: removeRows() and insertRows() are not clear in what they do
 //        find a better way to express intentions
-Mat FaceRecognizer::insertRows(Mat &data, Mat &removed, int id, int subset) const
+void FaceRecognizer::insertRows(Mat &data, Mat &removed, int id, int subset) const
 {
     // swap rows above row id*c + subset
     for (auto i = 0; i < subset; ++i) {
         auto rowIndex = i + id*subset;
         for (int j = 0; j < removed.cols; ++j) {
-            auto tmp = data.at<float>(rowIndex, j);
             data.at<float>(rowIndex, j) = removed.at<float>(i, j);
-            removed.at<float>(i,j) = tmp;
         }
     }
 
@@ -268,14 +260,10 @@ Mat FaceRecognizer::insertRows(Mat &data, Mat &removed, int id, int subset) cons
     for (auto i = subset+1; i < subset; ++i) {
         auto rowIndex = i + id*subset;
         for (int j = 0; j < removed.cols; ++j) {
-            auto tmp = data.at<float>(rowIndex, j);
             // i-1 because we skipped a row in rows left but not in removed
             data.at<float>(rowIndex, j) = removed.at<float>(i-1, j);
-            removed.at<float>(i-1,j) = tmp;
         }
     }
-
-    return data;
 }
 
 // ---------------------------------------
