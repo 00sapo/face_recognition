@@ -11,7 +11,7 @@ using std::vector;
 
 namespace face {
 
-
+// FIXME: not a good name, it's not a matrix because it can have rows of different sizes
 using MatMatrix = vector<vector<Mat>>;
 
 
@@ -115,27 +115,26 @@ void setToCovariance(const vector<const Face*> &set, Mat &imageCovariance, Mat &
 
     MatMatrix imageBlocks(16);
     MatMatrix depthBlocks(16);
-    Mat imageMean(16, SET_SIZE, CV_32FC1);
-    Mat depthMean(16, SET_SIZE, CV_32FC1);
-
     for (int i = 0; i < 16; ++i) {
         imageBlocks[i].resize(SET_SIZE);
         depthBlocks[i].resize(SET_SIZE);
     }
 
+    Mat imageMean(16, SET_SIZE, CV_32FC1);
+    Mat depthMean(16, SET_SIZE, CV_32FC1);
+
     // for each face in the set...
     int i = 0;
-    for (auto &face : set) {
+    for (const auto &face : set) {
 
-        if (face->image.empty() || face->depthMap.empty())
-            std::cout << "ERROR! Empty image!!" << std::endl;
+        assert (!face->image.empty() && !face->depthMap.empty()
+                && "ERROR! Empty image!!");
 
         // compute 4x4 blocks size
         const auto HEIGHT = face->getHeight();
         const auto WIDTH  = face->getWidth();
-
-        const int BLOCK_H = HEIGHT / 4;
-        const int BLOCK_W = WIDTH / 4;
+        const auto BLOCK_H = HEIGHT / 4;
+        const auto BLOCK_W = WIDTH / 4;
 
         // for each of the 16 blocks of the face...
         for (size_t y = 0, q = 0; y <= HEIGHT - BLOCK_H; y += BLOCK_H, ++q) {

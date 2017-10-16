@@ -74,8 +74,8 @@ private:
                                    // and c the number of head rotation subsets
 
     void trainSVMs(cv::Mat &data, const std::vector<int> &indexes, ImgType svmToTrain);
-    cv::Mat removeRows(cv::Mat &data, cv::Mat &removed, int id, int subset) const;
-    void insertRows(cv::Mat &data, cv::Mat &removed, int id, int subset) const;
+    cv::Mat removeRows(cv::Mat &data, cv::Mat &removed, int baseIdIndex, int subset) const;
+    void restoreRows(cv::Mat &data, cv::Mat &removed, int baseIdIndex, int subset) const;
 };
 
 }   // namespace face

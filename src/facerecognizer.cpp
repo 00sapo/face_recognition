@@ -28,7 +28,6 @@ void getNormalizedCovariances(const vector<Face> &identity, int subsets, vector<
 void getNormalizedCovariances(const FaceMatrix &identities, int subsets, MatMatrix &grayscaleCovarOut,
                               MatMatrix &depthmapCovarOut);
 
-
 // --------------------------------------------------
 // ------------- FaceRecognizer members -------------
 // --------------------------------------------------
@@ -68,7 +67,7 @@ void FaceRecognizer::train(const FaceMatrix &trainingSamples, const vector<strin
     trainSVMs(grayscaleMat, grayscaleIndexes, ImgType::grayscale);
 
     // train SVMs for depthmap images
-    trainSVMs(depthmapMat,  depthmapIndexes,  ImgType::depthmap );
+    //trainSVMs(depthmapMat,  depthmapIndexes,  ImgType::depthmap );
 
 }
 
@@ -198,71 +197,70 @@ bool FaceRecognizer::save(const string &directoryName)
 void FaceRecognizer::trainSVMs(Mat &data, const vector<int> &indexes, ImgType svmToTrain)
 {
     auto &svms = (svmToTrain == ImgType::grayscale) ? grayscaleSVMs : depthmapSVMs;
-    for (int id = 0; id < 1/*N*/; ++id) {
+    for (auto id = 0; id < 1/*N*/; ++id) {
         vector<int> labels(data.rows - c + 1, -1);
         for (auto i = 0; i < c; ++i) {
-            int matrixRow = i + indexes[id];
+            int matrixRow = indexes[id] + i;
             labels[matrixRow] = 1;
             Mat removed;
-            auto rowsLeft = removeRows(data, removed, id, i);
-            svms[id][i].trainAuto(rowsLeft, labels);
-            insertRows(data, removed, id, i);
+            auto trainingData = removeRows(data, removed, indexes[id], i);
+            svms[id][i].trainAuto(trainingData, labels);
+            restoreRows(data, removed, indexes[id], i);
             labels[matrixRow] = -1;
         }
     }
 }
 
-// FIXME: problem with the last identity
-// FIXME: removeRows() and insertRows() are not clear in what they do
-//        find a better way to express intentions
-Mat FaceRecognizer::removeRows(Mat &data, Mat &removed, int id, int subset) const
+
+Mat FaceRecognizer::removeRows(Mat &data, Mat &removed, int baseIdIndex, int subset) const
 {
     removed = Mat(c - 1, data.cols, data.type());
 
-    // swap rows above row id*c + subset
+    auto rowToKeep = baseIdIndex + subset;
+
+    int baseSwapIndex = data.rows - c + 1;            // if rowToKeep is in the top half of data matrix
+    cv::Rect roi(0, 0, data.cols, data.rows - c + 1); // overwrite rows using last c-1 rows.
+    if (rowToKeep > data.rows / 2) {    // if rowToKeep is in the bottom half of data matrix
+        baseSwapIndex = 0;              // overwrite rows using first c-1 rows.
+        roi.y = c - 1;
+    }
+
     for (auto i = 0; i < subset; ++i) {
-        auto rowIndex = i + id*c;
-        auto rowToWrite = data.rows - c + i;
+        auto rowIndex = baseIdIndex + i;        // save row above row id*c + subset
+        auto rowToWrite = baseSwapIndex + i;    // and overwrite it with rowToWrite
         for (int j = 0; j < removed.cols; ++j) {
             removed.at<float>(i,j) = data.at<float>(rowIndex, j);
             data.at<float>(rowIndex, j) = data.at<float>(rowToWrite, j);
         }
     }
 
-    // swap rows below row id*c + subset
     for (auto i = subset+1; i < c; ++i) {
-        auto rowToSave  = i + id*c;
-        auto rowToWrite = data.rows - c + i;
+        auto rowToSave  = baseIdIndex + i;        // save row below row id*c + subset
+        auto rowToWrite = baseSwapIndex + i - 1;  // and overwrite it with rowToWrite
         for (int j = 0; j < removed.cols; ++j) {
-            // i-1 because we skipped a row in rows left but not in removed
+            // i-1 because we skipped a row in data but not in removed
             removed.at<float>(i-1,j) = data.at<float>(rowToSave, j);
             data.at<float>(rowToSave, j) = data.at<float>(rowToWrite, j);
         }
     }
 
-    return data(cv::Rect(0, 0, data.cols, data.rows - c + 1));
+    return data(roi);
 }
 
-// FIXME: problem with the last identity
-// FIXME: removeRows() and insertRows() are not clear in what they do
-//        find a better way to express intentions
-void FaceRecognizer::insertRows(Mat &data, Mat &removed, int id, int subset) const
+
+void FaceRecognizer::restoreRows(Mat &data, Mat &removed, int baseIdIndex, int subset) const
 {
-    // swap rows above row id*c + subset
     for (auto i = 0; i < subset; ++i) {
-        auto rowIndex = i + id*subset;
-        for (int j = 0; j < removed.cols; ++j) {
+        auto rowIndex = baseIdIndex + i;
+        for (int j = 0; j < removed.cols; ++j)    // restore previously removed row
             data.at<float>(rowIndex, j) = removed.at<float>(i, j);
-        }
     }
 
-    // swap rows below row id*c + subset
-    for (auto i = subset+1; i < subset; ++i) {
-        auto rowIndex = i + id*subset;
-        for (int j = 0; j < removed.cols; ++j) {
+    for (auto i = subset+1; i < c; ++i) {
+        auto rowIndex = baseIdIndex + i;
+        for (int j = 0; j < removed.cols; ++j)    // restore previously removed row
             // i-1 because we skipped a row in rows left but not in removed
             data.at<float>(rowIndex, j) = removed.at<float>(i-1, j);
-        }
     }
 }
 
