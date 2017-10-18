@@ -10,12 +10,12 @@
 
 #include "covariancecomputer.h"
 #include "face.h"
+#include "facerecognizer.h"
 #include "image4d.h"
 #include "image4dloader.h"
 #include "lbp.h"
 #include "preprocessor.h"
 #include "settings.h"
-#include "facerecognizer.h"
 
 using cv::Mat;
 using cv::waitKey;
@@ -26,7 +26,6 @@ using std::string;
 using std::vector;
 
 namespace face {
-
 
 using Image4DMatrix = std::vector<std::vector<Image4D>>;
 
@@ -63,8 +62,7 @@ namespace test {
         FaceRecognizer faceRec;
         faceRec.train(peoples);
 
-        faceRec.save("/home/alberto/Desktop/svms");
-
+        faceRec.save("../svms");
     }
 
     void testSettings()
