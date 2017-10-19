@@ -3,10 +3,9 @@
 
 namespace ml = cv::ml;
 
-using std::vector;
-using std::string;
 using cv::Mat;
-
+using std::string;
+using std::vector;
 
 namespace face {
 
@@ -63,41 +62,40 @@ SVMStein::SVMStein()
     svm->setTermCriteria(cv::TermCriteria(cv::TermCriteria::MAX_ITER, 100, 1e-6));
 }
 
-SVMStein::SVMStein(const string &filename)
+SVMStein::SVMStein(const string& filename)
 {
     if (!load(filename))
         std::cout << "Error. Failed loading pretrained SVM model." << std::endl;
 }
 
-float SVMStein::predict(const Mat &samples) const
+float SVMStein::predict(const Mat& samples) const
 {
     return svm->predict(samples);
 }
 
-
-float SVMStein::getDistanceFromHyperplane(const Mat &sample) const
+float SVMStein::getDistanceFromHyperplane(const Mat& sample) const
 {
     Mat res;
     svm->predict(sample, res, ml::StatModel::RAW_OUTPUT);
     return res.at<float>(0);
 }
 
-bool SVMStein::train(const Mat &data, const vector<int> &labelsVector)
+bool SVMStein::train(const Mat& data, const vector<int>& labelsVector)
 {
     auto trainData = ml::TrainData::create(data, ml::ROW_SAMPLE, Mat(labelsVector, true));
     return svm->train(trainData);
 }
 
-SteinKernelParams SVMStein::trainAuto(const Mat &data, const vector<int> &labelsVector,
-                                      const ml::ParamGrid &gammaGrid, const ml::ParamGrid &CGrid)
+SteinKernelParams SVMStein::trainAuto(const Mat& data, const vector<int>& labelsVector,
+    const ml::ParamGrid& gammaGrid, const ml::ParamGrid& CGrid)
 {
     auto trainData = ml::TrainData::create(data, ml::ROW_SAMPLE, Mat(labelsVector, true));
 
     vector<double> bestGamma, bestC;
     float bestScore = 0;
-    for (auto gamma = gammaGrid.minVal; gamma < gammaGrid.maxVal; gamma *= gammaGrid.logStep) {
+    for (auto gamma = gammaGrid.minVal; gamma < gammaGrid.maxVal * 10e6; gamma *= gammaGrid.logStep) {
         setGamma(gamma);
-        for (auto C = CGrid.minVal; C < CGrid.maxVal; C *= CGrid.logStep) {
+        for (auto C = CGrid.minVal; C < CGrid.maxVal * 10e6; C *= CGrid.logStep) {
             std::cout << "C = " << C << "; gamma = " << gamma << std::endl;
             setC(C);
             std::cout << "Training..." << std::endl;
@@ -128,14 +126,14 @@ SteinKernelParams SVMStein::trainAuto(const Mat &data, const vector<int> &labels
     return SteinKernelParams(C, gamma);
 }
 
-bool SVMStein::load(const string &filename)
+bool SVMStein::load(const string& filename)
 {
     svm = ml::SVM::load(filename);
     svm->setType(ml::SVM::CUSTOM);
     return svm != nullptr;
 }
 
-void SVMStein::save(const string &filename) const
+void SVMStein::save(const string& filename) const
 {
     svm->setType(ml::SVM::POLY);
     svm->save(filename);
@@ -157,9 +155,9 @@ void SVMStein::setParams(const SteinKernelParams& params)
     setGamma(params.gamma);
 }
 
-float SVMStein::evaluateFMeasure(const Mat &data, const vector<int> &labels)
+float SVMStein::evaluateFMeasure(const Mat& data, const vector<int>& labels)
 {
-  /*
+    /*
    * 1) Recall:       true positives (0 or 1 in this case) divided by all real positives
    * (true positives + false negatives, exactly 1 in this case).
    * 2) Precision:    true positives divided by all detected positives (true positives + false positives).
@@ -193,6 +191,5 @@ float SVMStein::evaluateFMeasure(const Mat &data, const vector<int> &labels)
 
     return 2 * truePositives / (float)(truePositives + falseNegatives + falsePositives);
 }
-
 
 } // namespace face

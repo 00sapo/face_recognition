@@ -202,13 +202,16 @@ void FaceRecognizer::trainSVMs(Mat& data, const vector<int>& indexes, ImgType sv
     for (auto id = 0; id < 1 /*N*/; ++id) {
         vector<int> labels(data.rows - c + 1, -1);
         for (auto i = 0; i < c; ++i) {
-            int matrixRow = indexes[id];
-            labels[matrixRow] = 1;
+            int targetIndex = indexes[id] + i;
+            if (indexes[id] + i > data.rows / 2)
+                targetIndex -= c - 1;
+            labels[targetIndex] = 1;
+
             Mat removed;
             auto trainingData = removeRows(data, removed, indexes[id], i);
             svms[id][i].trainAuto(trainingData, labels);
             restoreRows(data, removed, indexes[id], i);
-            labels[matrixRow] = -1;
+            labels[targetIndex] = -1;
         }
     }
 }
