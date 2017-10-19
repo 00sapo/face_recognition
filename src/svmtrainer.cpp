@@ -1,4 +1,4 @@
-#include "facerecognizer.h"
+#include "svmtrainer.h"
 
 #include <experimental/filesystem>
 #include <iomanip>
@@ -16,32 +16,7 @@ namespace fs = std::experimental::filesystem;
 
 namespace face {
 
-// utility functions
-vector<string> generateLabels(int numOfLabels);
-Mat formatDataForTraining(const MatMatrix& data, vector<int>& indexes);
-Mat formatDataForPrediction(const vector<Mat>& data);
-void getNormalizedCovariances(const vector<Face>& identity, int subsets, vector<Mat>& grayscaleCovarOut,
-    vector<Mat>& depthmapCovarOut);
-void getNormalizedCovariances(const FaceMatrix& identities, int subsets, MatMatrix& grayscaleCovarOut,
-    MatMatrix& depthmapCovarOut);
-
-// --------------------------------------------------
-// ------------- FaceRecognizer members -------------
-// --------------------------------------------------
-
-const string FaceRecognizer::unknownIdentity = "unknown_ID";
-
-FaceRecognizer::FaceRecognizer(int c)
-    : c(c)
-{
-}
-
-FaceRecognizer::FaceRecognizer(const string& fileName)
-{
-    load(fileName);
-}
-
-void FaceRecognizer::train(const FaceMatrix& trainingSamples, const vector<string>& samplIDs)
+void SVMTrainer::train(const FaceMatrix& trainingSamples, const vector<string>& samplIDs)
 {
     N = trainingSamples.size();
 
@@ -71,100 +46,7 @@ void FaceRecognizer::train(const FaceMatrix& trainingSamples, const vector<strin
     trainSVMs(depthmapMat, depthmapIndexes, ImgType::depthmap);
 }
 
-string FaceRecognizer::predict(const vector<Face>& identity) const
-{
-    vector<Mat> grayscaleCovar, depthmapCovar;
-    getNormalizedCovariances(identity, c, grayscaleCovar, depthmapCovar);
-    auto grayscaleData = formatDataForPrediction(grayscaleCovar);
-    auto depthmapData = formatDataForPrediction(depthmapCovar);
-
-    // count votes for each identity
-    vector<int> votes(N);
-    int maxVotes = -1;
-    for (auto i = 0; i < N; ++i) {
-        int vote = 0;
-        for (auto j = 0; j < c; ++j) {
-            if (grayscaleSVMs[i][j].predict(grayscaleData.row(j)) == 1)
-                ++vote;
-            if (depthmapSVMs[i][j].predict(depthmapData.row(j)) == 1)
-                ++vote;
-        }
-        if (vote > maxVotes)
-            maxVotes = vote;
-
-        votes[i] = vote;
-    }
-
-    // get identities with the same number of votes
-    vector<int> ties;
-    for (auto i = 0; i < N; ++i) {
-        if (votes[i] == maxVotes)
-            ties.push_back(i);
-    }
-
-    // pick the identity with maximum mean distance from the hyperplane
-    float maxDistance = std::numeric_limits<float>::min();
-    int bestIndex = -1;
-    for (auto i : ties) {
-        float distance = 0;
-        for (auto j = 0; j < c; ++j) {
-            distance += grayscaleSVMs[i][j].getDistanceFromHyperplane(grayscaleData.row(j));
-            distance += depthmapSVMs[i][j].getDistanceFromHyperplane(depthmapData.row(j));
-        }
-        if (distance > maxDistance) {
-            maxDistance = distance;
-            bestIndex = i;
-        }
-    }
-
-    if (bestIndex == -1)
-        return unknownIdentity;
-
-    return IDs[bestIndex];
-}
-
-bool FaceRecognizer::load(const string& directoryName)
-{
-    IDs.clear();
-    grayscaleSVMs.clear();
-    depthmapSVMs.clear();
-
-    int numOfIdentities = 0;
-    for (const auto& subdir : fs::directory_iterator(directoryName)) {
-        ++numOfIdentities;
-        vector<fs::path> dirElements;
-        for (const auto& dirElement : fs::directory_iterator(subdir)) {
-            dirElements.push_back(dirElement);
-        }
-        std::sort(dirElements.begin(), dirElements.end());
-
-        vector<SVMStein> graySVMs, depthSVMs;
-        for (const auto& elem : dirElements) {
-            std::cout << "Loading " << elem << std::endl;
-            try {
-                if (elem.filename().string().find("grayscale") == 0)
-                    graySVMs.emplace_back(elem.string());
-                else if (elem.filename().string().find("depthmap") == 0)
-                    depthSVMs.emplace_back(elem.string());
-                else
-                    std::cout << "Unrecognized directory element: " << elem;
-            } catch (const cv::Exception& ex) {
-                std::cout << ex.what() << std::endl;
-            }
-        }
-        c = dirElements.size();
-        grayscaleSVMs.push_back(std::move(graySVMs));
-        depthmapSVMs.push_back(std::move(depthSVMs));
-        std::cout << "Finished loading identity " << subdir.path().filename().string() << std::endl;
-        IDs.push_back(subdir.path().filename().string());
-    }
-
-    N = numOfIdentities;
-
-    return true;
-}
-
-bool FaceRecognizer::save(const string& directoryName)
+bool SVMTrainer::save(const string& directoryName)
 {
     // create root directory
     fs::path rootDir(directoryName);
@@ -196,7 +78,7 @@ bool FaceRecognizer::save(const string& directoryName)
     return true;
 }
 
-void FaceRecognizer::trainSVMs(Mat& data, const vector<int>& indexes, ImgType svmToTrain)
+void SVMTrainer::trainSVMs(Mat& data, const vector<int>& indexes, ImgType svmToTrain)
 {
     SVMSteinMatrix& svms = (svmToTrain == ImgType::grayscale) ? grayscaleSVMs : depthmapSVMs;
     for (auto id = 0; id < indexes.size(); ++id) {
@@ -217,7 +99,7 @@ void FaceRecognizer::trainSVMs(Mat& data, const vector<int>& indexes, ImgType sv
     }
 }
 
-Mat FaceRecognizer::removeRows(Mat& data, Mat& removed, int baseIdIndex, int subset) const
+Mat SVMTrainer::removeRows(Mat& data, Mat& removed, int baseIdIndex, int subset) const
 {
     removed = Mat(c - 1, data.cols, data.type());
 
@@ -252,7 +134,7 @@ Mat FaceRecognizer::removeRows(Mat& data, Mat& removed, int baseIdIndex, int sub
     return data(roi);
 }
 
-void FaceRecognizer::restoreRows(Mat& data, Mat& removed, int baseIdIndex, int subset) const
+void SVMTrainer::restoreRows(Mat& data, Mat& removed, int baseIdIndex, int subset) const
 {
     for (auto i = 0; i < subset; ++i) {
         auto rowIndex = baseIdIndex + i;
@@ -268,28 +150,6 @@ void FaceRecognizer::restoreRows(Mat& data, Mat& removed, int baseIdIndex, int s
     }
 }
 
-// ---------------------------------------
-// ---------- Utility functions ----------
-// ---------------------------------------
-
-vector<string> generateLabels(int numOfLabels)
-{
-    string id = "identity_";
-    vector<string> identities;
-
-    int numOfDigits = 0;
-    for (int N = numOfLabels; N > 0; N /= 10, ++numOfDigits)
-        ; // count number of digits
-
-    for (int i = 0; i < numOfLabels; ++i) {
-        std::stringstream stream;
-        stream << id << std::setfill('0') << std::setw(numOfDigits) << i; // fixed length identity
-        identities.push_back(stream.str());
-    }
-
-    return identities;
-}
-
 /**
  * @brief formatDataForTraining transforms the input dataset in a suitable format to be used by
  *        grayscaleSVMs and depthmapSVMs
@@ -300,7 +160,7 @@ vector<string> generateLabels(int numOfLabels)
  *         and a number of columns equal to Mat::rows x Mat::columns (assuming every Mat in dataIn
  *         has the same dimensions)
  */
-Mat formatDataForTraining(const MatMatrix& data, std::vector<int>& indexes)
+Mat SVMTrainer::formatDataForTraining(const MatMatrix& data, std::vector<int>& indexes)
 {
     indexes.clear();
 
@@ -332,53 +192,6 @@ Mat formatDataForTraining(const MatMatrix& data, std::vector<int>& indexes)
     }
 
     return dataOut;
-}
-
-Mat formatDataForPrediction(const vector<Mat>& data)
-{
-    const int height = data.size();
-    const int width = data[0].rows * data[0].cols;
-    Mat dataOut(height, width, data[0].type());
-
-    for (auto i = 0; i < height; ++i) { // for each Mat belonging to this identity...
-        // convert the Mat in a row of dataOut
-        auto iter = data[i].begin<float>();
-        for (auto j = 0; j < width; ++j, ++iter) {
-            dataOut.at<float>(i, j) = *iter;
-        }
-    }
-
-    return dataOut;
-}
-
-void getNormalizedCovariances(const vector<Face>& identity, int subsets, vector<Mat>& grayscaleCovarOut,
-    vector<Mat>& depthmapCovarOut)
-{
-    grayscaleCovarOut.clear();
-    depthmapCovarOut.clear();
-
-    auto pairs = covariance::computeCovarianceRepresentation(identity, subsets);
-    for (const auto& pair : pairs) {
-        Mat normalizedGrayscale, normalizedDepthmap;
-        cv::normalize(pair.first, normalizedGrayscale);
-        cv::normalize(pair.second, normalizedDepthmap);
-        grayscaleCovarOut.push_back(normalizedGrayscale);
-        depthmapCovarOut.push_back(normalizedDepthmap);
-    }
-}
-
-void getNormalizedCovariances(const FaceMatrix& identities, int subsets, MatMatrix& grayscaleCovarOut,
-    MatMatrix& depthmapCovarOut)
-{
-    grayscaleCovarOut.clear();
-    depthmapCovarOut.clear();
-
-    for (const auto& identity : identities) {
-        vector<Mat> grayscaleCovar, depthmapCovar;
-        getNormalizedCovariances(identity, subsets, grayscaleCovar, depthmapCovar);
-        grayscaleCovarOut.push_back(std::move(grayscaleCovar));
-        depthmapCovarOut.push_back(std::move(depthmapCovar));
-    }
 }
 
 } // namespace face

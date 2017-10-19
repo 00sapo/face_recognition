@@ -10,7 +10,7 @@
 
 #include "covariancecomputer.h"
 #include "face.h"
-#include "facerecognizer.h"
+#include "svmtrainer.h"
 #include "image4d.h"
 #include "image4dloader.h"
 #include "lbp.h"
@@ -33,36 +33,7 @@ namespace test {
 
     void testSVMLoad()
     {
-        FaceRecognizer rec("/home/alberto/Desktop/svms");
-    }
-
-    void testSVM()
-    {
-        string dirPath = "../RGBD_Face_dataset_training/";
-        Image4DLoader loader(dirPath, "000_.*");
-
-        Image4DMatrix identities;
-        for (int i = 0; i <= 25; ++i) {
-            string fileNameRegEx = i / 10 >= 1 ? "0" : "00";
-            fileNameRegEx += std::to_string(i) + "_.*";
-
-            loader.setFileNameRegEx(fileNameRegEx);
-            identities.push_back(loader.get());
-        }
-
-        Preprocessor preproc;
-
-        int i = 0;
-        FaceMatrix peoples;
-        for (auto& id : identities) {
-            cout << "Preprocessing images of person " << i++ << endl;
-            peoples.push_back(preproc.preprocess(id));
-        }
-
-        FaceRecognizer faceRec;
-        faceRec.train(peoples);
-
-        faceRec.save("../svms");
+        SVMTrainer rec("/home/alberto/Desktop/svms");
     }
 
     void testSettings()

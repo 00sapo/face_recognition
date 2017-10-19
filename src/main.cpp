@@ -1,47 +1,64 @@
 #include <iostream>
+#include <preprocessor.h>
+#include <string.h>
+#include <svmtrainer.h>
+#include <vector>
 
-#include "test.h"
+#include "face.h"
+#include "image4dloader.h"
 
-void testFunctions();
+using namespace face;
+using namespace std;
 
-int main()
+using Image4DMatrix = std::vector<std::vector<Image4D>>;
+
+void training(string trainingSetDir, string outputDir)
 {
-    testFunctions();
 
-    return 0;
+    string dirPath = trainingSetDir;
+    Image4DLoader loader(dirPath, "000_.*");
+
+    Image4DMatrix identities;
+    for (int i = 0; i <= 25; ++i) {
+        string fileNameRegEx = i / 10 >= 1 ? "0" : "00";
+        fileNameRegEx += std::to_string(i) + "_.*";
+
+        loader.setFileNameRegEx(fileNameRegEx);
+        identities.push_back(loader.get());
+    }
+
+    Preprocessor preproc;
+
+    int i = 0;
+    FaceMatrix peoples;
+    for (auto& id : identities) {
+        cout << "Preprocessing images of person " << i++ << endl;
+        peoples.push_back(preproc.preprocess(id));
+    }
+
+    SVMTrainer faceRec;
+    faceRec.train(peoples);
+
+    faceRec.save(outputDir);
 }
 
-void testFunctions()
+void testing(string testingSetDir, string outputDir)
 {
-    //test::testSingletonSettings();
-    //
-    //test::testImage4DLoader();
-    //
-    //test::testFindThreshold();
-    //
-    //test::testGetDepthMap();
-    //
-    //test::testKmeans();
-    //
-    //face::test::testPreprocessing();
-    //
-    //test::testLoadSpeed();
-    //
-    //test::testEulerAnglesToRotationMatrix();
-    //
-    //test::testPoseClustering();
-    //
-    //test::testKmeans2();
-    //
-    //face::test::covarianceTest();
-    //
-    face::test::testSVM();
-    //
-    //face::test::testSVMLoad();
-    //
-    //face::test::covarianceTest();
-    //
-    //face::test::testBackgroundRemoval();
+    //TODO
+}
 
-    cout << "\n\nTests finished!" << endl;
+int main(int count, char* args[])
+{
+    if (count != 4) {
+        cout << "This software has two commands: " << endl;
+        cout << "\t* training <training set directory> <model output directory>\t\t- to train the model" << endl;
+        cout << "\t* testing <testing set directory> <model directory>\t\t- to test the model" << endl;
+        return 1;
+    }
+    if (!strncmp(args[1], "training", 8))
+        training(args[2], args[3]);
+    if (!strncmp(args[1], "testing", 7))
+        testing(args[2], args[3]);
+
+    return 0;
 }
