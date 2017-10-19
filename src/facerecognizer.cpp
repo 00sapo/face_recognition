@@ -65,10 +65,10 @@ void FaceRecognizer::train(const FaceMatrix& trainingSamples, const vector<strin
     auto depthmapMat = formatDataForTraining(depthmapCovar, depthmapIndexes);
 
     // train SVMs for grayscale images
-    trainSVMs(grayscaleMat, grayscaleIndexes, ImgType::grayscale);
+    //    trainSVMs(grayscaleMat, grayscaleIndexes, ImgType::grayscale);
 
     // train SVMs for depthmap images
-    //trainSVMs(depthmapMat,  depthmapIndexes,  ImgType::depthmap );
+    trainSVMs(depthmapMat, depthmapIndexes, ImgType::depthmap);
 }
 
 string FaceRecognizer::predict(const vector<Face>& identity) const
@@ -198,10 +198,11 @@ bool FaceRecognizer::save(const string& directoryName)
 
 void FaceRecognizer::trainSVMs(Mat& data, const vector<int>& indexes, ImgType svmToTrain)
 {
-    auto& svms = (svmToTrain == ImgType::grayscale) ? grayscaleSVMs : depthmapSVMs;
-    for (auto id = 0; id < 1 /*N*/; ++id) {
+    SVMSteinMatrix& svms = (svmToTrain == ImgType::grayscale) ? grayscaleSVMs : depthmapSVMs;
+    for (auto id = 0; id < indexes.size(); ++id) {
         vector<int> labels(data.rows - c + 1, -1);
         for (auto i = 0; i < c; ++i) {
+            std::cout << "id: " << id << ", subset: " << i << std::endl;
             int targetIndex = indexes[id] + i;
             if (indexes[id] + i > data.rows / 2)
                 targetIndex -= c - 1;
