@@ -14,7 +14,7 @@ class SVMTrainer : SVMManager {
 public:
     SVMTrainer(int c = 3);
 
-    SVMTrainer(const std::string& fileName);
+    //    SVMTrainer(const std::string& fileName);
 
     /**
      * @brief Given a vector of faces trains an SVM model to recognize those faces

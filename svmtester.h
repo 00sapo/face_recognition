@@ -32,7 +32,7 @@ public:
     bool load(const string& directoryName);
 
 private:
-    Mat formatDataForPrediction(const vector<Mat>& data);
+    Mat formatDataForPrediction(const vector<Mat>& data) const;
 };
 }
 #endif // SVMTESTER_H

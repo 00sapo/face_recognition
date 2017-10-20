@@ -16,6 +16,11 @@ namespace fs = std::experimental::filesystem;
 
 namespace face {
 
+SVMTrainer::SVMTrainer(int c)
+    : SVMManager(c)
+{
+}
+
 void SVMTrainer::train(const FaceMatrix& trainingSamples, const vector<string>& samplIDs)
 {
     N = trainingSamples.size();

@@ -23,12 +23,10 @@ public:
 protected:
     // utility functions
     vector<string> generateLabels(int numOfLabels);
-    Mat formatDataForTraining(const MatMatrix& data, vector<int>& indexes);
-    Mat formatDataForPrediction(const vector<Mat>& data);
     void getNormalizedCovariances(const vector<Face>& identity, int subsets, vector<Mat>& grayscaleCovarOut,
-        vector<Mat>& depthmapCovarOut);
+        vector<Mat>& depthmapCovarOut) const;
     void getNormalizedCovariances(const FaceMatrix& identities, int subsets, MatMatrix& grayscaleCovarOut,
-        MatMatrix& depthmapCovarOut);
+        MatMatrix& depthmapCovarOut) const;
 
     enum class ImgType {
         grayscale,

@@ -3,6 +3,11 @@
 
 using namespace face;
 
+SVMManager::SVMManager(int c)
+{
+    this->c = c;
+}
+
 vector<string> SVMManager::generateLabels(int numOfLabels)
 {
     string id = "identity_";
@@ -22,7 +27,7 @@ vector<string> SVMManager::generateLabels(int numOfLabels)
 }
 
 void SVMManager::getNormalizedCovariances(const vector<Face>& identity, int subsets, vector<Mat>& grayscaleCovarOut,
-    vector<Mat>& depthmapCovarOut)
+    vector<Mat>& depthmapCovarOut) const
 {
     grayscaleCovarOut.clear();
     depthmapCovarOut.clear();
@@ -38,7 +43,7 @@ void SVMManager::getNormalizedCovariances(const vector<Face>& identity, int subs
 }
 
 void SVMManager::getNormalizedCovariances(const FaceMatrix& identities, int subsets, MatMatrix& grayscaleCovarOut,
-    MatMatrix& depthmapCovarOut)
+    MatMatrix& depthmapCovarOut) const
 {
     grayscaleCovarOut.clear();
     depthmapCovarOut.clear();

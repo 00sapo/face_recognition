@@ -64,7 +64,7 @@ SVMTester::SVMTester(int c)
 
 string SVMTester::predict(const vector<Face>& identity) const
 {
-    const vector<Mat> grayscaleCovar, depthmapCovar;
+    vector<Mat> grayscaleCovar, depthmapCovar;
     getNormalizedCovariances(identity, c, grayscaleCovar, depthmapCovar);
     auto grayscaleData = formatDataForPrediction(grayscaleCovar);
     auto depthmapData = formatDataForPrediction(depthmapCovar);
@@ -114,7 +114,7 @@ string SVMTester::predict(const vector<Face>& identity) const
     return IDs[bestIndex];
 }
 
-Mat SVMTester::formatDataForPrediction(const vector<Mat>& data)
+Mat SVMTester::formatDataForPrediction(const vector<Mat>& data) const
 {
     const int height = data.size();
     const int width = data[0].rows * data[0].cols;
