@@ -2,9 +2,11 @@
 #define FACE_IMAGE_4D_H
 
 #include <functional>
+#include <imageset.h>
 #include <opencv2/opencv.hpp>
 
 typedef unsigned int uint;
+typedef cv::Matx<float, 9, 1> Pose;
 
 namespace face {
 
@@ -12,12 +14,8 @@ namespace face {
      * @brief The Image4D class is a couple (grayscale image - depth map)
      *        that represents both the visual and spatial information of a scene
      */
-class Image4D {
+class Image4D : public Image4DSet {
 public:
-    cv::Mat image; // Color or grayscale representation of the face
-    cv::Mat depthMap; // Depth representation of the face
-    std::string name;
-
     Image4D();
 
     /**
@@ -29,6 +27,14 @@ public:
          * @param intrinsicCameraMatrix
          */
     Image4D(cv::Mat& image, cv::Mat& depthMap, const cv::Mat& intrinsicCameraMatrix);
+
+    /**
+     * @brief Image4D create an Image4D using one already existing and new position and eulerAngles
+     * @param image
+     * @param position
+     * @param eulerAngles
+     */
+    Image4D(Image4D& image, cv::Vec3f& position, cv::Vec3f& eulerAngles);
 
     /**
          * @brief get3DImage organizes the depthmap in a Mat object
@@ -85,8 +91,7 @@ public:
          * @param function function to be called on each pixel
          * @param ROI region of interest to which apply function
          */
-    template <typename T>
-    void depthForEach(const std::function<void(int, int, T&)>& function, const cv::Rect& ROI)
+    boost::any virtualDepthForEach(const std::function<void(int, int, boost::any&)>& function, const cv::Rect& ROI)
     {
 
         const uint MAX_X = ROI.x + ROI.width;
@@ -94,24 +99,7 @@ public:
 
         for (uint y = ROI.y; y < MAX_Y; ++y) {
             for (uint x = ROI.x; x < MAX_X; ++x) {
-                function(x, y, depthMap.at<T>(y, x));
-            }
-        }
-    }
-
-    /**
-         * @brief const version of depthForEach()
-         */
-    template <typename T>
-    void depthForEach(const std::function<void(int, int, const T&)>& function, const cv::Rect& ROI) const
-    {
-
-        const uint MAX_X = ROI.x + ROI.width;
-        const uint MAX_Y = ROI.y + ROI.height;
-
-        for (uint y = ROI.y; y < MAX_Y; ++y) {
-            for (uint x = ROI.x; x < MAX_X; ++x) {
-                function(x, y, depthMap.at<T>(y, x));
+                function(x, y, depthMap.at<boost::any>(y, x));
             }
         }
     }
@@ -123,34 +111,36 @@ public:
          * @param function function to be called on each point
          * @param ROI region of interest to which apply function
          */
-    template <typename T>
-    void imageForEach(const std::function<void(int, int, T&)>& function, const cv::Rect& ROI)
+    boost::any virtualImageForEach(const std::function<void(int, int, boost::any&)>& function, const cv::Rect& ROI)
     {
         const uint MAX_X = ROI.x + ROI.width;
         const uint MAX_Y = ROI.y + ROI.height;
 
         for (uint y = ROI.y; y < MAX_Y; ++y) {
             for (uint x = ROI.x; x < MAX_X; ++x) {
-                function(x, y, image.at<T>(y, x));
+                function(x, y, image.at<boost::any>(y, x));
             }
         }
     }
 
-    /**
-         * @brief const version of imageForEach
-         */
-    template <typename T>
-    void imageForEach(const std::function<void(int, int, const T&)>& function, const cv::Rect& ROI) const
-    {
-        const uint MAX_X = ROI.x + ROI.width;
-        const uint MAX_Y = ROI.y + ROI.height;
+    Pose getRotationMatrix() const;
+    cv::Vec3f getEulerAngles() const;
+    cv::Vec3f getPosition() const;
 
-        for (uint y = ROI.y; y < MAX_Y; ++y) {
-            for (uint x = ROI.x; x < MAX_X; ++x) {
-                function(x, y, image.at<T>(y, x));
-            }
-        }
-    }
+    void setEulerAngles(const cv::Vec3f& value);
+
+    void setPosition(const cv::Vec3f& value);
+
+    const cv::Mat* getImage() const;
+
+    const cv::Mat* getDepthMap() const;
+
+private:
+    cv::Vec3f eulerAngles;
+    cv::Vec3f position;
+    cv::Mat image; // Color or grayscale representation of the face
+    cv::Mat depthMap; // Depth representation of the face
+    std::string name;
 
 protected:
     uint WIDTH; // width of the face

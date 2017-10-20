@@ -6,7 +6,6 @@ CONFIG -= qt
 SOURCES += src/main.cpp \
            src/image4d.cpp \
            src/image4dloader.cpp \
-           src/face.cpp \
            src/preprocessor.cpp \
            src/settings.cpp \
            src/covariancecomputer.cpp \
@@ -15,7 +14,10 @@ SOURCES += src/main.cpp \
            extern_libs/head_pose_estimation/CRTree.cpp \
     svmtester.cpp \
     src/svmtrainer.cpp \
-    svmmanager.cpp
+    svmmanager.cpp \
+    kmeansbackgroundremover.cpp \
+    clusterofimages.cpp \
+    facecropper.cpp
 
 INCLUDEPATH += include $$(OPENCV_INCLUDE)
 
@@ -24,7 +26,12 @@ HEADERS += include/*.h \
            extern_libs/head_pose_estimation/CRForestEstimator.h \
            extern_libs/head_pose_estimation/CRTree.h \
     svmtester.h \
-    svmmanager.h
+    svmmanager.h \
+    filter.h \
+    kmeansbackgroundremover.h \
+    imageset.h \
+    clusterofimages.h \
+    facecropper.h
 
 DISTFILES += \
     camera_info.yaml

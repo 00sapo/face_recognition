@@ -14,7 +14,7 @@ class Face;
 
 using FaceMatrix = std::vector<std::vector<face::Face>>;
 using MatMatrix = std::vector<std::vector<cv::Mat>>;
-using SVMSteinMatrix = std::vector<std::vector<SVMStein>>;
+typedef std::vector<std::vector<SVMStein>> SVMSteinMatrix;
 
 class SVMManager {
 public:
