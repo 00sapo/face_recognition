@@ -1,0 +1,1733 @@
+format 214
+"source" // source
+  revision 1
+  modified_by 2 "sapo"
+  // class settings
+  
+  classdiagramsettings member_max_width 0 end
+  
+  usecasediagramsettings end
+  
+  sequencediagramsettings end
+  
+  collaborationdiagramsettings end
+  
+  objectdiagramsettings end
+  
+  componentdiagramsettings
+   end
+  
+  deploymentdiagramsettings
+   end
+  
+  statediagramsettings
+   end
+  
+  activitydiagramsettings
+   end
+  
+  cpp_h_dir "/home/sapo/Develop/face_recognition/source/"
+  cpp_src_dir "/home/sapo/Develop/face_recognition/source/"
+  cpp_namespace "face"
+  classview 128002 "source"
+    
+    classdiagramsettings member_max_width 0 end
+    
+    collaborationdiagramsettings end
+    
+    objectdiagramsettings end
+    
+    sequencediagramsettings end
+    
+    statediagramsettings
+     end
+    
+    
+    activitydiagramsettings
+     end
+    class 128002 "FaceCropper"
+      visibility package 
+      cpp_decl "${comment}${template}class ${name}${inherit} {
+${members}};
+${inlines}
+"
+      java_decl ""
+      php_decl ""
+      python_2_2 python_decl ""
+      idl_decl ""
+      explicit_switch_type ""
+      mysql_decl ""
+      
+      classrelation 128002 // <generalisation>
+	relation 128002 ---|>
+	  a public
+	    cpp default "${type}"
+	    classrelation_ref 128002 // <generalisation>
+	  b parent class_ref 128130 // Filter
+      end
+
+      operation 128002 "FaceCropper"
+	preserve_cpp_body_indent public explicit_return_type ""
+	nparams 0
+	cpp_decl "    ${comment}${friend}${static}${inline}${virtual} ${name}${(}${)}${const}${volatile}${throw}${abstract};
+"
+	cpp_def "${comment}${inline} ${class}::${name}${(}${)}${const}${volatile}${throw}${staticnl}{
+  ${body}}
+"
+	
+	
+	
+	
+      end
+
+      operation 128130 "filter"
+	preserve_cpp_body_indent public explicit_return_type "bool"
+	nparams 0
+	cpp_decl "    ${comment}${friend}${static}${inline}${virtual}${type} ${name}${(}${)}${const}${volatile}${throw}${abstract};
+"
+	cpp_def "${comment}${inline}${type} ${class}::${name}${(}${)}${const}${volatile}${throw}${staticnl}{
+  ${body}}
+"
+	
+	
+	
+	
+      end
+
+      operation 128258 "getImage4d"
+	preserve_cpp_body_indent const public return_type class_ref 128258 // Image4DSetComponent
+	nparams 0
+	cpp_decl "    ${comment}${friend}${static}${inline}${virtual}${type} ${name}${(}${)}${const}${volatile}${throw}${abstract};
+"
+	cpp_def "${comment}${inline}${type} ${class}::${name}${(}${)}${const}${volatile}${throw}${staticnl}{
+  ${body}}
+"
+	
+	
+	
+	
+      end
+
+      operation 128386 "setImage4d"
+	preserve_cpp_body_indent public explicit_return_type "void"
+	nparams 1
+	  param inout name "value" type class_ref 128258 // Image4DSetComponent
+	cpp_decl "    ${comment}${friend}${static}${inline}${virtual}${type} ${name}${(}${t0} & ${p0}${v0}${)}${const}${volatile}${throw}${abstract};
+"
+	cpp_def "${comment}${inline}${type} ${class}::${name}${(}${t0} & ${p0}${)}${const}${volatile}${throw}${staticnl}{
+  ${body}}
+"
+	
+	
+	
+	
+      end
+
+      operation 128514 "getEstimator"
+	preserve_cpp_body_indent const public return_type class_ref 128386 // CRForestEstimator
+	nparams 0
+	cpp_decl "    ${comment}${friend}${static}${inline}${virtual}${type} ${name}${(}${)}${const}${volatile}${throw}${abstract};
+"
+	cpp_def "${comment}${inline}${type} ${class}::${name}${(}${)}${const}${volatile}${throw}${staticnl}{
+  ${body}}
+"
+	
+	
+	
+	
+      end
+
+      operation 128642 "setEstimator"
+	preserve_cpp_body_indent public explicit_return_type "void"
+	nparams 1
+	  param in name "value" type class_ref 128386 // CRForestEstimator
+	cpp_decl "    ${comment}${friend}${static}${inline}${virtual}${type} ${name}${(}const ${t0} & ${p0}${v0}${)}${const}${volatile}${throw}${abstract};
+"
+	cpp_def "${comment}${inline}${type} ${class}::${name}${(}const ${t0} & ${p0}${)}${const}${volatile}${throw}${staticnl}{
+  ${body}}
+"
+	
+	
+	
+	
+      end
+
+      operation 128770 "isPoseEstimatorAvailable"
+	preserve_cpp_body_indent const public explicit_return_type "bool"
+	nparams 0
+	cpp_decl "    ${comment}${friend}${static}${inline}${virtual}${type} ${name}${(}${)}${const}${volatile}${throw}${abstract};
+"
+	cpp_def "${comment}${inline}${type} ${class}::${name}${(}${)}${const}${volatile}${throw}${staticnl}{
+  ${body}}
+"
+	
+	
+	
+	
+      end
+
+      operation 128898 "removeOutliers"
+	preserve_cpp_body_indent const private explicit_return_type "void"
+	nparams 0
+	cpp_decl "    ${comment}${friend}${static}${inline}${virtual}${type} ${name}${(}${)}${const}${volatile}${throw}${abstract};
+"
+	cpp_def "${comment}${inline}${type} ${class}::${name}${(}${)}${const}${volatile}${throw}${staticnl}{
+  ${body}}
+"
+	
+	
+	
+	
+      end
+
+      operation 129026 "estimateFacePose"
+	preserve_cpp_body_indent const private explicit_return_type "bool"
+	nparams 0
+	cpp_decl "    ${comment}${friend}${static}${inline}${virtual}${type} ${name}${(}${)}${const}${volatile}${throw}${abstract};
+"
+	cpp_def "${comment}${inline}${type} ${class}::${name}${(}${)}${const}${volatile}${throw}${staticnl}{
+  ${body}}
+"
+	
+	
+	
+	
+      end
+
+      classrelation 128130 // image4d (<unidirectional association>)
+	relation 128130 --->
+	  a role_name "image4d" private
+	    cpp default "    ${comment}${static}${thread_local}${mutable}${volatile}${const}${type} * ${name}${value};
+"
+	    classrelation_ref 128130 // image4d (<unidirectional association>)
+	  b parent class_ref 128258 // Image4DSetComponent
+      end
+
+      classrelation 128258 // estimator (<directional composition>)
+	relation 128258 *-->
+	  a role_name "estimator" private
+	    cpp default "    ${comment}${static}${thread_local}${mutable}${volatile}${const}${type} ${name}${value};
+"
+	    classrelation_ref 128258 // estimator (<directional composition>)
+	  b parent class_ref 128386 // CRForestEstimator
+      end
+
+      attribute 128002 "poseEstimatorAvailable"
+	private explicit_type "bool"
+	init_value "=  false"
+	cpp_decl "    ${comment}${static}${thread_local}${mutable}${volatile}${const}${type} ${name}${value};
+"
+	java_decl ""
+	php_decl ""
+	python_decl ""
+	idl_decl ""
+	mysql_decl ""
+	MysqlColumn
+      end
+    end
+
+    class 128130 "Filter"
+      abstract visibility package 
+      cpp_decl "${comment}${template}class ${name}${inherit} {
+${members}};
+${inlines}
+"
+      java_decl ""
+      php_decl ""
+      python_2_2 python_decl ""
+      idl_decl ""
+      explicit_switch_type ""
+      mysql_decl ""
+      
+      operation 129154 "filter"
+	abstract cpp_virtual public explicit_return_type "bool"
+	nparams 0
+	cpp_decl "    ${comment}${friend}${static}${inline}${virtual}${type} ${name}${(}${)}${const}${volatile}${throw}${abstract};
+"
+	
+	
+	
+	
+      end
+
+      operation 129282 "getImage4d"
+	const cpp_virtual public return_type class_ref 128258 // Image4DSetComponent
+	nparams 0
+	cpp_decl "    ${comment}${friend}${static}${inline}${virtual}${type} * ${name}${(}${)}${const}${volatile}${throw}${abstract};
+"
+	cpp_def "${comment}${inline}${type} * ${class}::${name}${(}${)}${const}${volatile}${throw}${staticnl}{
+  ${body}}
+"
+	
+	
+	
+	
+      end
+
+      operation 129410 "setImage4d"
+	cpp_virtual public explicit_return_type "void"
+	nparams 1
+	  param inout name "value" type class_ref 128258 // Image4DSetComponent
+	cpp_decl "    ${comment}${friend}${static}${inline}${virtual}${type} ${name}${(}${t0} * ${p0}${v0}${)}${const}${volatile}${throw}${abstract};
+"
+	cpp_def "${comment}${inline}${type} ${class}::${name}${(}${t0} * ${p0}${)}${const}${volatile}${throw}${staticnl}{
+  ${body}}
+"
+	
+	
+	
+	
+      end
+    end
+
+    class 128258 "Image4DSetComponent"
+      abstract visibility package 
+      cpp_decl "${comment}${template}class ${name}${inherit} {
+${members}};
+${inlines}
+"
+      java_decl ""
+      php_decl ""
+      python_2_2 python_decl ""
+      idl_decl ""
+      explicit_switch_type ""
+      mysql_decl ""
+      
+      operation 129666 "Image4DSetComponent"
+	public explicit_return_type ""
+	nparams 0
+	cpp_decl "    ${comment}${inline}${name}${(}${)}${volatile}${throw}${abstract};
+"
+	cpp_def "${comment}${inline}${class}::${name}${(}${)}${throw}{
+  ${body}}
+"
+	
+	
+	
+	
+      end
+
+      operation 129794 "depthForEach"
+	stereotype "template"
+	cpp_inline public explicit_return_type "void"
+	nparams 2
+	  param in name "function" explicit_type "std::function<void(int, int, T&)>"
+	  param in name "ROI" explicit_type "cv::Rect"
+	cpp_decl "    ${comment}template<typename T>
+  ${friend}${static}${inline}${virtual}${type} ${name}${(}const ${t0} & ${p0}${v0}, const ${t1} & ${p1}${v1}${)}${const}${volatile}${throw}${abstract} {
+        return boost::any_cast<T>(virtualDepthForEach(function, ROI));
+    };
+"
+	
+	
+	
+	
+	comment "@brief depthForEach applies a function to every pixel
+       in the ROI of the depth map. Function receives two coordinates (x,y) of
+       the pixel and a reference to the pixel
+@param function function to be called on each pixel
+@param ROI region of interest to which apply function
+"
+      end
+
+      operation 129922 "imageForEach"
+	stereotype "template"
+	cpp_inline public explicit_return_type "void"
+	nparams 2
+	  param in name "function" explicit_type "std::function<void(int, int, T&)>"
+	  param in name "ROI" explicit_type "cv::Rect"
+	cpp_decl "    ${comment}template<typename T>
+  ${friend}${static}${inline}${virtual}${type} ${name}${(}const ${t0} & ${p0}${v0}, const ${t1} & ${p1}${v1}${)}${const}${volatile}${throw}${abstract} {
+        return boost::any_cast<T>(virtualImageForEach(function, ROI));
+    };
+"
+	
+	
+	
+	
+	comment "@brief imageForEach applies the function function to every point
+       in the ROI of the image. Function receives two coordinates (x,y) of
+       the point in the image and a reference to the point
+@param function function to be called on each point
+@param ROI region of interest to which apply function
+"
+      end
+
+      operation 130050 "getImage"
+	abstract const cpp_virtual public explicit_return_type "cv::Mat"
+	nparams 0
+	cpp_decl "    ${comment}${friend}${static}${inline}${virtual}${type} ${name}${(}${)}${const}${volatile}${throw}${abstract};
+"
+	
+	
+	
+	
+      end
+
+      operation 130178 "getDepthMap"
+	abstract const cpp_virtual public explicit_return_type "cv::Mat"
+	nparams 0
+	cpp_decl "    ${comment}${friend}${static}${inline}${virtual}${type} ${name}${(}${)}${const}${volatile}${throw}${abstract};
+"
+	
+	
+	
+	
+      end
+
+      operation 130306 "getHeight"
+	abstract const cpp_virtual public explicit_return_type "size_t"
+	nparams 0
+	cpp_decl "    ${comment}${friend}${static}${inline}${virtual}${type} ${name}${(}${)}${const}${volatile}${throw}${abstract};
+"
+	
+	
+	
+	
+	comment "@brief getHeight gives the height (in pixels) of image and cloud
+       (which have the same dimensions)
+@return height of the 4D image
+"
+      end
+
+      operation 130434 "getWidth"
+	abstract const cpp_virtual public explicit_return_type "size_t"
+	nparams 0
+	cpp_decl "    ${comment}${friend}${static}${inline}${virtual}${type} ${name}${(}${)}${const}${volatile}${throw}${abstract};
+"
+	
+	
+	
+	
+	comment "@brief getWidth gives the width (in pixels) of image and depthmap
+       (which have the same dimensions)
+@return width of the 4D image
+"
+      end
+
+      operation 130562 "getArea"
+	abstract const cpp_virtual public explicit_return_type "size_t"
+	nparams 0
+	cpp_decl "    ${comment}${friend}${static}${inline}${virtual}${type} ${name}${(}${)}${const}${volatile}${throw}${abstract};
+"
+	
+	
+	
+	
+	comment "@brief getArea gives the area (in pixel) of image and depthMap
+       (which have the same dimensions)
+@return area of the face
+"
+      end
+
+      operation 130690 "get3DImage"
+	const cpp_virtual public explicit_return_type "cv::Mat"
+	nparams 0
+	cpp_decl "    ${comment}${friend}${static}${inline}${virtual}${type} ${name}${(}${)}${const}${volatile}${throw}${abstract};
+"
+	cpp_def "${comment}${inline}${type} ${class}::${name}${(}${)}${const}${volatile}${throw}${staticnl}{
+  ${body}}
+"
+	
+	
+	
+	
+	comment "@brief get3DImage organizes the depthmap in a Mat object
+       with 3 channels (X, Y, Z) using intrinsicMatrix.
+@return 3D representation of the face
+"
+      end
+
+      operation 130818 "crop"
+	cpp_virtual public explicit_return_type "void"
+	nparams 1
+	  param in name "cropRegion" explicit_type "cv::Rect"
+	cpp_decl "    ${comment}${friend}${static}${inline}${virtual}${type} ${name}${(}const ${t0} & ${p0}${v0}${)}${const}${volatile}${throw}${abstract};
+"
+	cpp_def "${comment}${inline}${type} ${class}::${name}${(}const ${t0} & ${p0}${)}${const}${volatile}${throw}${staticnl}{
+  ${body}}
+"
+	
+	
+	
+	
+	comment "@brief This function crops both the image and the cloud removing
+       every point outside the cropping region and adjusting
+       the intrinsicMatrix accordingly to take into account the resolution change
+@param cropRegion region of interest
+"
+      end
+
+      operation 130946 "getRotationMatrix"
+	const cpp_virtual public return_type class_ref 129026 // Pose
+	nparams 0
+	cpp_decl "    ${comment}${friend}${static}${inline}${virtual}${type} ${name}${(}${)}${const}${volatile}${throw}${abstract};
+"
+	cpp_def "${comment}${inline}${type} ${class}::${name}${(}${)}${const}${volatile}${throw}${staticnl}{
+  ${body}}
+"
+	
+	
+	
+	
+      end
+
+      operation 131074 "getEulerAngles"
+	const cpp_virtual public explicit_return_type "cv::Vec3f"
+	nparams 0
+	cpp_decl "    ${comment}${friend}${static}${inline}${virtual}${type} ${name}${(}${)}${const}${volatile}${throw}${abstract};
+"
+	cpp_def "${comment}${inline}${type} ${class}::${name}${(}${)}${const}${volatile}${throw}${staticnl}{
+  ${body}}
+"
+	
+	
+	
+	
+      end
+
+      operation 131202 "getPosition"
+	const cpp_virtual public explicit_return_type "cv::Vec3f"
+	nparams 0
+	cpp_decl "    ${comment}${friend}${static}${inline}${virtual}${type} ${name}${(}${)}${const}${volatile}${throw}${abstract};
+"
+	cpp_def "${comment}${inline}${type} ${class}::${name}${(}${)}${const}${volatile}${throw}${staticnl}{
+  ${body}}
+"
+	
+	
+	
+	
+      end
+
+      operation 131330 "setEulerAngles"
+	cpp_virtual public explicit_return_type "void"
+	nparams 1
+	  param in name "value" explicit_type "cv::Vec3f"
+	cpp_decl "    ${comment}${friend}${static}${inline}${virtual}${type} ${name}${(}const ${t0} & ${p0}${v0}${)}${const}${volatile}${throw}${abstract};
+"
+	cpp_def "${comment}${inline}${type} ${class}::${name}${(}const ${t0} & ${p0}${)}${const}${volatile}${throw}${staticnl}{
+  ${body}}
+"
+	
+	
+	
+	
+      end
+
+      operation 131458 "setPosition"
+	cpp_virtual public explicit_return_type "void"
+	nparams 1
+	  param in name "value" explicit_type "cv::Vec3f"
+	cpp_decl "    ${comment}${friend}${static}${inline}${virtual}${type} ${name}${(}const ${t0} & ${p0}${v0}${)}${const}${volatile}${throw}${abstract};
+"
+	cpp_def "${comment}${inline}${type} ${class}::${name}${(}const ${t0} & ${p0}${)}${const}${volatile}${throw}${staticnl}{
+  ${body}}
+"
+	
+	
+	
+	
+      end
+
+      operation 131586 "getDepthImageRatio"
+	const cpp_virtual public explicit_return_type "float"
+	nparams 0
+	cpp_decl "    ${comment}${friend}${static}${inline}${virtual}${type} ${name}${(}${)}${const}${volatile}${throw}${abstract};
+"
+	cpp_def "${comment}${inline}${type} ${class}::${name}${(}${)}${const}${volatile}${throw}${staticnl}{
+  ${body}}
+"
+	
+	
+	
+	
+	comment "@brief getCloudImageRatio
+@return downscaling ratio applied to image by the constructor
+"
+      end
+
+      operation 131714 "getIntrinsicMatrix"
+	const cpp_virtual public explicit_return_type "cv::Mat"
+	nparams 0
+	cpp_decl "    ${comment}${friend}${static}${inline}${virtual}${type} ${name}${(}${)}${const}${volatile}${throw}${abstract};
+"
+	cpp_def "${comment}${inline}${type} ${class}::${name}${(}${)}${const}${volatile}${throw}${staticnl}{
+  ${body}}
+"
+	
+	
+	
+	
+      end
+
+      operation 131842 "getName"
+	cpp_virtual public explicit_return_type "std::string"
+	nparams 0
+	cpp_decl "    ${comment}${friend}${static}${inline}${virtual}${type} ${name}${(}${)}${const}${volatile}${throw}${abstract};
+"
+	cpp_def "${comment}${inline}${type} ${class}::${name}${(}${)}${const}${volatile}${throw}${staticnl}{
+  ${body}}
+"
+	
+	
+	
+	
+      end
+
+      operation 131970 "setName"
+	cpp_virtual public explicit_return_type "void"
+	nparams 1
+	  param in name "name" explicit_type "std::string"
+	cpp_decl "    ${comment}${friend}${static}${inline}${virtual}${type} ${name}${(}${t0} ${p0}${v0}${)}${const}${volatile}${throw}${abstract};
+"
+	cpp_def "${comment}${inline}${type} ${class}::${name}${(}${t0} ${p0}${)}${const}${volatile}${throw}${staticnl}{
+  ${body}}
+"
+	
+	
+	
+	
+      end
+
+      operation 132098 "virtualDepthForEach"
+	abstract cpp_virtual protected explicit_return_type "boost::any"
+	nparams 2
+	  param in name "function" explicit_type "std::function<void(int, int, boost::any&)>"
+	  param in name "ROI" explicit_type "cv::Rect"
+	cpp_decl "    ${comment}${friend}${static}${inline}${virtual}${type} ${name}${(}const ${t0} & ${p0}${v0}, const ${t1} & ${p1}${v1}${)}${const}${volatile}${throw}${abstract};
+"
+	
+	
+	
+	
+      end
+
+      operation 132226 "virtualImageForEach"
+	abstract cpp_virtual protected explicit_return_type "boost::any"
+	nparams 2
+	  param in name "function" explicit_type "std::function<void(int, int, boost::any&)>"
+	  param in name "ROI" explicit_type "cv::Rect"
+	cpp_decl "    ${comment}${friend}${static}${inline}${virtual}${type} ${name}${(}const ${t0} & ${p0}${v0}, const ${t1} & ${p1}${v1}${)}${const}${volatile}${throw}${abstract};
+"
+	
+	
+	
+	
+      end
+
+      operation 132354 "resizeImage"
+	cpp_virtual protected explicit_return_type "void"
+	nparams 0
+	cpp_decl "    ${comment}${friend}${static}${inline}${virtual}${type} ${name}${(}${)}${const}${volatile}${throw}${abstract};
+"
+	cpp_def "${comment}${inline}${type} ${class}::${name}${(}${)}${const}${volatile}${throw}${staticnl}{
+  ${body}}
+"
+	
+	
+	
+	
+	comment "@brief resizeImage dowscales the image to match depth map dimensions
+"
+      end
+    end
+
+    class 128514 "Image4DClusterComposite"
+      visibility package 
+      cpp_decl "${comment}${template}class ${name}${inherit} {
+${members}};
+${inlines}
+"
+      java_decl ""
+      php_decl ""
+      python_2_2 python_decl ""
+      idl_decl ""
+      explicit_switch_type ""
+      mysql_decl ""
+      
+      classrelation 128386 // <generalisation>
+	relation 128386 ---|>
+	  a public
+	    cpp default "${type}"
+	    classrelation_ref 128386 // <generalisation>
+	  b parent class_ref 128258 // Image4DSetComponent
+      end
+
+      operation 129538 "Image4DClusterComposite"
+	preserve_cpp_body_indent public explicit_return_type ""
+	nparams 0
+	cpp_decl "    ${comment}${inline}${name}${(}${)}${volatile}${throw}${abstract};
+"
+	cpp_def "${comment}${inline}${class}::${name}${(}${)}${throw}{
+  ${body}}
+"
+	
+	
+	
+	
+      end
+
+      classrelation 128514 // cluster (<directional composition>)
+	relation 128514 *-->
+	  stereotype "vector"
+	  a role_name "cluster" private
+	    cpp default "    ${comment}${static}${thread_local}${mutable}${volatile}${const}${stereotype}<${type}> ${name}${value};
+"
+	    classrelation_ref 128514 // cluster (<directional composition>)
+	  b parent class_ref 128642 // Image4DLeaf
+      end
+    end
+
+    class 129154 "KmeansBackgroundRemover"
+      visibility package 
+      cpp_decl "${comment}${template}class ${name}${inherit} {
+${members}};
+${inlines}
+"
+      java_decl ""
+      php_decl ""
+      python_2_2 python_decl ""
+      idl_decl ""
+      explicit_switch_type ""
+      mysql_decl ""
+      
+      classrelation 128642 // <generalisation>
+	relation 128642 ---|>
+	  a public
+	    cpp default "${type}"
+	    classrelation_ref 128642 // <generalisation>
+	  b parent class_ref 128130 // Filter
+      end
+
+      operation 132482 "KmeansBackgroundRemover"
+	preserve_cpp_body_indent public explicit_return_type ""
+	nparams 1
+	  param in name "fixedThreshold" explicit_type "uint16_t"
+	    defaultvalue "1600"
+	cpp_decl "    ${comment}${inline}${name}${(}${t0} ${p0}${v0}${)}${volatile}${throw}${abstract};
+"
+	cpp_def "${comment}${inline}${class}::${name}${(}${t0} ${p0}${)}
+    : fixedThreshold(fixedThreshold)
+${throw}{
+  ${body}}
+"
+	
+	
+	
+	
+      end
+
+      operation 132610 "filter"
+	preserve_cpp_body_indent public explicit_return_type "bool"
+	nparams 0
+	cpp_decl "    ${comment}${friend}${static}${inline}${virtual}${type} ${name}${(}${)}${const}${volatile}${throw}${abstract};
+"
+	cpp_def "${comment}${inline}${type} ${class}::${name}${(}${)}${const}${volatile}${throw}${staticnl}{
+  ${body}}
+"
+	
+	
+	
+	
+	comment "@brief filter remove the background on the first 4D image of the set using kmeans
+@param image
+@return
+"
+      end
+
+      operation 132738 "getImage4d"
+	preserve_cpp_body_indent const public return_type class_ref 128258 // Image4DSetComponent
+	nparams 0
+	cpp_decl "    ${comment}${friend}${static}${inline}${virtual}${type} * ${name}${(}${)}${const}${volatile}${throw}${abstract};
+"
+	cpp_def "${comment}${inline}${type} * ${class}::${name}${(}${)}${const}${volatile}${throw}${staticnl}{
+  ${body}}
+"
+	
+	
+	
+	
+      end
+
+      operation 132866 "setImage4d"
+	preserve_cpp_body_indent public explicit_return_type "void"
+	nparams 1
+	  param inout name "value" type class_ref 128258 // Image4DSetComponent
+	cpp_decl "    ${comment}${friend}${static}${inline}${virtual}${type} ${name}${(}${t0} * ${p0}${v0}${)}${const}${volatile}${throw}${abstract};
+"
+	cpp_def "${comment}${inline}${type} ${class}::${name}${(}${t0} * ${p0}${)}${const}${volatile}${throw}${staticnl}{
+  ${body}}
+"
+	
+	
+	
+	
+      end
+
+      operation 132994 "getFixedThreshold"
+	preserve_cpp_body_indent const public explicit_return_type "uint16_t"
+	nparams 0
+	cpp_decl "    ${comment}${friend}${static}${inline}${virtual}${type} ${name}${(}${)}${const}${volatile}${throw}${abstract};
+"
+	cpp_def "${comment}${inline}${type} ${class}::${name}${(}${)}${const}${volatile}${throw}${staticnl}{
+  ${body}}
+"
+	
+	
+	
+	
+      end
+
+      operation 133122 "setFixedThreshold"
+	preserve_cpp_body_indent public explicit_return_type "void"
+	nparams 1
+	  param in name "value" explicit_type "uint16_t"
+	cpp_decl "    ${comment}${friend}${static}${inline}${virtual}${type} ${name}${(}const ${t0} & ${p0}${v0}${)}${const}${volatile}${throw}${abstract};
+"
+	cpp_def "${comment}${inline}${type} ${class}::${name}${(}const ${t0} & ${p0}${)}${const}${volatile}${throw}${staticnl}{
+  ${body}}
+"
+	
+	
+	
+	
+      end
+
+      operation 133250 "getClassifier"
+	preserve_cpp_body_indent const public explicit_return_type "cv::CascadeClassifier"
+	nparams 0
+	cpp_decl "    ${comment}${friend}${static}${inline}${virtual}${type} ${name}${(}${)}${const}${volatile}${throw}${abstract};
+"
+	cpp_def "${comment}${inline}${type} ${class}::${name}${(}${)}${const}${volatile}${throw}${staticnl}{
+  ${body}}
+"
+	
+	
+	
+	
+      end
+
+      operation 133378 "setClassifier"
+	preserve_cpp_body_indent public explicit_return_type "void"
+	nparams 1
+	  param in name "value" explicit_type "cv::CascadeClassifier"
+	cpp_decl "    ${comment}${friend}${static}${inline}${virtual}${type} ${name}${(}const ${t0} & ${p0}${v0}${)}${const}${volatile}${throw}${abstract};
+"
+	cpp_def "${comment}${inline}${type} ${class}::${name}${(}const ${t0} & ${p0}${)}${const}${volatile}${throw}${staticnl}{
+  ${body}}
+"
+	
+	
+	
+	
+      end
+
+      operation 133506 "isFaceDetectorAvailable"
+	preserve_cpp_body_indent const public explicit_return_type "bool"
+	nparams 0
+	cpp_decl "    ${comment}${friend}${static}${inline}${virtual}${type} ${name}${(}${)}${const}${volatile}${throw}${abstract};
+"
+	cpp_def "${comment}${inline}${type} ${class}::${name}${(}${)}${const}${volatile}${throw}${staticnl}{
+  ${body}}
+"
+	
+	
+	
+	
+      end
+
+      attribute 128130 "faceDetectorAvailable"
+	private explicit_type "bool"
+	init_value "=  false"
+	cpp_decl "    ${comment}${static}${thread_local}${mutable}${volatile}${const}${type} ${name}${h_value};
+"
+	java_decl ""
+	php_decl ""
+	python_decl ""
+	idl_decl ""
+	mysql_decl ""
+	MysqlColumn
+      end
+
+      attribute 128258 "classifier"
+	private explicit_type "cv::CascadeClassifier"
+	cpp_decl "    ${comment}${static}${thread_local}${mutable}${volatile}${const}${type} ${name}${value};
+"
+	java_decl ""
+	php_decl ""
+	python_decl ""
+	idl_decl ""
+	mysql_decl ""
+	MysqlColumn
+      end
+
+      attribute 128386 "fixedThreshold"
+	private explicit_type "uint16_t"
+	cpp_decl "    ${comment}${static}${thread_local}${mutable}${volatile}${const}${type} ${name}${value};
+"
+	java_decl ""
+	php_decl ""
+	python_decl ""
+	idl_decl ""
+	mysql_decl ""
+	MysqlColumn
+      end
+
+      classrelation 128770 // image4d (<unidirectional association>)
+	relation 128770 --->
+	  a role_name "image4d" private
+	    cpp default "    ${comment}${static}${thread_local}${mutable}${volatile}${const}${type} * ${name}${value};
+"
+	    classrelation_ref 128770 // image4d (<unidirectional association>)
+	  b parent class_ref 128258 // Image4DSetComponent
+      end
+
+      operation 133634 "removeBackgroundFixed"
+	preserve_cpp_body_indent const private explicit_return_type "void"
+	nparams 0
+	cpp_decl "    ${comment}${friend}${static}${inline}${virtual}${type} ${name}${(}${)}${const}${volatile}${throw}${abstract};
+"
+	cpp_def "${comment}${inline}${type} ${class}::${name}${(}${)}${const}${volatile}${throw}${staticnl}{
+  ${body}}
+"
+	
+	
+	
+	
+      end
+
+      operation 133762 "removeBackgroundDynamic"
+	preserve_cpp_body_indent const private explicit_return_type "void"
+	nparams 1
+	  param inout name "boundingBox" explicit_type "cv::Rect"
+	cpp_decl "    ${comment}${friend}${static}${inline}${virtual}${type} ${name}${(}${t0} & ${p0}${v0}${)}${const}${volatile}${throw}${abstract};
+"
+	cpp_def "${comment}${inline}${type} ${class}::${name}${(}${t0} & ${p0}${)}${const}${volatile}${throw}${staticnl}{
+  ${body}}
+"
+	
+	
+	
+	
+      end
+
+      operation 133890 "detectForegroundFace"
+	preserve_cpp_body_indent private explicit_return_type "bool"
+	nparams 1
+	  param inout name "boundingBox" explicit_type "cv::Rect"
+	cpp_decl "    ${comment}${friend}${static}${inline}${virtual}${type} ${name}${(}${t0} & ${p0}${v0}${)}${const}${volatile}${throw}${abstract};
+"
+	cpp_def "${comment}${inline}${type} ${class}::${name}${(}${t0} & ${p0}${)}${const}${volatile}${throw}${staticnl}{
+  ${body}}
+"
+	
+	
+	
+	
+      end
+    end
+
+    class 129282 "PreprocessorPipe"
+      visibility package 
+      cpp_decl "${comment}${template}class ${name}${inherit} {
+${members}};
+${inlines}
+"
+      java_decl ""
+      php_decl ""
+      python_2_2 python_decl ""
+      idl_decl ""
+      explicit_switch_type ""
+      mysql_decl ""
+      
+      operation 134018 "PreprocessorPipe"
+	preserve_cpp_body_indent public explicit_return_type ""
+	nparams 0
+	cpp_decl "    ${comment}${inline}${name}${(}${)}${volatile}${throw}${abstract};
+"
+	cpp_def "${comment}${inline}${class}::${name}${(}${)}${throw}{
+  ${body}}
+"
+	
+	
+	
+	
+      end
+
+      operation 134146 "push_back"
+	preserve_cpp_body_indent public explicit_return_type "void"
+	nparams 1
+	  param inout name "f" type class_ref 128130 // Filter
+	cpp_decl "    ${comment}${friend}${static}${inline}${virtual}${type} ${name}${(}${t0} & ${p0}${v0}${)}${const}${volatile}${throw}${abstract};
+"
+	cpp_def "${comment}${inline}${type} ${class}::${name}${(}${t0} & ${p0}${)}${const}${volatile}${throw}${staticnl}{
+  ${body}}
+"
+	
+	
+	
+	
+	comment "@brief push_back add filter f at the end of the pipe
+@param f
+"
+      end
+
+      operation 134274 "insert"
+	preserve_cpp_body_indent public explicit_return_type "void"
+	nparams 2
+	  param in name "i" type class_ref 128770 // uint
+	  param inout name "f" type class_ref 128130 // Filter
+	cpp_decl "    ${comment}${friend}${static}${inline}${virtual}${type} ${name}${(}${t0} ${p0}${v0}, ${t1} & ${p1}${v1}${)}${const}${volatile}${throw}${abstract};
+"
+	cpp_def "${comment}${inline}${type} ${class}::${name}${(}${t0} ${p0}, ${t1} & ${p1}${)}${const}${volatile}${throw}${staticnl}{
+  ${body}}
+"
+	
+	
+	
+	
+	comment "@brief insert insert a Filter at position i in the pipe
+@param i
+@param f
+"
+      end
+
+      operation 134402 "filterPipeAt"
+	preserve_cpp_body_indent public return_type class_ref 128130 // Filter
+	nparams 1
+	  param in name "i" type class_ref 128770 // uint
+	cpp_decl "    ${comment}${friend}${static}${inline}${virtual}${type} & ${name}${(}${t0} ${p0}${v0}${)}${const}${volatile}${throw}${abstract};
+"
+	cpp_def "${comment}${inline}${type} & ${class}::${name}${(}${t0} ${p0}${)}${const}${volatile}${throw}${staticnl}{
+  ${body}}
+"
+	
+	
+	
+	
+	comment "@brief at
+@param i
+@return a pointer to the Filter at position i in the pipe
+"
+      end
+
+      operation 134530 "removeFilter"
+	preserve_cpp_body_indent public explicit_return_type "void"
+	nparams 1
+	  param in name "i" type class_ref 128770 // uint
+	cpp_decl "    ${comment}${friend}${static}${inline}${virtual}${type} ${name}${(}${t0} ${p0}${v0}${)}${const}${volatile}${throw}${abstract};
+"
+	cpp_def "${comment}${inline}${type} ${class}::${name}${(}${t0} ${p0}${)}${const}${volatile}${throw}${staticnl}{
+  ${body}}
+"
+	
+	
+	
+	
+	comment "@brief removeFilter remove filter
+at index i in the pipe. Use std::vector::erase(), it is slow.
+@param i
+"
+      end
+
+      operation 134658 "processPipe"
+	preserve_cpp_body_indent public explicit_return_type "bool"
+	nparams 0
+	cpp_decl "    ${comment}${friend}${static}${inline}${virtual}${type} ${name}${(}${)}${const}${volatile}${throw}${abstract};
+"
+	cpp_def "${comment}${inline}${type} ${class}::${name}${(}${)}${const}${volatile}${throw}${staticnl}{
+  ${body}}
+"
+	
+	
+	
+	
+	comment "@brief processPipe apply filter pipe to the image set
+@return true if all filters managed to work, false otherwise
+"
+      end
+
+      operation 134786 "push_back"
+	preserve_cpp_body_indent public explicit_return_type "void"
+	nparams 1
+	  param inout name "image4d" type class_ref 128258 // Image4DSetComponent
+	cpp_decl "    ${comment}${friend}${static}${inline}${virtual}${type} ${name}${(}${t0} & ${p0}${v0}${)}${const}${volatile}${throw}${abstract};
+"
+	cpp_def "${comment}${inline}${type} ${class}::${name}${(}${t0} & ${p0}${)}${const}${volatile}${throw}${staticnl}{
+  ${body}}
+"
+	
+	
+	
+	
+	comment "@brief push_back add the Image4DSetComponent to the image set
+@param image4d
+"
+      end
+
+      operation 134914 "imageSetAt"
+	preserve_cpp_body_indent public return_type class_ref 128258 // Image4DSetComponent
+	nparams 1
+	  param in name "i" type class_ref 128770 // uint
+	cpp_decl "    ${comment}${friend}${static}${inline}${virtual}${type} & ${name}${(}${t0} ${p0}${v0}${)}${const}${volatile}${throw}${abstract};
+"
+	cpp_def "${comment}${inline}${type} & ${class}::${name}${(}${t0} ${p0}${)}${const}${volatile}${throw}${staticnl}{
+  ${body}}
+"
+	
+	
+	
+	
+	comment "@brief imageSetAt
+@param i
+@return the Image4DSetComponent at position i
+"
+      end
+
+      operation 135042 "getFilterPipe"
+	preserve_cpp_body_indent const public explicit_return_type "vector<Filter>"
+	nparams 0
+	cpp_decl "    ${comment}${friend}${static}${inline}${virtual}${type} ${name}${(}${)}${const}${volatile}${throw}${abstract};
+"
+	cpp_def "${comment}${inline}${type} ${class}::${name}${(}${)}${const}${volatile}${throw}${staticnl}{
+  ${body}}
+"
+	
+	
+	
+	
+      end
+
+      operation 135170 "setFilterPipe"
+	preserve_cpp_body_indent public explicit_return_type "void"
+	nparams 1
+	  param in name "value" explicit_type "vector<Filter>"
+	cpp_decl "    ${comment}${friend}${static}${inline}${virtual}${type} ${name}${(}const ${t0} & ${p0}${v0}${)}${const}${volatile}${throw}${abstract};
+"
+	cpp_def "${comment}${inline}${type} ${class}::${name}${(}const ${t0} & ${p0}${)}${const}${volatile}${throw}${staticnl}{
+  ${body}}
+"
+	
+	
+	
+	
+      end
+
+      operation 135298 "getImageSet"
+	preserve_cpp_body_indent const public explicit_return_type "vector<Image4DSetComponent>"
+	nparams 0
+	cpp_decl "    ${comment}${friend}${static}${inline}${virtual}${type} ${name}${(}${)}${const}${volatile}${throw}${abstract};
+"
+	cpp_def "${comment}${inline}${type} ${class}::${name}${(}${)}${const}${volatile}${throw}${staticnl}{
+  ${body}}
+"
+	
+	
+	
+	
+      end
+
+      operation 135426 "setImageSet"
+	preserve_cpp_body_indent public explicit_return_type "void"
+	nparams 1
+	  param in name "value" explicit_type "vector<Image4DSetComponent>"
+	cpp_decl "    ${comment}${friend}${static}${inline}${virtual}${type} ${name}${(}const ${t0} & ${p0}${v0}${)}${const}${volatile}${throw}${abstract};
+"
+	cpp_def "${comment}${inline}${type} ${class}::${name}${(}const ${t0} & ${p0}${)}${const}${volatile}${throw}${staticnl}{
+  ${body}}
+"
+	
+	
+	
+	
+      end
+
+      classrelation 128898 // filterPipe (<directional composition>)
+	relation 128898 *-->
+	  stereotype "vector"
+	  a role_name "filterPipe" protected
+	    cpp default "    ${comment}${static}${thread_local}${mutable}${volatile}${const}${stereotype}<${type}> ${name}${value};
+"
+	    classrelation_ref 128898 // filterPipe (<directional composition>)
+	  b parent class_ref 128130 // Filter
+      end
+
+      classrelation 129026 // imageSet (<directional composition>)
+	relation 129026 *-->
+	  stereotype "vector"
+	  a role_name "imageSet" protected
+	    cpp default "    ${comment}${static}${thread_local}${mutable}${volatile}${const}${stereotype}<${type}> ${name}${value};
+"
+	    classrelation_ref 129026 // imageSet (<directional composition>)
+	  b parent class_ref 128258 // Image4DSetComponent
+      end
+    end
+
+    class 129410 "FaceMatrix"
+      visibility package stereotype "template_typedef"
+      cpp_decl "${comment}${template}using ${name} = ${inherit};
+"
+      java_decl ""
+      php_decl ""
+      python_2_2 python_decl ""
+      idl_decl ""
+      explicit_switch_type ""
+      mysql_decl ""
+      
+      classrelation 129154 // <generalisation>
+	relation 129154 ---|>
+	  a public
+	    cpp default "${type}"
+	    classrelation_ref 129154 // <generalisation>
+	  b parent class_ref 129538 // typedef1
+      end
+    end
+
+    class 129538 "typedef1"
+      visibility package stereotype "typedef" explicit_base_type "std::vector<std::vector<face::Face>>"
+      cpp_decl "${comment}typedef ${type} ${name};
+"
+      java_decl ""
+      php_decl ""
+      python_2_2 python_decl ""
+      idl_decl ""
+      explicit_switch_type ""
+      mysql_decl ""
+      
+    end
+
+    class 129666 "MatMatrix"
+      visibility package stereotype "template_typedef"
+      cpp_decl "${comment}${template}using ${name} = ${inherit};
+"
+      java_decl ""
+      php_decl ""
+      python_2_2 python_decl ""
+      idl_decl ""
+      explicit_switch_type ""
+      mysql_decl ""
+      
+      classrelation 129282 // <generalisation>
+	relation 129282 ---|>
+	  a public
+	    cpp default "${type}"
+	    classrelation_ref 129282 // <generalisation>
+	  b parent class_ref 129794 // typedef2
+      end
+    end
+
+    class 129794 "typedef2"
+      visibility package stereotype "typedef" explicit_base_type "std::vector<std::vector<cv::Mat>>"
+      cpp_decl "${comment}typedef ${type} ${name};
+"
+      java_decl ""
+      php_decl ""
+      python_2_2 python_decl ""
+      idl_decl ""
+      explicit_switch_type ""
+      mysql_decl ""
+      
+    end
+
+    class 129922 "SVMSteinMatrix"
+      visibility package stereotype "typedef" explicit_base_type "std::vector<std::vector<SVMStein>>"
+      cpp_decl "${comment}typedef ${type} ${name};
+"
+      java_decl ""
+      php_decl ""
+      python_2_2 python_decl ""
+      idl_decl ""
+      explicit_switch_type ""
+      mysql_decl ""
+      
+    end
+
+    class 130050 "SVMManager"
+      visibility package 
+      cpp_decl "${comment}${template}class ${name}${inherit} {
+${members}};
+${inlines}
+"
+      java_decl ""
+      php_decl ""
+      python_2_2 python_decl ""
+      idl_decl ""
+      explicit_switch_type ""
+      mysql_decl ""
+      
+      operation 135554 "SVMManager"
+	preserve_cpp_body_indent public explicit_return_type ""
+	nparams 1
+	  param in name "c" explicit_type "int"
+	    defaultvalue "3"
+	cpp_decl "    ${comment}${inline}${name}${(}${t0} ${p0}${v0}${)}${volatile}${throw}${abstract};
+"
+	cpp_def "${comment}${inline}${class}::${name}${(}${t0} ${p0}${)}${throw}{
+  ${body}}
+"
+	
+	
+	
+	
+      end
+
+      operation 135682 "generateLabels"
+	preserve_cpp_body_indent protected explicit_return_type "vector<string>"
+	nparams 1
+	  param in name "numOfLabels" explicit_type "int"
+	cpp_decl "    ${comment}${friend}${static}${inline}${virtual}${type} ${name}${(}${t0} ${p0}${v0}${)}${const}${volatile}${throw}${abstract};
+"
+	cpp_def "${comment}${inline}${type} ${class}::${name}${(}${t0} ${p0}${)}${const}${volatile}${throw}${staticnl}{
+  ${body}}
+"
+	
+	
+	
+	
+	comment " utility functions"
+      end
+
+      operation 135810 "getNormalizedCovariances"
+	preserve_cpp_body_indent const protected explicit_return_type "void"
+	nparams 4
+	  param in name "identity" explicit_type "vector<Face>"
+	  param in name "subsets" explicit_type "int"
+	  param inout name "grayscaleCovarOut" explicit_type "vector<Mat>"
+	  param inout name "depthmapCovarOut" explicit_type "vector<Mat>"
+	cpp_decl "    ${comment}${friend}${static}${inline}${virtual}${type} ${name}${(}const ${t0} & ${p0}${v0}, ${t1} ${p1}${v1}, ${t2} & ${p2}${v2}, ${t3} & ${p3}${v3}${)}${const}${volatile}${throw}${abstract};
+"
+	cpp_def "${comment}${inline}${type} ${class}::${name}${(}const ${t0} & ${p0}, ${t1} ${p1}, ${t2} & ${p2}, ${t3} & ${p3}${)}${const}${throw}${staticnl}{
+  ${body}}
+"
+	
+	
+	
+	
+      end
+
+      operation 135938 "getNormalizedCovariances"
+	const protected explicit_return_type "void"
+	nparams 4
+	  param in name "identities" type class_ref 129410 // FaceMatrix
+	  param in name "subsets" explicit_type "int"
+	  param inout name "grayscaleCovarOut" type class_ref 129666 // MatMatrix
+	  param inout name "depthmapCovarOut" type class_ref 129666 // MatMatrix
+	cpp_decl "    ${comment}${friend}${static}${inline}${virtual}${type} ${name}${(}const ${t0} & ${p0}${v0}, ${t1} ${p1}${v1}, ${t2} & ${p2}${v2}, ${t3} & ${p3}${v3}${)}${const}${volatile}${throw}${abstract};
+"
+	cpp_def "${comment}${inline}${type} ${class}::${name}${(}const ${t0} & ${p0}, ${t1} ${p1}, ${t2} & ${p2}, ${t3} & ${p3}${)}${const}${throw}${staticnl}{
+  ${body}}
+"
+	
+	
+	
+	
+      end
+
+      class 130178 "ImgType"
+	visibility package stereotype "enum_class"
+	cpp_decl "${comment}enum class ${name} {
+${items}};
+"
+	java_decl ""
+	php_decl ""
+	python_2_2 python_decl ""
+	idl_decl ""
+	explicit_switch_type ""
+	mysql_decl ""
+	
+	attribute 128514 "grayscale"
+	  public type class_ref 130178 // ImgType
+	  cpp_decl "  ${name}${value},${comment}"
+	  java_decl ""
+	  php_decl ""
+	  python_decl ""
+	  idl_decl ""
+	  mysql_decl ""
+	  MysqlColumn
+	end
+
+	attribute 128642 "depthmap"
+	  public type class_ref 130178 // ImgType
+	  cpp_decl "  ${name}${value},${comment}"
+	  java_decl ""
+	  php_decl ""
+	  python_decl ""
+	  idl_decl ""
+	  mysql_decl ""
+	  MysqlColumn
+	end
+      end
+
+      attribute 128770 "c"
+	protected explicit_type "int"
+	init_value "=  3"
+	cpp_decl "    ${comment}${static}${thread_local}${mutable}${volatile}${const}${type} ${name}${h_value};
+"
+	java_decl ""
+	php_decl ""
+	python_decl ""
+	idl_decl ""
+	mysql_decl ""
+	MysqlColumn
+	comment " number of head rotation subsets for each identity"
+      end
+
+      attribute 128898 "N"
+	protected explicit_type "int"
+	init_value "=  0"
+	cpp_decl "    ${comment}${static}${thread_local}${mutable}${volatile}${const}${type} ${name}${h_value};
+"
+	java_decl ""
+	php_decl ""
+	python_decl ""
+	idl_decl ""
+	mysql_decl ""
+	MysqlColumn
+	comment " number of identities provided for training"
+      end
+
+      attribute 129026 "IDs"
+	protected explicit_type "std::string"
+	stereotype "std::vector"
+	cpp_decl "    ${comment}${static}${thread_local}${mutable}${volatile}${const}${stereotype}<${type}> ${name}${value};
+"
+	java_decl ""
+	php_decl ""
+	python_decl ""
+	idl_decl ""
+	mysql_decl ""
+	MysqlColumn
+	comment " labels associated to each identity in the same order as in grayscaleSVMs and depthmapSVMs"
+      end
+
+      classrelation 129410 // grayscaleSVMs (<directional composition>)
+	relation 129410 *-->
+	  a role_name "grayscaleSVMs" protected
+	    comment " a row for each identity and a column for each head rotation subset"
+	    cpp default "    ${comment}${static}${thread_local}${mutable}${volatile}${const}${type} ${name}${value};
+"
+	    classrelation_ref 129410 // grayscaleSVMs (<directional composition>)
+	  b parent class_ref 129922 // SVMSteinMatrix
+      end
+
+      classrelation 129538 // depthmapSVMs (<directional composition>)
+	relation 129538 *-->
+	  a role_name "depthmapSVMs" protected
+	    comment " thus resulting in a Nxc matrix where N is the number of identities"
+	    cpp default "    ${comment}${static}${thread_local}${mutable}${volatile}${const}${type} ${name}${value};
+"
+	    classrelation_ref 129538 // depthmapSVMs (<directional composition>)
+	  b parent class_ref 129922 // SVMSteinMatrix
+      end
+    end
+
+    class 130306 "SVMTester"
+      visibility package 
+      cpp_decl "${comment}${template}class ${name}${inherit} {
+${members}};
+${inlines}
+"
+      java_decl ""
+      php_decl ""
+      python_2_2 python_decl ""
+      idl_decl ""
+      explicit_switch_type ""
+      mysql_decl ""
+      
+      classrelation 129666 // <generalisation>
+	relation 129666 ---|>
+	  a private
+	    cpp default "${type}"
+	    classrelation_ref 129666 // <generalisation>
+	  b parent class_ref 130050 // SVMManager
+      end
+
+      attribute 129154 "unknownIdentity"
+	class_attribute const_attribute public explicit_type "std::string"
+	init_value "= \"unknown_ID\""
+	cpp_decl "    ${comment}${static}${thread_local}${mutable}${volatile}${const}${type} ${name}${value};
+"
+	java_decl ""
+	php_decl ""
+	python_decl ""
+	idl_decl ""
+	mysql_decl ""
+	MysqlColumn
+	comment " unknown identity label"
+      end
+
+      operation 136066 "SVMTester"
+	preserve_cpp_body_indent public explicit_return_type ""
+	nparams 1
+	  param in name "c" explicit_type "int"
+	    defaultvalue "3"
+	cpp_decl "    ${comment}${inline}${name}${(}${t0} ${p0}${v0}${)}${volatile}${throw}${abstract};
+"
+	cpp_def "${comment}${inline}${class}::${name}${(}${t0} ${p0}${)}
+    : SVMManager(c)
+${throw}{
+  ${body}}
+"
+	
+	
+	
+	
+      end
+
+      operation 136194 "predict"
+	const public explicit_return_type "std::string"
+	nparams 1
+	  param in name "identity" explicit_type "std::vector<Face>"
+	cpp_decl "    ${comment}${friend}${static}${inline}${virtual}${type} ${name}${(}const ${t0} & ${p0}${v0}${)}${const}${volatile}${throw}${abstract};
+"
+	cpp_def "${comment}${inline}${type} ${class}::${name}${(}const ${t0} & ${p0}${)}${const}${volatile}${throw}${staticnl}{
+  ${body}}
+"
+	
+	
+	
+	
+	comment "@brief predict predicts the identity of the given face set
+@param identity: various Faces of the same person
+@return person label if the identity was in the training samples and is recognized,
+        unknownIdentity otherwise
+"
+      end
+
+      operation 136322 "load"
+	preserve_cpp_body_indent public explicit_return_type "bool"
+	nparams 1
+	  param in name "directoryName" explicit_type "string"
+	cpp_decl "    ${comment}${friend}${static}${inline}${virtual}${type} ${name}${(}const ${t0} & ${p0}${v0}${)}${const}${volatile}${throw}${abstract};
+"
+	cpp_def "${comment}${inline}${type} ${class}::${name}${(}const ${t0} & ${p0}${)}${const}${volatile}${throw}${staticnl}{
+  ${body}}
+"
+	
+	
+	
+	
+	comment "@brief loads a pretrained model
+@param fileName: path of the folder containing the pretrained models
+@return true if succedes
+"
+      end
+
+      operation 136450 "formatDataForPrediction"
+	preserve_cpp_body_indent const private explicit_return_type "Mat"
+	nparams 1
+	  param in name "data" explicit_type "vector<Mat>"
+	cpp_decl "    ${comment}${friend}${static}${inline}${virtual}${type} ${name}${(}const ${t0} & ${p0}${v0}${)}${const}${volatile}${throw}${abstract};
+"
+	cpp_def "${comment}${inline}${type} ${class}::${name}${(}const ${t0} & ${p0}${)}${const}${volatile}${throw}${staticnl}{
+  ${body}}
+"
+	
+	
+	
+	
+      end
+    end
+  end
+
+  package_ref 128130 // extern_libs
+
+  deploymentview 128002 "source"
+    //deployment diagram settings
+    deploymentdiagramsettings
+     end
+    artifact 128002 "facecropper"
+      stereotype "source"
+      cpp_h "#ifndef ${NAMESPACE}_${NAME}_H
+#define ${NAMESPACE}_${NAME}_H
+
+${comment}
+${includes}
+${declarations}
+${namespace_start}
+${definition}
+${namespace_end}
+#endif
+"
+      cpp_src "${comment}
+${includes}
+${namespace_start}
+${members}
+${namespace_end}"
+      associated_elems
+	class_ref 128002 // FaceCropper
+      end
+    end
+
+    artifact 128130 "filter"
+      stereotype "source"
+      cpp_h "#ifndef ${NAMESPACE}_${NAME}_H
+#define ${NAMESPACE}_${NAME}_H
+
+${comment}
+${includes}
+${declarations}
+${namespace_start}
+${definition}
+${namespace_end}
+#endif
+"
+      cpp_src "${comment}
+${includes}
+${namespace_start}
+${members}
+${namespace_end}"
+      associated_elems
+	class_ref 128130 // Filter
+      end
+    end
+
+    artifact 128258 "image4dclustercomposite"
+      stereotype "source"
+      cpp_h "#ifndef ${NAMESPACE}_${NAME}_H
+#define ${NAMESPACE}_${NAME}_H
+
+${comment}
+${includes}
+${declarations}
+${namespace_start}
+${definition}
+${namespace_end}
+#endif
+"
+      cpp_src "${comment}
+${includes}
+${namespace_start}
+${members}
+${namespace_end}"
+      associated_elems
+	class_ref 128514 // Image4DClusterComposite
+      end
+    end
+
+    artifact 128514 "image4dsetcomponent"
+      stereotype "source"
+      cpp_h "#ifndef ${NAMESPACE}_${NAME}_H
+#define ${NAMESPACE}_${NAME}_H
+
+${comment}
+${includes}
+${declarations}
+${namespace_start}
+${definition}
+${namespace_end}
+#endif
+"
+      cpp_src "${comment}
+${includes}
+${namespace_start}
+${members}
+${namespace_end}"
+      associated_elems
+	class_ref 128258 // Image4DSetComponent
+      end
+    end
+
+    artifact 128642 "kmeansbackgroundremover"
+      stereotype "source"
+      cpp_h "#ifndef ${NAMESPACE}_${NAME}_H
+#define ${NAMESPACE}_${NAME}_H
+
+${comment}
+${includes}
+${declarations}
+${namespace_start}
+${definition}
+${namespace_end}
+#endif
+"
+      cpp_src "${comment}
+${includes}
+${namespace_start}
+${members}
+${namespace_end}"
+      associated_elems
+	class_ref 129154 // KmeansBackgroundRemover
+      end
+    end
+
+    artifact 128770 "preprocessorpipe"
+      stereotype "source"
+      cpp_h "#ifndef ${NAMESPACE}_${NAME}_H
+#define ${NAMESPACE}_${NAME}_H
+
+${comment}
+${includes}
+${declarations}
+${namespace_start}
+${definition}
+${namespace_end}
+#endif
+"
+      cpp_src "${comment}
+${includes}
+${namespace_start}
+${members}
+${namespace_end}"
+      associated_elems
+	class_ref 129282 // PreprocessorPipe
+      end
+    end
+
+    artifact 128898 "svmmanager"
+      stereotype "source"
+      cpp_h "#ifndef ${NAMESPACE}_${NAME}_H
+#define ${NAMESPACE}_${NAME}_H
+
+${comment}
+${includes}
+${declarations}
+${namespace_start}
+${definition}
+${namespace_end}
+#endif
+"
+      cpp_src "${comment}
+${includes}
+${namespace_start}
+${members}
+${namespace_end}"
+      associated_elems
+	class_ref 129538 // typedef1
+	class_ref 129410 // FaceMatrix
+	class_ref 129794 // typedef2
+	class_ref 129666 // MatMatrix
+	class_ref 129922 // SVMSteinMatrix
+	class_ref 130050 // SVMManager
+      end
+    end
+
+    artifact 129026 "svmtester"
+      stereotype "source"
+      cpp_h "#ifndef ${NAMESPACE}_${NAME}_H
+#define ${NAMESPACE}_${NAME}_H
+
+${comment}
+${includes}
+${declarations}
+${namespace_start}
+${definition}
+${namespace_end}
+#endif
+"
+      cpp_src "${comment}
+${includes}
+${namespace_start}
+${members}
+${namespace_end}"
+      associated_elems
+	class_ref 130306 // SVMTester
+      end
+    end
+  end
+
+  package_ref 128386 // include
+
+  package_ref 128642 // src
+end

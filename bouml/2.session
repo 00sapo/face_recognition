@@ -1,0 +1,17 @@
+window_sizes 1366 744 238 1122 571 120
+cleanlooks_style
+diagrams
+  active  classdiagram_ref 128002 // classdiagram
+    1122 571 30 D 0 0
+end
+show_stereotypes
+selected classdiagram_ref 128002 // classdiagram
+open
+  classview_ref 128002 // source
+  classview_ref 128258 // include
+  deploymentview_ref 128642 // src
+  
+  package_ref 128770 // face
+  classdiagram_ref 128002 // classdiagram
+end
+end

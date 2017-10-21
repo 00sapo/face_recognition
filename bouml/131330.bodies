@@ -1,0 +1,48 @@
+class Settings
+!!!144002.cpp!!!	setCameraInfoPath(in pathName : std::string) : void
+    cameraInfoPath = pathName;
+    cameraInfoPathHasChanged = true;
+!!!144130.cpp!!!	getInstance() : Settings
+    static Settings instance;
+    if (cameraInfoPathHasChanged) {
+        instance.readCameraInfo();
+        cameraInfoPathHasChanged = false;
+    }
+    return instance;
+!!!144258.cpp!!!	getK() : cv::Mat
+ return K;
+!!!144386.cpp!!!	getD() : cv::Mat
+ return D;
+!!!144514.cpp!!!	getP() : cv::Mat
+ return P;
+!!!144642.cpp!!!	getR() : cv::Mat
+ return R;
+!!!144770.cpp!!!	getHeight() : int
+ return height;
+!!!144898.cpp!!!	getWidth() : int
+ return width;
+!!!145282.cpp!!!	getFaceDetectorPath() : std::string
+    return faceDetectorPath;
+!!!145410.cpp!!!	getPoseEstimatorPath() : std::string
+    return poseEstimatorPath;
+!!!145538.cpp!!!	Settings()
+    readCameraInfo();
+!!!145666.cpp!!!	readCameraInfo() : bool
+    // Opening file
+    cout << "\nReading: " << endl;
+    FileStorage fs(cameraInfoPath, FileStorage::READ); // FileStorage destructor is going to close the file.
+
+    if (!fs.isOpened()) {
+        cerr << "Failed to open " << cameraInfoPath << endl;
+        return false;
+    }
+
+    // reading parameters
+    fs["K"] >> K;
+    fs["D"] >> D;
+    fs["R"] >> R;
+    fs["height"] >> height;
+    fs["width"] >> width;
+    fs["P"] >> P;
+
+    return true;

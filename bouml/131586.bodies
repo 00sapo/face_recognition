@@ -1,0 +1,15 @@
+class SVMStein
+!!!145922.cpp!!!	SVMStein()
+    svm = ml::SVM::create();
+
+    svm->setCustomKernel(new SteinKernel(1));
+    svm->setType(ml::SVM::C_SVC);
+    svm->setC(1);
+    svm->setTermCriteria(cv::TermCriteria(cv::TermCriteria::MAX_ITER, 100, 1e-6));
+!!!147074.cpp!!!	setC(in C : float) : void
+    svm->setC(C);
+!!!147202.cpp!!!	setGamma(in gamma : float) : void
+    svm->setCustomKernel(new SteinKernel(gamma));
+!!!147330.cpp!!!	setParams(in params : SteinKernelParams) : void
+    setC(params.C);
+    setGamma(params.gamma);

@@ -1,0 +1,30 @@
+class PreprocessorPipe
+!!!134146.cpp!!!	push_back(inout f : Filter) : void
+    filterPipe.push_back(f);
+!!!134274.cpp!!!	insert(in i : uint, inout f : Filter) : void
+    filterPipe.insert(filterPipe.begin() + i, f);
+!!!134402.cpp!!!	filterPipeAt(in i : uint) : Filter
+    return filterPipe.at(i);
+!!!134530.cpp!!!	removeFilter(in i : uint) : void
+    filterPipe.erase(filterPipe.begin() + i);
+!!!134658.cpp!!!	processPipe() : bool
+    bool result = false;
+    for (Image4DSetComponent& image4d : imageSet) {
+        for (Filter& filter : filterPipe) {
+            filter.setImage4d(&image4d);
+            result = filter.filter();
+        }
+    }
+    return result;
+!!!134786.cpp!!!	push_back(inout image4d : Image4DSetComponent) : void
+    imageSet.push_back(image4d);
+!!!134914.cpp!!!	imageSetAt(in i : uint) : Image4DSetComponent
+    return imageSet.at(i);
+!!!135042.cpp!!!	getFilterPipe() : vector<Filter>
+    return filterPipe;
+!!!135170.cpp!!!	setFilterPipe(in value : vector<Filter>) : void
+    filterPipe = value;
+!!!135298.cpp!!!	getImageSet() : vector<Image4DSetComponent>
+    return imageSet;
+!!!135426.cpp!!!	setImageSet(in value : vector<Image4DSetComponent>) : void
+    imageSet = value;

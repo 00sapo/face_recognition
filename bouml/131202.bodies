@@ -1,0 +1,121 @@
+class Image4DLoader
+!!!142722.cpp!!!	hasNext() : bool
+    return !imageFileNames.empty() && !cloudFileNames.empty();
+!!!142850.cpp!!!	get(inout image4d : Image4DSetComponent) : bool
+    if (!hasNext())
+        return false;
+
+    const string& imageFile = imageFileNames.back();
+    const string& cloudFile = cloudFileNames.back();
+
+    Mat image = cv::imread(imageFile, CV_LOAD_IMAGE_GRAYSCALE);
+    if (image.empty()) {
+        cout << "Unable to load file " << imageFile << endl;
+        return false;
+    }
+
+    PointCloud<PointXYZ> cloud;
+    int result = pcl::io::loadPCDFile<PointXYZ>(cloudFile, cloud);
+    if (result == -1) {
+        cout << "Unable to load file " << cloudFile << endl;
+        return false;
+    }
+
+    if (!cloud.isOrganized()) {
+        std::cerr << "ERROR: loading unorganized point cloud!" << endl;
+        return false;
+    }
+
+    Mat depthMap(cloud.height, cloud.width, CV_16SC1);
+    for (uint x = 0; x < cloud.height; ++x) {
+        for (uint y = 0; y < cloud.width; ++y) {
+            depthMap.at<uint16_t>(x, y) = cloud.at(y, x).z * 10E2;
+        }
+    }
+
+    image4d = Image4DLeaf(image, depthMap, Settings::getInstance().getK());
+
+    imageFileNames.pop_back();
+    cloudFileNames.pop_back();
+
+    return true;
+!!!142978.cpp!!!	get() : std::vector<Image4DSetComponent>
+    const auto SIZE = imageFileNames.size();
+    vector<Image4DSetComponent> image4DSequence(SIZE);
+
+    // get number of concurrently executable threads
+    const int numOfThreads = std::thread::hardware_concurrency();
+    vector<std::thread> threads(numOfThreads);
+
+    // equally split number of images to load
+    int blockSize = SIZE / numOfThreads;
+    if (blockSize < 1)
+        blockSize = 1;
+
+    std::mutex imageSeqMutex;
+    for (int i = 0; i < numOfThreads && i < SIZE; ++i) {
+        int begin = i * blockSize;
+        int end = begin + blockSize;
+        if (i == numOfThreads - 1)
+            end += SIZE % numOfThreads;
+
+        // start a thread executing getMultiThr function
+        threads[i] = std::thread(&Image4DLoader::getMultiThr, this, std::ref(image4DSequence), begin, end, std::ref(imageSeqMutex));
+    }
+
+    // wait for threads to start
+    std::this_thread::sleep_for(std::chrono::milliseconds(200)); // FIXME: this is not a safe way to do it
+
+    // wait for threads to end (syncronization)
+    for (auto& thread : threads) {
+        if (thread.joinable())
+            thread.join();
+    }
+
+    imageFileNames.clear();
+    cloudFileNames.clear();
+
+    return image4DSequence;
+!!!143362.cpp!!!	getLeafSize() : float
+    return leafSize;
+!!!143490.cpp!!!	setLeafSize(in value : float) : void
+    leafSize = value;
+!!!143874.cpp!!!	getMultiThr(inout image4DSequence : std::vector<Image4DSetComponent>, in begin : int, in end : int, inout mutex : std::mutex) : void
+    Mat K = Settings::getInstance().getK();
+
+    for (int i = begin; i < end; ++i) {
+
+        // no locks required since reading a const reference
+        const string& imageFile = imageFileNames[i];
+        const string& cloudFile = cloudFileNames[i];
+
+        Mat image = cv::imread(imageFile, CV_LOAD_IMAGE_GRAYSCALE);
+        if (image.empty()) {
+            cout << "Unable to load file " << imageFile << endl;
+            return;
+        }
+
+        PointCloud<PointXYZ> cloud;
+        int result = pcl::io::loadPCDFile<PointXYZ>(cloudFile, cloud);
+        if (result == -1) {
+            cout << "Unable to load file " << cloudFile << endl;
+            return;
+        }
+
+        if (!cloud.isOrganized()) {
+            std::cerr << "ERROR: loading unorganized point cloud!" << endl;
+            return;
+        }
+
+        Mat depthMap(cloud.height, cloud.width, CV_16SC1);
+        for (uint x = 0; x < cloud.height; ++x) {
+            for (uint y = 0; y < cloud.width; ++y) {
+                depthMap.at<uint16_t>(x, y) = cloud.at(y, x).z * 10E2;
+            }
+        }
+
+        // lock needed to prevent concurrent writing
+        std::lock_guard<std::mutex> lock(mutex);
+        image4DSequence[i] = Image4DLeaf(image, depthMap, K);
+        image4DSequence[i].setName(imageFile.substr(0, imageFile.length() - 4));
+    }

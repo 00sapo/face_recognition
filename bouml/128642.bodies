@@ -1,0 +1,96 @@
+class Image4DLeaf
+!!!139778.cpp!!!	Image4DLeaf()
+    image = Mat::zeros(1, 1, CV_16UC3);
+    depthMap = Mat::zeros(1, 1, CV_16SC1);
+
+    intrinsicMatrix = Mat::zeros(3, 3, CV_64FC1);
+    intrinsicMatrix.at<double>(0, 0) = 1;
+    intrinsicMatrix.at<double>(1, 1) = 1;
+    intrinsicMatrix.at<double>(2, 2) = 1;
+    intrinsicMatrix.at<double>(0, 2) = WIDTH / 2;
+    intrinsicMatrix.at<double>(1, 2) = HEIGHT / 2;
+!!!140034.cpp!!!	get3DImage() : cv::Mat
+    float fx = float(intrinsicMatrix.at<double>(0, 0));
+    float fy = float(intrinsicMatrix.at<double>(1, 1));
+    float cx = float(intrinsicMatrix.at<double>(0, 2));
+    float cy = float(intrinsicMatrix.at<double>(1, 2));
+
+    Mat image3D(HEIGHT, WIDTH, CV_32FC3);
+
+    for (uint i = 0; i < HEIGHT; ++i) {
+        for (uint j = 0; j < WIDTH; ++j) {
+            float d = static_cast<float>(depthMap.at<uint16_t>(i, j));
+            auto& vec = image3D.at<cv::Vec3f>(i, j);
+            vec[0] = d * (float(j) - cx) / fx;
+            vec[1] = d * (float(i) - cy) / fy;
+            vec[2] = d;
+        }
+    }
+
+    return image3D;
+!!!140162.cpp!!!	getWidth() : size_t
+ return WIDTH;
+!!!140290.cpp!!!	getHeight() : size_t
+ return HEIGHT;
+!!!140418.cpp!!!	getArea() : size_t
+ return WIDTH * HEIGHT;
+!!!140546.cpp!!!	getDepthImageRatio() : float
+ return DEPTH_IMG_RATIO;
+!!!140674.cpp!!!	getIntrinsicMatrix() : cv::Mat
+    Mat newIntrinsicMatrix;
+    intrinsicMatrix.copyTo(newIntrinsicMatrix);
+    return newIntrinsicMatrix;
+!!!141058.cpp!!!	crop(in cropRegion : cv::Rect) : void
+
+    image = image(cropRegion); // crop image
+    depthMap = depthMap(cropRegion); // crop depthMap
+
+    WIDTH = cropRegion.width;
+    HEIGHT = cropRegion.height;
+
+    intrinsicMatrix.at<double>(0, 2) -= cropRegion.x;
+    intrinsicMatrix.at<double>(1, 2) -= cropRegion.y;
+!!!141442.cpp!!!	getRotationMatrix() : Pose
+    // Calculate rotation around x axis
+    float cosx = cos(eulerAngles[0]);
+    float senx = sin(eulerAngles[0]);
+    float cosy = cos(eulerAngles[1]);
+    float seny = sin(eulerAngles[1]);
+    float cosz = cos(eulerAngles[2]);
+    float senz = sin(eulerAngles[2]);
+
+    return Pose(cosy * cosz, cosx * senz + senx * seny * cosz, senx * senz - cosx * seny * cosz,
+        -cosy * senz, cosx * cosz - senx * seny * senz, senx * cosz + cosx * seny * senz,
+        seny, -senx * cosy, cosx * cosy);
+!!!141570.cpp!!!	getEulerAngles() : cv::Vec3f
+ return eulerAngles;
+!!!141698.cpp!!!	getPosition() : cv::Vec3f
+ return position;
+!!!141826.cpp!!!	setEulerAngles(in value : cv::Vec3f) : void
+    eulerAngles = value;
+!!!141954.cpp!!!	setPosition(in value : cv::Vec3f) : void
+    position = value;
+!!!142082.cpp!!!	getImage() : cv::Mat
+    return image;
+!!!142210.cpp!!!	getDepthMap() : cv::Mat
+    return depthMap;
+!!!142338.cpp!!!	resizeImage() : void
+    const int IMG_WIDTH = image.cols;
+    const int IMG_HEIGHT = image.rows;
+
+    DEPTH_IMG_RATIO = static_cast<float>(depthMap.cols) / IMG_WIDTH;
+
+    if (DEPTH_IMG_RATIO == 1)
+        return;
+
+    assert(static_cast<float>(depthMap.rows) / IMG_HEIGHT == DEPTH_IMG_RATIO && "Image and cloud sizes are not proportional!");
+
+    assert(DEPTH_IMG_RATIO < 1 && "Image is smaller than cloud!");
+
+    cv::Size newImageSize(IMG_WIDTH * DEPTH_IMG_RATIO, IMG_HEIGHT * DEPTH_IMG_RATIO);
+    cv::resize(image, image, newImageSize, cv::INTER_AREA);
+
+    intrinsicMatrix.at<double>(0, 2) *= DEPTH_IMG_RATIO;
+    intrinsicMatrix.at<double>(1, 2) *= DEPTH_IMG_RATIO;
+
+    return;

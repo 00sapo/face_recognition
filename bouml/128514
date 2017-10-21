@@ -1,0 +1,135 @@
+format 214
+"demo" // source::extern_libs::head_pose_estimation::demo
+  revision 1
+  modified_by 2 "sapo"
+  // class settings
+  
+  classdiagramsettings member_max_width 0 end
+  
+  usecasediagramsettings end
+  
+  sequencediagramsettings end
+  
+  collaborationdiagramsettings end
+  
+  objectdiagramsettings end
+  
+  componentdiagramsettings
+   end
+  
+  deploymentdiagramsettings
+   end
+  
+  statediagramsettings
+   end
+  
+  activitydiagramsettings
+   end
+  
+  cpp_h_dir "/home/sapo/Develop/face_recognition/source/extern_libs/head_pose_estimation/demo/"
+  cpp_src_dir "/home/sapo/Develop/face_recognition/source/extern_libs/head_pose_estimation/demo/"
+  classview 128514 "demo"
+    
+    classdiagramsettings member_max_width 0 end
+    
+    collaborationdiagramsettings end
+    
+    objectdiagramsettings end
+    
+    sequencediagramsettings end
+    
+    statediagramsettings
+     end
+    
+    
+    activitydiagramsettings
+     end
+    class 130946 "GLUTproc"
+      visibility package stereotype "typedef" explicit_base_type "void"
+      cpp_decl "${comment}typedef ${type}(* ${name})();
+"
+      java_decl ""
+      php_decl ""
+      python_2_2 python_decl ""
+      idl_decl ""
+      explicit_switch_type ""
+      mysql_decl ""
+      
+      comment "
+Extension functions, see freeglut_ext.c
+"
+    end
+  end
+
+  deploymentview 128386 "demo"
+    //deployment diagram settings
+    deploymentdiagramsettings
+     end
+    artifact 129538 "freeglut_ext"
+      stereotype "source"
+      cpp_h "#ifndef ${NAMESPACE}_${NAME}_H
+#define ${NAMESPACE}_${NAME}_H
+
+${comment}
+${includes}
+${declarations}
+${namespace_start}
+${definition}
+${namespace_end}
+#endif
+"
+      cpp_src "${comment}
+${includes}
+${namespace_start}
+${members}
+${namespace_end}"
+      associated_elems
+	class_ref 130946 // GLUTproc
+      end
+    end
+
+    artifact 130690 "main"
+      stereotype "source"
+      cpp_src "int main(int argc, char* argv[])
+{
+
+	if( argc != 2 ){
+
+		cout << \"usage: ./head_demo config_file\" << endl;
+		exit(-1);
+	}
+
+	loadConfig( argv[1] );
+	g_Estimate =  new CRForestEstimator();
+	if( !g_Estimate->loadForest(g_treepath.c_str(), g_ntrees) ){
+
+		cerr << \"could not read forest!\" << endl;
+		exit(-1);
+	}
+
+	initialize();
+
+	// initialize GLUT
+	glutInitWindowSize(800, 800);
+	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
+	glutInit(&argc, argv);
+
+	glutCreateWindow(\"HeadPoseDemo (press h for list of available commands)\");
+	glutDisplayFunc(draw);
+	glutMouseFunc(mb);
+	glutMotionFunc(mm);
+	glutKeyboardFunc(key);
+	glutReshapeFunc(resize);
+	glutIdleFunc(idle);
+	glutMainLoop();
+
+	return 0;
+
+
+}
+"
+      associated_elems
+      end
+    end
+  end
+end
