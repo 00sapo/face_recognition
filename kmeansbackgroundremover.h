@@ -13,16 +13,28 @@ public:
      * @param image
      * @return
      */
-    bool filter(face::Image4DSet& image);
+    bool filter();
+
+    Image4DSetComponent* getImage4d() const;
+    void setImage4d(Image4DSetComponent* value);
+
+    uint16_t getFixedThreshold() const;
+    void setFixedThreshold(const uint16_t& value);
+
+    cv::CascadeClassifier getClassifier() const;
+    void setClassifier(const cv::CascadeClassifier& value);
+
+    bool isFaceDetectorAvailable() const;
 
 private:
     bool faceDetectorAvailable = false;
     cv::CascadeClassifier classifier;
-    uint16_t fixedThreshold = 1600;
+    uint16_t fixedThreshold;
+    Image4DSetComponent* image4d;
 
-    void removeBackgroundFixed(Image4DSet& face, uint16_t threshold) const;
-    void removeBackgroundDynamic(Image4DSet& face, const cv::Rect& boundingBox) const;
-    bool detectForegroundFace(const Image4DSet& face, cv::Rect& boundingBox);
+    void removeBackgroundFixed() const;
+    void removeBackgroundDynamic(cv::Rect& boundingBox) const;
+    bool detectForegroundFace(cv::Rect& boundingBox);
 };
 }
 #endif // KMEANSBACKGROUNDREMOVER_H

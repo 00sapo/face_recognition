@@ -21,7 +21,7 @@ SVMTrainer::SVMTrainer(int c)
 {
 }
 
-void SVMTrainer::train(const FaceMatrix& trainingSamples, const vector<string>& samplIDs)
+void SVMTrainer::train(const Image4DSetComponentMatrix& trainingSamples, const vector<string>& samplIDs)
 {
     N = trainingSamples.size();
 

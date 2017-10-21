@@ -22,7 +22,7 @@ public:
      * @param labels: labels to be assigned to each identity; these labels will be returned
      *                by FaceRecognizer::predict() when identifies a person
      */
-    void train(const FaceMatrix& trainingSamples,
+    void train(const Image4DSetComponentMatrix& trainingSamples,
         const std::vector<std::string>& samplLabels = std::vector<std::string>());
 
     /**

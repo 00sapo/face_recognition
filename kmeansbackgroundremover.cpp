@@ -1,4 +1,5 @@
 #include "kmeansbackgroundremover.h"
+#include <settings.h>
 #include <vector>
 
 using std::vector;
@@ -7,21 +8,65 @@ namespace face {
 KmeansBackgroundRemover::KmeansBackgroundRemover(uint16_t fixedThreshold)
     : fixedThreshold(fixedThreshold)
 {
+    // load the pretrained face detection model
+    classifier = cv::CascadeClassifier(Settings::getInstance().getFaceDetectorPath());
+    if (classifier.empty()) {
+        std::cerr << "ERROR! Unable to load haarcascade_frontalface_default.xml" << std::endl;
+        return;
+    }
+
+    faceDetectorAvailable = true;
 }
 
-bool KmeansBackgroundRemover::filter(face::Image4DSet& image)
+bool KmeansBackgroundRemover::filter()
 {
     cv::Rect boundingBox;
     // ... detect foreground face...
-    if (!detectForegroundFace(image, boundingBox))
-        removeBackgroundFixed(image, fixedThreshold);
+    if (!detectForegroundFace(boundingBox))
+        removeBackgroundFixed();
     else
-        removeBackgroundDynamic(image, boundingBox);
+        removeBackgroundDynamic(boundingBox);
 
     return 1;
 }
 
-bool KmeansBackgroundRemover::detectForegroundFace(const Image4DSet& face, cv::Rect& boundingBox)
+Image4DSetComponent* KmeansBackgroundRemover::getImage4d() const
+{
+    return image4d;
+}
+
+void KmeansBackgroundRemover::setImage4d(Image4DSetComponent* value)
+{
+    image4d = value;
+}
+
+uint16_t KmeansBackgroundRemover::getFixedThreshold() const
+{
+    return fixedThreshold;
+}
+
+void KmeansBackgroundRemover::setFixedThreshold(const uint16_t& value)
+{
+    fixedThreshold = value;
+}
+
+cv::CascadeClassifier KmeansBackgroundRemover::getClassifier() const
+{
+    return classifier;
+}
+
+void KmeansBackgroundRemover::setClassifier(const cv::CascadeClassifier& value)
+{
+    classifier = value;
+    faceDetectorAvailable = true;
+}
+
+bool KmeansBackgroundRemover::isFaceDetectorAvailable() const
+{
+    return faceDetectorAvailable;
+}
+
+bool KmeansBackgroundRemover::detectForegroundFace(cv::Rect& boundingBox)
 {
     if (!faceDetectorAvailable) {
         std::cout << "Error! Face detector unavailable!" << std::endl;
@@ -30,7 +75,7 @@ bool KmeansBackgroundRemover::detectForegroundFace(const Image4DSet& face, cv::R
 
     // face detection
     vector<cv::Rect> faces;
-    classifier.detectMultiScale(*(face.getImage()), faces, 1.1, 2, 0 | cv::CASCADE_SCALE_IMAGE, cv::Size(70, 70));
+    classifier.detectMultiScale(image4d->getImage(), faces, 1.1, 2, 0 | cv::CASCADE_SCALE_IMAGE, cv::Size(70, 70));
 
     if (faces.empty())
         return false;
@@ -42,7 +87,7 @@ bool KmeansBackgroundRemover::detectForegroundFace(const Image4DSet& face, cv::R
     return true;
 }
 
-void KmeansBackgroundRemover::removeBackgroundDynamic(Image4DSet& face, const cv::Rect& boundingBox) const
+void KmeansBackgroundRemover::removeBackgroundDynamic(cv::Rect& boundingBox) const
 {
     // take non-nan, non-zero points
     vector<float> depth;
@@ -51,7 +96,7 @@ void KmeansBackgroundRemover::removeBackgroundDynamic(Image4DSet& face, const cv
             depth.push_back(dpt);
     };
 
-    face.depthForEach<uint16_t>(lambda, boundingBox);
+    image4d->depthForEach<uint16_t>(lambda, boundingBox);
 
     // clustering
     vector<int> bestLabels;
@@ -71,7 +116,7 @@ void KmeansBackgroundRemover::removeBackgroundDynamic(Image4DSet& face, const cv
     const int MIN_X = boundingBox.x - boundingBox.width;
     const int MAX_X = boundingBox.x + 2 * boundingBox.width;
 
-    face.getDepthMap()->forEach<uint16_t>([&](uint16_t& p, const int* pos) {
+    image4d->getDepthMap().forEach<uint16_t>([&](uint16_t& p, const int* pos) {
         if (float(p) > threshold || std::isnan(p) || pos[1] < MIN_X || pos[1] > MAX_X)
             p = 0;
     });
@@ -79,9 +124,10 @@ void KmeansBackgroundRemover::removeBackgroundDynamic(Image4DSet& face, const cv
     return;
 }
 
-void KmeansBackgroundRemover::removeBackgroundFixed(Image4DSet& face, uint16_t threshold) const
+void KmeansBackgroundRemover::removeBackgroundFixed() const
 {
-    face.getDepthMap()->forEach<uint16_t>([threshold](uint16_t& p, const int* pos) {
+    uint16_t threshold = fixedThreshold;
+    image4d->getDepthMap().forEach<uint16_t>([threshold](uint16_t& p, const int* pos) {
         if (p > threshold || std::isnan(p))
             p = 0;
     });

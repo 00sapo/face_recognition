@@ -1,16 +1,16 @@
+#include <facecropper.h>
+#include <image4dsetcomponent.h>
 #include <iostream>
-#include <preprocessor.h>
+#include <kmeansbackgroundremover.h>
+#include <preprocessorpipe.h>
 #include <string.h>
 #include <svmtrainer.h>
 #include <vector>
 
-#include "face.h"
 #include "image4dloader.h"
 
 using namespace face;
 using namespace std;
-
-using Image4DMatrix = std::vector<std::vector<Image4D>>;
 
 void training(string trainingSetDir, string outputDir)
 {
@@ -18,28 +18,26 @@ void training(string trainingSetDir, string outputDir)
     string dirPath = trainingSetDir;
     Image4DLoader loader(dirPath, "000_.*");
 
-    Image4DMatrix identities;
+    PreprocessorPipe pipe;
     for (int i = 0; i <= 25; ++i) {
         string fileNameRegEx = i / 10 >= 1 ? "0" : "00";
         fileNameRegEx += std::to_string(i) + "_.*";
 
         loader.setFileNameRegEx(fileNameRegEx);
-        identities.push_back(loader.get());
+        pipe.setImageSet(loader.get());
     }
 
-    Preprocessor preproc;
+    KmeansBackgroundRemover backgroundRemover = KmeansBackgroundRemover(1600);
+    FaceCropper faceCropper = FaceCropper();
 
-    int i = 0;
-    FaceMatrix peoples;
-    for (auto& id : identities) {
-        cout << "Preprocessing images of person " << i++ << endl;
-        peoples.push_back(preproc.preprocess(id));
-    }
+    pipe.push_back(backgroundRemover);
+    pipe.push_back(faceCropper);
+    pipe.processPipe();
 
-    SVMTrainer faceRec;
-    faceRec.train(peoples);
+    //    SVMTrainer faceRec;
+    //    faceRec.train(pipe.getImageSet());
 
-    faceRec.save(outputDir);
+    //    faceRec.save(outputDir);
 }
 
 void testing(string testingSetDir, string outputDir)

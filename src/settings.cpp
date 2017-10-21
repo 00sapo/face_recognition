@@ -2,30 +2,29 @@
 
 #include <iostream>
 
-using std::cout;
-using std::cerr;
-using std::endl;
-using cv::Mat;
 using cv::FileStorage;
+using cv::Mat;
+using std::cerr;
+using std::cout;
+using std::endl;
 
 namespace face {
 
+std::string Settings::cameraInfoPath = "camera_info.yaml";
+bool Settings::cameraInfoPathHasChanged = false;
 
-std::string Settings::path = "camera_info.yaml";
-bool Settings::pathHasChanged = false;
-
-void Settings::setPath(const std::string &pathName)
+void Settings::setCameraInfoPath(const std::string& pathName)
 {
-    path = pathName;
-    pathHasChanged = true;
+    cameraInfoPath = pathName;
+    cameraInfoPathHasChanged = true;
 }
 
 Settings& Settings::getInstance()
 {
     static Settings instance;
-    if(pathHasChanged) {
-        instance.read();
-        pathHasChanged = false;
+    if (cameraInfoPathHasChanged) {
+        instance.readCameraInfo();
+        cameraInfoPathHasChanged = false;
     }
     return instance;
 }
@@ -34,33 +33,44 @@ const Mat Settings::getK() { return K; }
 const Mat Settings::getD() { return D; }
 const Mat Settings::getP() { return P; }
 const Mat Settings::getR() { return R; }
-int Settings::getHeight()  { return height; }
-int Settings::getWidth()   { return width;  }
+int Settings::getHeight() { return height; }
+int Settings::getWidth() { return width; }
 
 Settings::Settings()
 {
-    read();
+    readCameraInfo();
 }
 
-bool Settings::read() {
+bool Settings::readCameraInfo()
+{
     // Opening file
     cout << "\nReading: " << endl;
-    FileStorage fs(path, FileStorage::READ);    // FileStorage destructor is going to close the file.
+    FileStorage fs(cameraInfoPath, FileStorage::READ); // FileStorage destructor is going to close the file.
 
     if (!fs.isOpened()) {
-        cerr << "Failed to open " << path << endl;
+        cerr << "Failed to open " << cameraInfoPath << endl;
         return false;
     }
 
     // reading parameters
-    fs["K"]      >> K;
-    fs["D"]      >> D;
-    fs["R"]      >> R;
+    fs["K"] >> K;
+    fs["D"] >> D;
+    fs["R"] >> R;
     fs["height"] >> height;
-    fs["width"]  >> width;
-    fs["P"]      >> P;
+    fs["width"] >> width;
+    fs["P"] >> P;
 
     return true;
+}
+
+std::string Settings::getPoseEstimatorPath() const
+{
+    return poseEstimatorPath;
+}
+
+std::string Settings::getFaceDetectorPath() const
+{
+    return faceDetectorPath;
 }
 
 } // face

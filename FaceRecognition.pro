@@ -4,9 +4,7 @@ CONFIG -= app_bundle
 CONFIG -= qt
 
 SOURCES += src/main.cpp \
-           src/image4d.cpp \
            src/image4dloader.cpp \
-           src/preprocessor.cpp \
            src/settings.cpp \
            src/covariancecomputer.cpp \
            src/svmstein.cpp \
@@ -16,8 +14,10 @@ SOURCES += src/main.cpp \
     src/svmtrainer.cpp \
     svmmanager.cpp \
     kmeansbackgroundremover.cpp \
-    clusterofimages.cpp \
-    facecropper.cpp
+    facecropper.cpp \
+    src/image4dleaf.cpp \
+    image4dclustercomposite.cpp \
+    preprocessorpipe.cpp
 
 INCLUDEPATH += include $$(OPENCV_INCLUDE)
 
@@ -29,9 +29,10 @@ HEADERS += include/*.h \
     svmmanager.h \
     filter.h \
     kmeansbackgroundremover.h \
-    imageset.h \
-    clusterofimages.h \
-    facecropper.h
+    facecropper.h \
+    image4dsetcomponent.h \
+    image4dclustercomposite.h \
+    preprocessorpipe.h
 
 DISTFILES += \
     camera_info.yaml

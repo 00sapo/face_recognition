@@ -11,7 +11,7 @@
 #include "covariancecomputer.h"
 #include "face.h"
 #include "svmtrainer.h"
-#include "image4d.h"
+#include "image4dleaf.h"
 #include "image4dloader.h"
 #include "lbp.h"
 #include "preprocessor.h"
@@ -27,7 +27,7 @@ using std::vector;
 
 namespace face {
 
-using Image4DMatrix = std::vector<std::vector<Image4D>>;
+using Image4DMatrix = std::vector<std::vector<Image4DLeaf>>;
 
 namespace test {
 
@@ -83,7 +83,7 @@ namespace test {
         string dirPath = "../RGBD_Face_dataset_training/";
         Image4DLoader loader(dirPath, "014.*"); // example: loads only .png files starting with 014
 
-        Image4D face;
+        Image4DLeaf face;
 
         if (!loader.get(face)) {
             cout << "Failed loading face" << endl;
@@ -160,7 +160,7 @@ namespace test {
 
         loader = Image4DLoader("../RGBD_Face_dataset_training/", ".*");
         start = std::chrono::high_resolution_clock::now();
-        Image4D image;
+        Image4DLeaf image;
         while (loader.hasNext())
             loader.get(image);
         end = std::chrono::high_resolution_clock::now();

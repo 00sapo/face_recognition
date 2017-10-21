@@ -1,4 +1,5 @@
 #include "facecropper.h"
+#include <settings.h>
 #include <vector>
 
 using std::vector;
@@ -6,16 +7,24 @@ using std::vector;
 namespace face {
 FaceCropper::FaceCropper()
 {
+    // load forest for face pose estimation
+    const char* estimatorPath = Settings::getInstance().getPoseEstimatorPath().c_str();
+    if (!estimator.loadForest(estimatorPath)) {
+        std::cerr << "ERROR! Unable to load forest files" << std::endl;
+        return;
+    }
+
+    poseEstimatorAvailable = true;
 }
 
-void FaceCropper::removeOutliers(Image4DSet& image4d) const
+void FaceCropper::removeOutliers() const
 {
     // TODO: a full resolution booleanDepthMap is probably too much
     //       maybe the same result is achievable with a sampling of a pixel every 4 or 8
-    cv::Mat booleanDepthMap(image4d.getFirst(), image4d.getFirst(), CV_8U);
+    cv::Mat booleanDepthMap(image4d->getHeight(), image4d->getWidth(), CV_8U);
     cv::Mat labels, stats, centroids;
     auto boolIter = booleanDepthMap.begin<bool>();
-    for (auto iter = image4d.getDepthMap()->begin<uint16_t>(); iter < image4d.getDepthMap()->end<uint16_t>(); ++iter, ++boolIter) {
+    for (auto iter = image4d->getDepthMap().begin<uint16_t>(); iter < image4d->getDepthMap().end<uint16_t>(); ++iter, ++boolIter) {
         *boolIter = *iter != 0;
     }
 
@@ -36,29 +45,29 @@ void FaceCropper::removeOutliers(Image4DSet& image4d) const
     int height = stats.at<int>(index, cv::CC_STAT_HEIGHT);
     cv::Rect roi(x, y, width, height);
 
-    image4d.getDepthMap()->forEach<uint16_t>([&](uint16_t& depth, const int* pos) {
+    image4d->getDepthMap().forEach<uint16_t>([&](uint16_t& depth, const int* pos) {
         if (!roi.contains(cv::Point(pos[1], pos[0])))
             depth = 0;
     });
 }
 
-bool FaceCropper::filter(Image4DSet& image4d)
+bool FaceCropper::filter()
 {
-    removeOutliers(image4d);
+    removeOutliers();
 
-    if (!estimateFacePose(image4d, position, eulerAngles)) {
+    if (!estimateFacePose()) {
         return false;
     }
 
-    const auto HEIGHT = image4d.getHeight();
-    const auto WIDTH = image4d.getWidth();
+    const auto HEIGHT = image4d->getHeight();
+    const auto WIDTH = image4d->getWidth();
     const int NONZERO_PXL_THRESHOLD = 5;
 
     int yTop = 0;
     for (std::size_t i = 0; i < HEIGHT; ++i) { // look for first non-empty row
         int nonzeroPixels = 0;
         for (std::size_t j = 0; j < WIDTH; ++j) {
-            if (image4d.getDepthMap()->at<uint16_t>(i, j) != 0)
+            if (image4d->getDepthMap().at<uint16_t>(i, j) != 0)
                 ++nonzeroPixels;
         }
         if (nonzeroPixels >= NONZERO_PXL_THRESHOLD) {
@@ -67,14 +76,14 @@ bool FaceCropper::filter(Image4DSet& image4d)
         }
     }
 
-    if (std::abs(eulerAngles[0]) > 35)
-        eulerAngles[0] = 0;
+    if (std::abs(image4d->getEulerAngles()[0]) > 35)
+        image4d->getEulerAngles()[0] = 0;
 
     // necessary corrections to take into account head rotations
-    yTop += 10 / 8 * eulerAngles[0] + 5 / 8 * eulerAngles[2];
+    yTop += 10 / 8 * image4d->getEulerAngles()[0] + 5 / 8 * image4d->getEulerAngles()[2];
     if (yTop < 0)
         yTop = 0;
-    int yBase = yTop + (145 / (position[2] / 1000.f));
+    int yBase = yTop + (145 / (image4d->getPosition()[2] / 1000.f));
     if (yBase > HEIGHT)
         yBase = HEIGHT;
     cv::Rect faceROI(0, yTop, WIDTH, yBase - yTop);
@@ -85,7 +94,7 @@ bool FaceCropper::filter(Image4DSet& image4d)
     for (size_t i = 0; i < WIDTH; ++i) { // look for first non-empty column from left
         int nonzeroPixels = 0;
         for (int j = faceROI.y; j < MAX_Y; ++j) {
-            if (image4d.getDepthMap()->at<uint16_t>(j, i) != 0)
+            if (image4d->getDepthMap().at<uint16_t>(j, i) != 0)
                 ++nonzeroPixels;
         }
         if (nonzeroPixels >= NONZERO_PXL_THRESHOLD) {
@@ -98,7 +107,7 @@ bool FaceCropper::filter(Image4DSet& image4d)
     for (int i = WIDTH - 1; i >= 0; --i) { // look for last non-empty column from right
         int nonzeroPixels = 0;
         for (int j = faceROI.y; j < MAX_Y; ++j) {
-            if (image4d.getDepthMap()->at<uint16_t>(j, i) != 0)
+            if (image4d->getDepthMap().at<uint16_t>(j, i) != 0)
                 ++nonzeroPixels;
         }
         if (nonzeroPixels >= NONZERO_PXL_THRESHOLD) {
@@ -110,18 +119,18 @@ bool FaceCropper::filter(Image4DSet& image4d)
     faceROI.x = xTop;
     faceROI.width = xBase - xTop;
 
-    image4d.crop(faceROI);
+    image4d->crop(faceROI);
     return true;
 }
 
-bool FaceCropper::estimateFacePose(const Image4D& image4d, cv::Vec3f& position, cv::Vec3f& eulerAngles) const
+bool FaceCropper::estimateFacePose() const
 {
     if (!poseEstimatorAvailable) {
         std::cout << "Error! Face pose estimator unavailable!" << std::endl;
         return false;
     }
 
-    cv::Mat img3D = image4d.get3DImage();
+    cv::Mat img3D = image4d->get3DImage();
 
     vector<cv::Vec<float, POSE_SIZE>> means; // outputs, POSE_SIZE defined in CRTree.h
     vector<vector<Vote>> clusters; // full clusters of votes
@@ -142,12 +151,38 @@ bool FaceCropper::estimateFacePose(const Image4D& image4d, cv::Vec3f& position, 
 
     auto& pose = means[0];
 
-    position = { -pose[1] + image4d.getHeight() / 2,
-        pose[0] + image4d.getWidth() / 2,
-        pose[2] };
+    image4d->setPosition({ -pose[1] + image4d->getHeight() / 2,
+        pose[0] + image4d->getWidth() / 2,
+        pose[2] });
 
-    eulerAngles = { pose[3], pose[4], pose[5] };
+    image4d->setEulerAngles({ pose[3], pose[4], pose[5] });
 
     return true;
+}
+
+CRForestEstimator FaceCropper::getEstimator() const
+{
+    return estimator;
+}
+
+void FaceCropper::setEstimator(const CRForestEstimator& value)
+{
+    estimator = value;
+    poseEstimatorAvailable = true;
+}
+
+bool FaceCropper::isPoseEstimatorAvailable() const
+{
+    return poseEstimatorAvailable;
+}
+
+Image4DSetComponent* FaceCropper::getImage4d() const
+{
+    return image4d;
+}
+
+void FaceCropper::setImage4d(Image4DSetComponent* value)
+{
+    image4d = value;
 }
 }

@@ -7,7 +7,7 @@ namespace face {
 
 class Settings {
 public:
-    static void setPath(const std::string &pathName);
+    static void setCameraInfoPath(const std::string& pathName);
     static Settings& getInstance();
     //    ~SingletonSettings();
 
@@ -26,11 +26,15 @@ public:
     //void setR(Mat R);
 
     Settings(Settings const&) = delete;
-    void operator=(Settings const&)    = delete;
+    void operator=(Settings const&) = delete;
+
+    std::string getFaceDetectorPath() const;
+
+    std::string getPoseEstimatorPath() const;
 
 protected:
     Settings();
-    bool read();
+    bool readCameraInfo();
 
     /*
      * Camera parameters
@@ -42,10 +46,12 @@ protected:
     int height;
     int width;
 
-    static std::string path;
-    static bool pathHasChanged;
+    std::string faceDetectorPath = "../haarcascade_frontalface_default.xml";
+    std::string poseEstimatorPath = "../trees/";
+    static std::string cameraInfoPath;
+    static bool cameraInfoPathHasChanged;
 };
 
-}   // face
+} // face
 
 #endif // FACE_SETTINGS_H

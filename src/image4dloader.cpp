@@ -13,9 +13,8 @@
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_types.h>
 
+#include "image4dleaf.h"
 #include "settings.h"
-
-#include "image4d.h"
 
 using cv::Mat;
 using pcl::PointCloud;
@@ -49,13 +48,13 @@ bool Image4DLoader::hasNext() const
     return !imageFileNames.empty() && !cloudFileNames.empty();
 }
 
-bool Image4DLoader::get(Image4D& image4d)
+bool Image4DLoader::get(Image4DSetComponent& image4d)
 {
     if (!hasNext())
         return false;
 
-    const string &imageFile = imageFileNames.back();
-    const string &cloudFile = cloudFileNames.back();
+    const string& imageFile = imageFileNames.back();
+    const string& cloudFile = cloudFileNames.back();
 
     Mat image = cv::imread(imageFile, CV_LOAD_IMAGE_GRAYSCALE);
     if (image.empty()) {
@@ -82,7 +81,7 @@ bool Image4DLoader::get(Image4D& image4d)
         }
     }
 
-    image4d = Image4D(image, depthMap, Settings::getInstance().getK());
+    image4d = Image4DLeaf(image, depthMap, Settings::getInstance().getK());
 
     imageFileNames.pop_back();
     cloudFileNames.pop_back();
@@ -90,15 +89,15 @@ bool Image4DLoader::get(Image4D& image4d)
     return true;
 }
 
-void Image4DLoader::getMultiThr(vector<Image4D>& image4DSequence, int begin, int end, std::mutex& mutex) const
+void Image4DLoader::getMultiThr(std::vector<Image4DSetComponent>& image4DSequence, int begin, int end, std::mutex& mutex) const
 {
     Mat K = Settings::getInstance().getK();
 
     for (int i = begin; i < end; ++i) {
 
         // no locks required since reading a const reference
-        const string &imageFile = imageFileNames[i];
-        const string &cloudFile = cloudFileNames[i];
+        const string& imageFile = imageFileNames[i];
+        const string& cloudFile = cloudFileNames[i];
 
         Mat image = cv::imread(imageFile, CV_LOAD_IMAGE_GRAYSCALE);
         if (image.empty()) {
@@ -127,15 +126,15 @@ void Image4DLoader::getMultiThr(vector<Image4D>& image4DSequence, int begin, int
 
         // lock needed to prevent concurrent writing
         std::lock_guard<std::mutex> lock(mutex);
-        image4DSequence[i] = Image4D(image, depthMap, K);
-        image4DSequence[i].name = imageFile.substr(0, imageFile.length() - 4);
+        image4DSequence[i] = Image4DLeaf(image, depthMap, K);
+        image4DSequence[i].setName(imageFile.substr(0, imageFile.length() - 4));
     }
 }
 
-vector<Image4D> Image4DLoader::get()
+std::vector<Image4DSetComponent> Image4DLoader::get()
 {
     const auto SIZE = imageFileNames.size();
-    vector<Image4D> image4DSequence(SIZE);
+    vector<Image4DSetComponent> image4DSequence(SIZE);
 
     // get number of concurrently executable threads
     const int numOfThreads = std::thread::hardware_concurrency();

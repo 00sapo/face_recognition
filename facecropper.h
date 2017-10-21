@@ -11,11 +11,21 @@ class FaceCropper : public Filter {
 public:
     FaceCropper();
 
-    bool filter(Image4DSet& image4d);
+    bool filter();
+
+    Image4DSetComponent* getImage4d() const;
+    void setImage4d(Image4DSetComponent* value);
+
+    CRForestEstimator getEstimator() const;
+    void setEstimator(const CRForestEstimator& value);
+
+    bool isPoseEstimatorAvailable() const;
 
 private:
-    void removeOutliers(Image4DSet& image4d) const;
-    bool estimateFacePose(const Image4D& image4d, cv::Vec3f& position, cv::Vec3f& eulerAngles) const;
+    void removeOutliers() const;
+    bool estimateFacePose() const;
+
+    Image4DSetComponent* image4d;
 
     CRForestEstimator estimator;
     bool poseEstimatorAvailable = false;

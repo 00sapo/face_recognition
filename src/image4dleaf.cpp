@@ -1,4 +1,4 @@
-#include "image4d.h"
+#include "image4dleaf.h"
 
 #include <math.h>
 
@@ -8,7 +8,7 @@ namespace face {
 
 // ---------- constructors ----------
 
-Image4D::Image4D()
+Image4DLeaf::Image4DLeaf()
     : WIDTH(0)
     , HEIGHT(0)
     , DEPTH_IMG_RATIO(0)
@@ -24,7 +24,7 @@ Image4D::Image4D()
     intrinsicMatrix.at<double>(1, 2) = HEIGHT / 2;
 }
 
-Image4D::Image4D(Mat& image, Mat& depthMap, const Mat& intrinsicCameraMatrix)
+Image4DLeaf::Image4DLeaf(Mat& image, Mat& depthMap, const Mat& intrinsicCameraMatrix)
     : image(image)
     , depthMap(depthMap)
 {
@@ -35,28 +35,20 @@ Image4D::Image4D(Mat& image, Mat& depthMap, const Mat& intrinsicCameraMatrix)
     resizeImage();
 }
 
-Image4D::Image4D(Image4D& image, cv::Vec3f& position, cv::Vec3f& eulerAngles)
-{
-    Image4D(image.image, image.depthMap, image.getIntrinsicMatrix());
-
-    this->position = position;
-    this->eulerAngles = eulerAngles;
-}
-
 // ---------- public member functions ----------
 
-size_t Image4D::getWidth() const { return WIDTH; }
-size_t Image4D::getHeight() const { return HEIGHT; }
-size_t Image4D::getArea() const { return WIDTH * HEIGHT; }
-float Image4D::getDepthImageRatio() const { return DEPTH_IMG_RATIO; }
-Mat Image4D::getIntrinsicMatrix() const
+size_t Image4DLeaf::getWidth() const { return WIDTH; }
+size_t Image4DLeaf::getHeight() const { return HEIGHT; }
+size_t Image4DLeaf::getArea() const { return WIDTH * HEIGHT; }
+float Image4DLeaf::getDepthImageRatio() const { return DEPTH_IMG_RATIO; }
+Mat Image4DLeaf::getIntrinsicMatrix() const
 {
     Mat newIntrinsicMatrix;
     intrinsicMatrix.copyTo(newIntrinsicMatrix);
     return newIntrinsicMatrix;
 }
 
-Mat Image4D::get3DImage() const
+Mat Image4DLeaf::get3DImage() const
 {
     float fx = float(intrinsicMatrix.at<double>(0, 0));
     float fy = float(intrinsicMatrix.at<double>(1, 1));
@@ -78,7 +70,7 @@ Mat Image4D::get3DImage() const
     return image3D;
 }
 
-void Image4D::crop(const cv::Rect& cropRegion)
+void Image4DLeaf::crop(const cv::Rect& cropRegion)
 {
 
     image = image(cropRegion); // crop image
@@ -91,7 +83,7 @@ void Image4D::crop(const cv::Rect& cropRegion)
     intrinsicMatrix.at<double>(1, 2) -= cropRegion.y;
 }
 
-Pose Image4D::getRotationMatrix() const
+Pose Image4DLeaf::getRotationMatrix() const
 {
     // Calculate rotation around x axis
     float cosx = cos(eulerAngles[0]);
@@ -106,32 +98,32 @@ Pose Image4D::getRotationMatrix() const
         seny, -senx * cosy, cosx * cosy);
 }
 
-cv::Vec3f Image4D::getEulerAngles() const { return eulerAngles; }
-cv::Vec3f Image4D::getPosition() const { return position; }
+cv::Vec3f Image4DLeaf::getEulerAngles() const { return eulerAngles; }
+cv::Vec3f Image4DLeaf::getPosition() const { return position; }
 
-void Image4D::setEulerAngles(const cv::Vec3f& value)
+void Image4DLeaf::setEulerAngles(const cv::Vec3f& value)
 {
     eulerAngles = value;
 }
 
-void Image4D::setPosition(const cv::Vec3f& value)
+void Image4DLeaf::setPosition(const cv::Vec3f& value)
 {
     position = value;
 }
 
-cv::Mat const* Image4D::getImage() const
+cv::Mat Image4DLeaf::getImage() const
 {
-    return &image;
+    return image;
 }
 
-cv::Mat const* Image4D::getDepthMap() const
+cv::Mat Image4DLeaf::getDepthMap() const
 {
-    return &depthMap;
+    return depthMap;
 }
 
 // ---------- private member functions ----------
 
-void Image4D::resizeImage()
+void Image4DLeaf::resizeImage()
 {
     const int IMG_WIDTH = image.cols;
     const int IMG_HEIGHT = image.rows;
