@@ -13,6 +13,7 @@
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_types.h>
 
+#include "image4dclustercomposite.h"
 #include "image4dleaf.h"
 #include "settings.h"
 
@@ -48,7 +49,7 @@ bool Image4DLoader::hasNext() const
     return !imageFileNames.empty() && !cloudFileNames.empty();
 }
 
-bool Image4DLoader::get(Image4DSetComponent& image4d)
+bool Image4DLoader::get(Image4DComponent& image4d)
 {
     if (!hasNext())
         return false;
@@ -89,7 +90,7 @@ bool Image4DLoader::get(Image4DSetComponent& image4d)
     return true;
 }
 
-void Image4DLoader::getMultiThr(std::vector<Image4DSetComponent>& image4DSequence, int begin, int end, std::mutex& mutex) const
+void Image4DLoader::getMultiThr(std::vector<Image4DComponent>& image4DSequence, int begin, int end, std::mutex& mutex) const
 {
     Mat K = Settings::getInstance().getK();
 
@@ -131,10 +132,10 @@ void Image4DLoader::getMultiThr(std::vector<Image4DSetComponent>& image4DSequenc
     }
 }
 
-std::vector<Image4DSetComponent> Image4DLoader::get()
+Image4DComponent* Image4DLoader::get()
 {
     const auto SIZE = imageFileNames.size();
-    vector<Image4DSetComponent> image4DSequence(SIZE);
+    vector<Image4DComponent> image4DSequence(SIZE);
 
     // get number of concurrently executable threads
     const int numOfThreads = std::thread::hardware_concurrency();
@@ -168,7 +169,9 @@ std::vector<Image4DSetComponent> Image4DLoader::get()
     imageFileNames.clear();
     cloudFileNames.clear();
 
-    return image4DSequence;
+    Image4DVectorComposite* returned = new Image4DVectorComposite();
+    returned->setVec(image4DSequence);
+    return returned;
 }
 
 void Image4DLoader::setFileNameRegEx(const string& fileNameRegEx)

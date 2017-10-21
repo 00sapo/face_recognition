@@ -1,5 +1,6 @@
 #include "image4dleaf.h"
 
+#include <image4dclustercomposite.h>
 #include <math.h>
 
 using cv::Mat;
@@ -83,7 +84,7 @@ void Image4DLeaf::crop(const cv::Rect& cropRegion)
     intrinsicMatrix.at<double>(1, 2) -= cropRegion.y;
 }
 
-Pose Image4DLeaf::getRotationMatrix() const
+std::vector<Pose> Image4DLeaf::getRotationMatrix() const
 {
     // Calculate rotation around x axis
     float cosx = cos(eulerAngles[0]);
@@ -93,9 +94,9 @@ Pose Image4DLeaf::getRotationMatrix() const
     float cosz = cos(eulerAngles[2]);
     float senz = sin(eulerAngles[2]);
 
-    return Pose(cosy * cosz, cosx * senz + senx * seny * cosz, senx * senz - cosx * seny * cosz,
+    return std::vector<Pose>({ Pose(cosy * cosz, cosx * senz + senx * seny * cosz, senx * senz - cosx * seny * cosz,
         -cosy * senz, cosx * cosz - senx * seny * senz, senx * cosz + cosx * seny * senz,
-        seny, -senx * cosy, cosx * cosy);
+        seny, -senx * cosy, cosx * cosy) });
 }
 
 cv::Vec3f Image4DLeaf::getEulerAngles() const { return eulerAngles; }
@@ -121,8 +122,6 @@ cv::Mat Image4DLeaf::getDepthMap() const
     return depthMap;
 }
 
-// ---------- private member functions ----------
-
 void Image4DLeaf::resizeImage()
 {
     const int IMG_WIDTH = image.cols;
@@ -144,5 +143,59 @@ void Image4DLeaf::resizeImage()
     intrinsicMatrix.at<double>(1, 2) *= DEPTH_IMG_RATIO;
 
     return;
+}
+
+bool Image4DLeaf::isLeaf() const
+{
+    return true;
+}
+
+void Image4DLeaf::forEachComponent(void (*func)(Image4DComponent*))
+{
+    func(this);
+}
+
+size_t Image4DLeaf::size() const
+{
+    return 1;
+}
+
+Image4DComponent* Image4DLeaf::add(Image4DComponent& item)
+{
+    Image4DVectorComposite* returned = new Image4DVectorComposite();
+    returned->add(*this);
+    returned->add(item);
+    return returned;
+}
+
+Image4DComponent* Image4DLeaf::add(Image4DComponent& item, uint i)
+{
+    if (i == 0)
+        return this->add(item);
+    else
+        return nullptr;
+}
+
+vector<Image4DComponent>::iterator Image4DLeaf::begin()
+{
+    return vector<Image4DComponent>().begin();
+}
+
+vector<Image4DComponent>::iterator Image4DLeaf::end()
+{
+    return vector<Image4DComponent>().end();
+}
+
+void Image4DLeaf::clear()
+{
+    Image4DLeaf();
+}
+
+Image4DComponent* Image4DLeaf::at(uint i)
+{
+    if (i == 0)
+        return this;
+    else
+        return nullptr;
 }
 }

@@ -51,8 +51,20 @@ void FaceCropper::removeOutliers() const
     });
 }
 
+void FaceCropper::filterImage4DComponent(Image4DComponent* image4d)
+{
+    FaceCropper remover;
+    remover.setImage4DComponent(image4d);
+    remover.filter();
+}
+
 bool FaceCropper::filter()
 {
+
+    if (!image4d->isLeaf()) {
+        image4d->forEachComponent(filterImage4DComponent);
+        return true;
+    }
     removeOutliers();
 
     if (!estimateFacePose()) {
@@ -176,12 +188,12 @@ bool FaceCropper::isPoseEstimatorAvailable() const
     return poseEstimatorAvailable;
 }
 
-Image4DSetComponent* FaceCropper::getImage4d() const
+Image4DComponent* FaceCropper::getImage4DComponent() const
 {
     return image4d;
 }
 
-void FaceCropper::setImage4d(Image4DSetComponent* value)
+void FaceCropper::setImage4DComponent(Image4DComponent* value)
 {
     image4d = value;
 }

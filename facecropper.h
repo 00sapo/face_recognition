@@ -13,8 +13,8 @@ public:
 
     bool filter();
 
-    Image4DSetComponent* getImage4d() const;
-    void setImage4d(Image4DSetComponent* value);
+    Image4DComponent* getImage4DComponent() const;
+    void setImage4DComponent(Image4DComponent* value);
 
     CRForestEstimator getEstimator() const;
     void setEstimator(const CRForestEstimator& value);
@@ -25,10 +25,11 @@ private:
     void removeOutliers() const;
     bool estimateFacePose() const;
 
-    Image4DSetComponent* image4d;
+    Image4DComponent* image4d;
 
     CRForestEstimator estimator;
     bool poseEstimatorAvailable = false;
+    static void filterImage4DComponent(Image4DComponent* image4d);
 };
 }
 #endif // FACECROPPER_H

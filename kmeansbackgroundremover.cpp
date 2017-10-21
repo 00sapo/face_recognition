@@ -20,22 +20,33 @@ KmeansBackgroundRemover::KmeansBackgroundRemover(uint16_t fixedThreshold)
 
 bool KmeansBackgroundRemover::filter()
 {
-    cv::Rect boundingBox;
-    // ... detect foreground face...
-    if (!detectForegroundFace(boundingBox))
-        removeBackgroundFixed();
-    else
-        removeBackgroundDynamic(boundingBox);
+    if (image4d->isLeaf()) {
+        cv::Rect boundingBox;
+        // ... detect foreground face...
+        if (!detectForegroundFace(boundingBox))
+            removeBackgroundFixed();
+        else
+            removeBackgroundDynamic(boundingBox);
 
+    } else {
+        image4d->forEachComponent(filterImage4DComponent);
+    }
     return 1;
 }
 
-Image4DSetComponent* KmeansBackgroundRemover::getImage4d() const
+void KmeansBackgroundRemover::filterImage4DComponent(Image4DComponent* image4d)
+{
+    KmeansBackgroundRemover remover;
+    remover.setImage4DComponent(image4d);
+    remover.filter();
+}
+
+Image4DComponent* KmeansBackgroundRemover::getImage4DComponent() const
 {
     return image4d;
 }
 
-void KmeansBackgroundRemover::setImage4d(Image4DSetComponent* value)
+void KmeansBackgroundRemover::setImage4DComponent(Image4DComponent* value)
 {
     image4d = value;
 }

@@ -7,9 +7,9 @@ typedef unsigned int uint;
 typedef cv::Matx<float, 9, 1> Pose;
 namespace face {
 
-class Image4DSetComponent {
+class Image4DComponent {
 public:
-    Image4DSetComponent();
+    Image4DComponent();
 
     /**
          * @brief depthForEach applies a function to every pixel
@@ -77,7 +77,11 @@ public:
          */
     virtual void crop(const cv::Rect& cropRegion);
 
-    virtual Pose getRotationMatrix() const;
+    /**
+     * @brief getRotationMatrix
+     * @return  a vector of Pose containing all rotation matrix of images in the set
+     */
+    virtual std::vector<Pose> getRotationMatrix() const;
     virtual cv::Vec3f getEulerAngles() const;
     virtual cv::Vec3f getPosition() const;
 
@@ -97,14 +101,50 @@ public:
 
     virtual void setName(std::string name);
 
-protected:
-    virtual boost::any virtualDepthForEach(const std::function<void(int, int, boost::any&)>& function, const cv::Rect& ROI) = 0;
-    virtual boost::any virtualImageForEach(const std::function<void(int, int, boost::any&)>& function, const cv::Rect& ROI) = 0;
-
     /**
          * @brief resizeImage dowscales the image to match depth map dimensions
          */
     virtual void resizeImage();
+
+    /**
+     * @brief isLeaf
+     * @return true if this component is a leaf, false otherwise
+     */
+    virtual bool isLeaf() const;
+
+    /**
+     * @brief forEachComponent execute function func on each sub component (on this component if it is a leaf)
+     */
+    virtual void forEachComponent(void (*func)(Image4DComponent*));
+
+    virtual size_t size() const;
+
+    /**
+     * @brief add one item to this Image4DComponent
+     * @param item the item to add
+     * @return a pointer to the Image4DComponent resulting
+     */
+    virtual Image4DComponent* add(Image4DComponent& item);
+
+    /**
+     * @brief add add one item to the Image4DComponent locted at index i of this Image4DComponent
+     * @param item the item to add
+     * @param i the index at which add the item
+     * @return the Image4DComponent resulting
+     */
+    virtual Image4DComponent* add(Image4DComponent& item, uint i);
+
+    virtual void clear();
+    virtual Image4DComponent* at(uint i);
+
+    /* method to make range based loops */
+    virtual std::vector<Image4DComponent>::iterator begin();
+    virtual std::vector<Image4DComponent>::iterator end();
+
+protected:
+    virtual boost::any virtualDepthForEach(const std::function<void(int, int, boost::any&)>& function, const cv::Rect& ROI)
+        = 0;
+    virtual boost::any virtualImageForEach(const std::function<void(int, int, boost::any&)>& function, const cv::Rect& ROI) = 0;
 };
 }
 #endif // IMAGESET_H

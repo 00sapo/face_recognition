@@ -28,23 +28,12 @@ void PreprocessorPipe::removeFilter(uint i)
 bool PreprocessorPipe::processPipe()
 {
     bool result = false;
-    for (Image4DSetComponent& image4d : imageSet) {
-        for (Filter& filter : filterPipe) {
-            filter.setImage4d(&image4d);
-            result = filter.filter();
-        }
+    for (Filter& filter : filterPipe) {
+        filter.setImage4DComponent(imageSet);
+        result = filter.filter();
+        imageSet = filter.getImage4DComponent();
     }
     return result;
-}
-
-void PreprocessorPipe::push_back(Image4DSetComponent& image4d)
-{
-    imageSet.push_back(image4d);
-}
-
-Image4DSetComponent& PreprocessorPipe::imageSetAt(uint i)
-{
-    return imageSet.at(i);
 }
 
 vector<Filter> PreprocessorPipe::getFilterPipe() const
@@ -57,13 +46,14 @@ void PreprocessorPipe::setFilterPipe(const vector<Filter>& value)
     filterPipe = value;
 }
 
-vector<Image4DSetComponent> PreprocessorPipe::getImageSet() const
+Image4DComponent* PreprocessorPipe::getImageSet() const
 {
     return imageSet;
 }
 
-void PreprocessorPipe::setImageSet(const vector<Image4DSetComponent>& value)
+void PreprocessorPipe::setImageSet(Image4DComponent* value)
 {
+
     imageSet = value;
 }
 }

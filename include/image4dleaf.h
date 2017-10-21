@@ -11,7 +11,7 @@ namespace face {
      * @brief The Image4DLeaf class is a couple (grayscale image - depth map)
      *        that represents both the visual and spatial information of a scene
      */
-class Image4DLeaf : public Image4DSetComponent {
+class Image4DLeaf : public Image4DComponent {
 public:
     Image4DLeaf();
 
@@ -74,7 +74,7 @@ public:
         }
     }
 
-    Pose getRotationMatrix() const;
+    std::vector<Pose> getRotationMatrix() const;
     cv::Vec3f getEulerAngles() const;
     cv::Vec3f getPosition() const;
 
@@ -85,6 +85,23 @@ public:
     cv::Mat getImage() const;
 
     cv::Mat getDepthMap() const;
+
+    void resizeImage();
+
+    bool isLeaf() const;
+
+    void forEachComponent(void (*func)(Image4DComponent*));
+
+    size_t size() const;
+
+    Image4DComponent* add(Image4DComponent& item);
+    Image4DComponent* add(Image4DComponent& item, uint i);
+
+    std::vector<Image4DComponent>::iterator begin();
+    std::vector<Image4DComponent>::iterator end();
+
+    void clear();
+    Image4DComponent* at(uint i);
 
 private:
     cv::Vec3f eulerAngles;
@@ -99,8 +116,6 @@ protected:
     float DEPTH_IMG_RATIO; // downscaling ratio applied to image by the constructor
 
     cv::Mat intrinsicMatrix;
-
-    void resizeImage();
 };
 
 } // face

@@ -15,8 +15,8 @@ public:
      */
     bool filter();
 
-    Image4DSetComponent* getImage4d() const;
-    void setImage4d(Image4DSetComponent* value);
+    Image4DComponent* getImage4DComponent() const;
+    void setImage4DComponent(Image4DComponent* value);
 
     uint16_t getFixedThreshold() const;
     void setFixedThreshold(const uint16_t& value);
@@ -30,11 +30,12 @@ private:
     bool faceDetectorAvailable = false;
     cv::CascadeClassifier classifier;
     uint16_t fixedThreshold;
-    Image4DSetComponent* image4d;
+    Image4DComponent* image4d;
 
     void removeBackgroundFixed() const;
     void removeBackgroundDynamic(cv::Rect& boundingBox) const;
     bool detectForegroundFace(cv::Rect& boundingBox);
+    static void filterImage4DComponent(Image4DComponent* image4d);
 };
 }
 #endif // KMEANSBACKGROUNDREMOVER_H

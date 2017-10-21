@@ -1,6 +1,7 @@
 #ifndef FACE_IMAGELOADER_HPP
 #define FACE_IMAGELOADER_HPP
 
+#include <image4dclustercomposite.h>
 #include <image4dsetcomponent.h>
 #include <mutex>
 #include <regex>
@@ -42,7 +43,7 @@ public:
      * @param image4d: output image4d
      * @return true if successfully loaded, false otherwise
      */
-    virtual bool get(Image4DSetComponent& image4d);
+    virtual bool get(Image4DComponent& image4d);
 
     /**
      * @brief get: multithreaded version of get(Image4D& image4d).
@@ -50,7 +51,7 @@ public:
      *        depending on the number of available cores
      * @return loaded files
      */
-    virtual std::vector<Image4DSetComponent> get();
+    virtual Image4DComponent *get();
 
     /**
      * @brief setFileNameRegEx
@@ -89,7 +90,7 @@ private:
 
     bool matchTemplate(const std::string& fileName);
 
-    void getMultiThr(std::vector<Image4DSetComponent>& image4DSequence, int begin, int end, std::mutex& mutex) const;
+    void getMultiThr(std::vector<Image4DComponent>& image4DSequence, int begin, int end, std::mutex& mutex) const;
 };
 
 } // face

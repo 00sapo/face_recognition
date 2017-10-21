@@ -43,28 +43,15 @@ public:
      */
     bool processPipe();
 
-    /**
-     * @brief push_back add the Image4DSetComponent to the image set
-     * @param image4d
-     */
-    void push_back(Image4DSetComponent& image4d);
-
-    /**
-     * @brief imageSetAt
-     * @param i
-     * @return the Image4DSetComponent at position i
-     */
-    Image4DSetComponent& imageSetAt(uint i);
-
     vector<Filter> getFilterPipe() const;
     void setFilterPipe(const vector<Filter>& value);
 
-    vector<Image4DSetComponent> getImageSet() const;
-    void setImageSet(const vector<Image4DSetComponent>& value);
+    Image4DComponent* getImageSet() const;
+    void setImageSet(Image4DComponent* value);
 
 protected:
     vector<Filter> filterPipe;
-    vector<Image4DSetComponent> imageSet;
+    Image4DComponent* imageSet;
 };
 }
 #endif // PREPROCESSORPIPE_H

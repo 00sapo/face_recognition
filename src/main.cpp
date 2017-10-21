@@ -2,6 +2,7 @@
 #include <image4dsetcomponent.h>
 #include <iostream>
 #include <kmeansbackgroundremover.h>
+#include <poseclusterizer.h>
 #include <preprocessorpipe.h>
 #include <string.h>
 #include <svmtrainer.h>
@@ -27,11 +28,13 @@ void training(string trainingSetDir, string outputDir)
         pipe.setImageSet(loader.get());
     }
 
-    KmeansBackgroundRemover backgroundRemover = KmeansBackgroundRemover(1600);
-    FaceCropper faceCropper = FaceCropper();
+    KmeansBackgroundRemover backgroundRemover;
+    FaceCropper faceCropper;
+    PoseClusterizer poseClusterizer;
 
     pipe.push_back(backgroundRemover);
     pipe.push_back(faceCropper);
+    pipe.push_back(poseClusterizer);
     pipe.processPipe();
 
     //    SVMTrainer faceRec;

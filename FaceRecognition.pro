@@ -17,7 +17,8 @@ SOURCES += src/main.cpp \
     facecropper.cpp \
     src/image4dleaf.cpp \
     image4dclustercomposite.cpp \
-    preprocessorpipe.cpp
+    preprocessorpipe.cpp \
+    poseclusterizer.cpp
 
 INCLUDEPATH += include $$(OPENCV_INCLUDE)
 
@@ -32,7 +33,8 @@ HEADERS += include/*.h \
     facecropper.h \
     image4dsetcomponent.h \
     image4dclustercomposite.h \
-    preprocessorpipe.h
+    preprocessorpipe.h \
+    poseclusterizer.h
 
 DISTFILES += \
     camera_info.yaml
