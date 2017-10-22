@@ -28,7 +28,7 @@ format 214
   
   cpp_h_dir "/home/sapo/Develop/face_recognition/source/extern_libs/head_pose_estimation/demo/"
   cpp_src_dir "/home/sapo/Develop/face_recognition/source/extern_libs/head_pose_estimation/demo/"
-  classview 128514 "demo"
+  classview 128386 "demo"
     
     classdiagramsettings member_max_width 0 end
     
@@ -44,7 +44,7 @@ format 214
     
     activitydiagramsettings
      end
-    class 130946 "GLUTproc"
+    class 128770 "GLUTproc"
       visibility package stereotype "typedef" explicit_base_type "void"
       cpp_decl "${comment}typedef ${type}(* ${name})();
 "
@@ -61,11 +61,11 @@ Extension functions, see freeglut_ext.c
     end
   end
 
-  deploymentview 128386 "demo"
+  deploymentview 128258 "demo"
     //deployment diagram settings
     deploymentdiagramsettings
      end
-    artifact 129538 "freeglut_ext"
+    artifact 128514 "freeglut_ext"
       stereotype "source"
       cpp_h "#ifndef ${NAMESPACE}_${NAME}_H
 #define ${NAMESPACE}_${NAME}_H
@@ -84,11 +84,11 @@ ${namespace_start}
 ${members}
 ${namespace_end}"
       associated_elems
-	class_ref 130946 // GLUTproc
+	class_ref 128770 // GLUTproc
       end
     end
 
-    artifact 130690 "main"
+    artifact 130946 "main"
       stereotype "source"
       cpp_src "int main(int argc, char* argv[])
 {

@@ -55,6 +55,7 @@ public:
         const uint MAX_X = ROI.x + ROI.width;
         const uint MAX_Y = ROI.y + ROI.height;
 
+        std::cout << "mat type: " << depthMap.type() << std::endl;
         for (uint y = ROI.y; y < MAX_Y; ++y) {
             for (uint x = ROI.x; x < MAX_X; ++x) {
                 function(x, y, depthMap.at<boost::any>(y, x));

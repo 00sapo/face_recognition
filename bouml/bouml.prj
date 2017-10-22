@@ -39,9 +39,9 @@ format 214
 
   mark_for_import
   
-  package_ref 128002 // source
-
-  classview 128770 "classview"
+  ncouples 1
+  key "html dir" value "/tmp/"
+  classview 128130 "class view"
     
     classdiagramsettings member_max_width 0 end
     
@@ -57,10 +57,11 @@ format 214
     
     activitydiagramsettings
      end
-    classdiagram 128002 "classdiagram"
+    classdiagram 128130 "uml"
       classdiagramsettings member_max_width 0 end
       size D
     end
-
   end
+
+  package_ref 128130 // source
 end

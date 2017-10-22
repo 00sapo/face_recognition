@@ -1,0 +1,68 @@
+class SVMTrainer
+!!!157442.cpp!!!	train(inout trainingSamples : Image4DComponent, in samplIDs : vector<string>) : void
+    N = trainingSamples.size();
+
+    // if not enough IDs automatically generate them
+    IDs = (N > samplIDs.size()) ? generateLabels(N) : samplIDs;
+
+    grayscaleSVMs.resize(N);
+    depthmapSVMs.resize(N);
+    for (auto& svmVector : grayscaleSVMs)
+        svmVector.resize(c);
+    for (auto& svmVector : depthmapSVMs)
+        svmVector.resize(c);
+
+    // compute normalized covariances, i.e. transform trainingSamples to feature vectors for the SVMs
+    MatSet grayscaleCovar, depthmapCovar;
+    for (Image4DComponent* imageC1 : trainingSamples) {
+        vector<Mat> grayScaleVec;
+        vector<Mat> depthVec;
+        for (Image4DComponent* imageC2 : *imageC1) {
+            grayScaleVec.push_back(imageC2->getImageCovariance());
+            depthVec.push_back(imageC2->getDepthCovariance());
+        }
+        grayscaleCovar.push_back(grayScaleVec);
+        depthmapCovar.push_back(depthVec);
+    }
+
+    // convert data format to be ready for SVMs, i.e. from Mat vector to Mat
+    vector<int> grayscaleIndexes, depthmapIndexes;
+    auto grayscaleMat = formatDataForTraining(grayscaleCovar, grayscaleIndexes);
+    auto depthmapMat = formatDataForTraining(depthmapCovar, depthmapIndexes);
+
+    // train SVMs for grayscale images
+    //    trainSVMs(grayscaleMat, grayscaleIndexes, ImgType::grayscale);
+
+    // train SVMs for depthmap images
+    trainSVMs(depthmapMat, depthmapIndexes, ImgType::depthmap);
+!!!158082.cpp!!!	formatDataForTraining(in data : MatSet, inout indexes : std::vector<int>) : Mat
+    indexes.clear();
+
+    // compute dataOut dimensions
+    int height = 0;
+    for (const auto& identity : data) {
+        height += identity.size();
+    }
+    const int width = data[0][0].rows * data[0][0].cols; // assuming all Mat in dataIn have the same dimensions
+    Mat dataOut(height, width, data[0][0].type());
+
+    // every Mat in dataIn is converted to a row of dataOut
+    int rowIndex = 0;
+    for (size_t i = 0; i < data.size(); ++i) { // for each vector in dataIn (i.e. for each identity)..
+        const auto& identity = data[i];
+        int start = rowIndex; // keep track of the first row index of current identity
+        for (size_t j = 0; j < identity.size(); ++j) { // for each Mat belonging to this identity...
+
+            // convert the Mat in a row of DataOut
+            auto iter = identity[j].begin<float>();
+            for (auto k = 0; k < width; ++k, ++iter) {
+                dataOut.at<float>(rowIndex, k) = *iter;
+            }
+            ++rowIndex;
+        }
+
+        // save the range of rows of dataOut belonging to this identity
+        indexes.push_back(start);
+    }
+
+    return dataOut;

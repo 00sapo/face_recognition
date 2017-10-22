@@ -1,5 +1,5 @@
 format 214
-"face" // source::src::face
+"include" // source::include::include
   revision 1
   modified_by 2 "sapo"
   // class settings
@@ -26,10 +26,9 @@ format 214
   activitydiagramsettings
    end
   
-  cpp_h_dir "/home/sapo/Develop/face_recognition/source/src/"
-  cpp_src_dir "/home/sapo/Develop/face_recognition/source/src/"
-  cpp_namespace "face"
-  classview 128642 "src"
+  cpp_h_dir "/home/sapo/Develop/face_recognition/source/include/"
+  cpp_src_dir "/home/sapo/Develop/face_recognition/source/include/"
+  classview 128642 "include"
     
     classdiagramsettings member_max_width 0 end
     
@@ -45,11 +44,9 @@ format 214
     
     activitydiagramsettings
      end
-    class 132098 "SteinKernel"
-      visibility package 
-      cpp_decl "${comment}${template}class ${name}${inherit} {
-${members}};
-${inlines}
+    class 129410 "uint"
+      visibility package stereotype "typedef" explicit_base_type "unsigned int"
+      cpp_decl "${comment}typedef ${type} ${name};
 "
       java_decl ""
       php_decl ""
@@ -58,94 +55,10 @@ ${inlines}
       explicit_switch_type ""
       mysql_decl ""
       
-      comment "@brief The SteinKernel class is a custom SVM kernel for
-       Lie group of Riemannian manifold, the space of symmetric
-       positive definite matrixes
-"
-      classrelation 130946 // <generalisation>
-	relation 130946 ---|>
-	  a public
-	    cpp default "${type}"
-	    classrelation_ref 130946 // <generalisation>
-	  b parent class_ref 132226 // typedef5
-      end
-
-      operation 148610 "SteinKernel"
-	cpp_inline public explicit_return_type ""
-	nparams 1
-	  param in name "gamma" explicit_type "float"
-	cpp_decl "    ${comment}${inline}${name}${(}${t0} ${p0}${v0}${)}${volatile}${throw}${abstract} : gamma(gamma)
-    {
-    };
-"
-	
-	
-	
-	
-      end
-
-      operation 148738 "calc"
-	cpp_inline public explicit_return_type "void"
-	nparams 5
-	  param in name "N" explicit_type "int"
-	  param in name "numOfFeatures" explicit_type "int"
-	  param in name "samples" explicit_type "float"
-	  param in name "x" explicit_type "float"
-	  param inout name "results" explicit_type "float"
-	cpp_decl "    ${comment}${friend}${static}${inline}${virtual}${type} ${name}${(}${t0} ${p0}${v0}, ${t1} ${p1}${v1}, const ${t2} * ${p2}${v2}, const ${t3} * ${p3}${v3}, ${t4} * ${p4}${v4}${)}${const}${volatile}${throw}${abstract} {
-        Mat Y(16, 16, CV_32F, (void*)(x));
-
-        for (int i = 0; i < N; i++) {
-            Mat X(16, 16, CV_32F, (void*)(samples + numOfFeatures * i));
-            auto A = X + Y;
-            double S = std::log10(cv::determinant(A / 2)) - std::log10(cv::determinant(X * Y)) / 2;
-            results[i] = std::exp(-gamma * S);
-        }
-    };
-"
-	
-	
-	
-	
-	comment "@brief calc computes the Stein kernel function.
-       results[i] = <h(x),h(samples[i])>, for i = 0,...,N-1
-       where <X,Y> denotes the inner product.
-@param N number of input samples (matrixes in our case)
-@param numOfFeatures length of sample (# of matrixes elements in our case)
-@param samples input samples
-@param x another input sample
-@param results array of the results
-"
-      end
-
-      operation 148866 "getType"
-	const cpp_inline public explicit_return_type "int"
-	nparams 0
-	cpp_decl "    ${comment}${friend}${static}${inline}${virtual}${type} ${name}${(}${)}${const}${volatile}${throw}${abstract} {
-        return ml::SVM::CUSTOM;
-    };
-"
-	
-	
-	
-	
-      end
-
-      attribute 134274 "gamma"
-	public explicit_type "float"
-	cpp_decl "    ${comment}${static}${thread_local}${mutable}${volatile}${const}${type} ${name}${value};
-"
-	java_decl ""
-	php_decl ""
-	python_decl ""
-	idl_decl ""
-	mysql_decl ""
-	MysqlColumn
-      end
     end
 
-    class 132226 "typedef5"
-      visibility package stereotype "typedef" explicit_base_type "ml::SVM::Kernel"
+    class 129538 "Pose"
+      visibility package stereotype "typedef" explicit_base_type "cv::Matx<float, 9, 1>"
       cpp_decl "${comment}typedef ${type} ${name};
 "
       java_decl ""
@@ -158,11 +71,11 @@ ${inlines}
     end
   end
 
-  deploymentview 128770 "face"
+  deploymentview 128514 "include"
     //deployment diagram settings
     deploymentdiagramsettings
      end
-    artifact 130946 "typedef5"
+    artifact 129026 "image4dcomponent"
       stereotype "source"
       cpp_h "#ifndef ${NAMESPACE}_${NAME}_H
 #define ${NAMESPACE}_${NAME}_H
@@ -181,30 +94,8 @@ ${namespace_start}
 ${members}
 ${namespace_end}"
       associated_elems
-	class_ref 132226 // typedef5
-      end
-    end
-
-    artifact 131074 "SteinKernel"
-      stereotype "source"
-      cpp_h "#ifndef ${NAMESPACE}_${NAME}_H
-#define ${NAMESPACE}_${NAME}_H
-
-${comment}
-${includes}
-${declarations}
-${namespace_start}
-${definition}
-${namespace_end}
-#endif
-"
-      cpp_src "${comment}
-${includes}
-${namespace_start}
-${members}
-${namespace_end}"
-      associated_elems
-	class_ref 132098 // SteinKernel
+	class_ref 129410 // uint
+	class_ref 129538 // Pose
       end
     end
   end

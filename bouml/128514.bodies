@@ -1,5 +1,5 @@
 class CRForestEstimator
-!!!138114.cpp!!!	loadForest(in treespath : char, in ntrees : int = 0) : bool
+!!!129666.cpp!!!	loadForest(in treespath : char, in ntrees : int = 0) : bool
 
 	// Init forest with number of trees
 	crForest = new CRForest( ntrees );

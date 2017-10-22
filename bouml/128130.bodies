@@ -1,0 +1,19 @@
+class CRForest
+!!!129026.cpp!!!	regressionIntegral(in patch : std::vector< cv::Mat >, in nonZeros : cv::Mat, in roi : cv::Rect) : std::vector< const LeafNode* >
+
+
+	std::vector<const LeafNode*> res;
+	for(int i=0; i<(int)vTrees.size(); ++i)
+		res.push_back( vTrees[i]->regressionIntegral(patch,nonZeros,roi) );
+	return res;
+!!!129154.cpp!!!	loadForest(in filename : char) : bool
+
+
+	char buffer[200];
+	bool success = true;
+	for(unsigned int i=0; i<vTrees.size(); ++i) {
+		sprintf(buffer,"%s%03d.bin",filename,i);
+		vTrees[i] = new CRTree();
+		success &= vTrees[i]->loadTree(buffer);
+	}
+	return success;

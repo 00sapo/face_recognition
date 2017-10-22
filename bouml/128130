@@ -1,5 +1,5 @@
 format 214
-"extern_libs" // source::extern_libs
+"source" // source
   revision 1
   modified_by 2 "sapo"
   // class settings
@@ -26,79 +26,11 @@ format 214
   activitydiagramsettings
    end
   
-  cpp_h_dir "/home/sapo/Develop/face_recognition/source/extern_libs/"
-  cpp_src_dir "/home/sapo/Develop/face_recognition/source/extern_libs/"
-  package_ref 128258 // head_pose_estimation
+  cpp_h_dir "/home/sapo/Develop/face_recognition/source/"
+  cpp_src_dir "/home/sapo/Develop/face_recognition/source/"
+  package_ref 128258 // extern_libs
 
-  classview 128386 "source"
-    
-    classdiagramsettings member_max_width 0 end
-    
-    collaborationdiagramsettings end
-    
-    objectdiagramsettings end
-    
-    sequencediagramsettings end
-    
-    statediagramsettings
-     end
-    
-    
-    activitydiagramsettings
-     end
-    class 128770 "uint"
-      visibility package stereotype "typedef" explicit_base_type "unsigned int"
-      cpp_decl "${comment}typedef ${type} ${name};
-"
-      java_decl ""
-      php_decl ""
-      python_2_2 python_decl ""
-      idl_decl ""
-      explicit_switch_type ""
-      mysql_decl ""
-      
-    end
+  package_ref 128642 // include
 
-    class 128898 "Pose"
-      visibility package stereotype "typedef" explicit_base_type "cv::Matx<float, 9, 1>"
-      cpp_decl "${comment}typedef ${type} ${name};
-"
-      java_decl ""
-      php_decl ""
-      python_2_2 python_decl ""
-      idl_decl ""
-      explicit_switch_type ""
-      mysql_decl ""
-      
-    end
-  end
-
-  deploymentview 128130 "extern_libs"
-    //deployment diagram settings
-    deploymentdiagramsettings
-     end
-    artifact 128386 "image4dsetcomponent"
-      stereotype "source"
-      cpp_h "#ifndef ${NAMESPACE}_${NAME}_H
-#define ${NAMESPACE}_${NAME}_H
-
-${comment}
-${includes}
-${declarations}
-${namespace_start}
-${definition}
-${namespace_end}
-#endif
-"
-      cpp_src "${comment}
-${includes}
-${namespace_start}
-${members}
-${namespace_end}"
-      associated_elems
-	class_ref 128770 // uint
-	class_ref 128898 // Pose
-      end
-    end
-  end
+  package_ref 128898 // src
 end
