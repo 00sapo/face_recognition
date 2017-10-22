@@ -1,5 +1,6 @@
+#include <covariancecomputer.h>
 #include <facecropper.h>
-#include <image4dsetcomponent.h>
+#include <image4dcomponent.h>
 #include <iostream>
 #include <kmeansbackgroundremover.h>
 #include <poseclusterizer.h>
@@ -31,10 +32,12 @@ void training(string trainingSetDir, string outputDir)
     KmeansBackgroundRemover backgroundRemover;
     FaceCropper faceCropper;
     PoseClusterizer poseClusterizer;
+    CovarianceComputer covarianceComputer;
 
     pipe.push_back(backgroundRemover);
     pipe.push_back(faceCropper);
     pipe.push_back(poseClusterizer);
+    pipe.push_back(covarianceComputer);
     pipe.processPipe();
 
     //    SVMTrainer faceRec;

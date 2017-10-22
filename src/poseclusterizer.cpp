@@ -1,4 +1,5 @@
 #include "poseclusterizer.h"
+#include <image4dvectorcomposite.h>
 
 using std::vector;
 
@@ -55,11 +56,12 @@ int PoseClusterizer::getNearestCenterId(const Pose& pose)
 
 void PoseClusterizer::assignFacesToClusters()
 {
-    vector<Image4DComponent> clusters(numCenters);
+    //not the best, dependency from Image4DVectorComposite should be removed
+    vector<Image4DVectorComposite> clusters(numCenters);
     for (auto& image : *imageSet) {
-        if (image.isLeaf()) {
-            int index = getNearestCenterId(image.getRotationMatrix()[0]);
-            clusters.at(index).add(image);
+        if (image->isLeaf()) {
+            int index = getNearestCenterId(image->getRotationMatrix()[0]);
+            clusters.at(index).add(*image);
         } else {
             //It should ever eter this block, I inserted it for completeness --sapo
             PoseClusterizer pc;

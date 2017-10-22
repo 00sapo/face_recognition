@@ -16,15 +16,15 @@ bool CovarianceComputer::filter()
 {
     bool result = false;
 
-    for (Image4DComponent& image : *imageSet) {
-        if (image.isLeaf()) {
+    for (Image4DComponent* image : *imageSet) {
+        if (image->isLeaf()) {
             if (leafCovarianceComputer) {
-                result = setToCovariance(image);
+                result = setToNormalizedCovariance(*image);
                 if (!result)
                     return false;
             }
         } else {
-            result = setToCovariance(image);
+            result = setToNormalizedCovariance(*image);
             if (!result)
                 return false;
         }
@@ -53,7 +53,7 @@ void CovarianceComputer::setLeafCovarianceComputer(bool value)
     leafCovarianceComputer = value;
 }
 
-bool CovarianceComputer::setToCovariance(Image4DComponent& set)
+bool CovarianceComputer::setToNormalizedCovariance(Image4DComponent& set)
 {
     cv::Mat imageCovariance, depthCovariance;
 
@@ -78,11 +78,11 @@ bool CovarianceComputer::setToCovariance(Image4DComponent& set)
     int i = 0;
     for (const auto& image4d : set) {
 
-        assert(!image4d.getImage().empty() && !image4d.getDepthMap().empty() && "ERROR! Empty image!!");
+        assert(!image4d->getImage().empty() && !image4d->getDepthMap().empty() && "ERROR! Empty image!!");
 
         // compute 4x4 blocks size
-        const auto HEIGHT = image4d.getHeight();
-        const auto WIDTH = image4d.getWidth();
+        const auto HEIGHT = image4d->getHeight();
+        const auto WIDTH = image4d->getWidth();
         const auto BLOCK_H = HEIGHT / 4;
         const auto BLOCK_W = WIDTH / 4;
 
@@ -92,8 +92,8 @@ bool CovarianceComputer::setToCovariance(Image4DComponent& set)
 
                 // crop block region
                 cv::Rect roi(x, y, BLOCK_W, BLOCK_H);
-                Mat image = image4d.getImage()(roi);
-                Mat depth = image4d.getDepthMap()(roi);
+                Mat image = image4d->getImage()(roi);
+                Mat depth = image4d->getDepthMap()(roi);
 
                 // compute LBP of the block
                 auto imageHist = OLBPHist(image);
@@ -114,7 +114,7 @@ bool CovarianceComputer::setToCovariance(Image4DComponent& set)
 
     // Computing covariances.
     // OpenCV cv::calcCovarMatrix() could be used but it's very hard to obtain the same result
-    // because data representation shold be changed requiring extra coding and runtime work
+    // because data representation should be changed requiring extra coding and runtime work
     for (int p = 0; p < 16; ++p) {
         for (int q = 0; q < 16; ++q) {
             float imageValue = 0, depthValue = 0;
@@ -126,9 +126,11 @@ bool CovarianceComputer::setToCovariance(Image4DComponent& set)
             depthCovariance.at<float>(p, q) = depthValue / SET_SIZE;
         }
     }
-
-    set.setDepthCovariance(depthCovariance);
-    set.setImageCovariance(imageCovariance);
+    Mat normalizedDepth, normalizedImage;
+    normalize(depthCovariance, normalizedDepth);
+    set.setDepthCovariance(normalizedDepth);
+    normalize(imageCovariance, normalizedImage);
+    set.setImageCovariance(normalizedImage);
 
     return true;
 }

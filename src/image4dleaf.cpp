@@ -176,14 +176,16 @@ Image4DComponent* Image4DLeaf::add(Image4DComponent& item, uint i)
         return nullptr;
 }
 
-vector<Image4DComponent>::iterator Image4DLeaf::begin()
+vector<Image4DComponent*>::iterator Image4DLeaf::begin()
 {
-    return vector<Image4DComponent>().begin();
+    vector<Image4DComponent*> v;
+    return v.begin();
 }
 
-vector<Image4DComponent>::iterator Image4DLeaf::end()
+vector<Image4DComponent*>::iterator Image4DLeaf::end()
 {
-    return vector<Image4DComponent>().end();
+    vector<Image4DComponent*> v;
+    return v.end();
 }
 
 void Image4DLeaf::clear()
@@ -204,7 +206,7 @@ cv::Mat Image4DLeaf::getImageCovariance() const
     return imageCovariance;
 }
 
-void Image4DLeaf::setImageCovariance(const cv::Mat &value)
+void Image4DLeaf::setImageCovariance(const cv::Mat& value)
 {
     imageCovariance = value;
 }
@@ -214,7 +216,7 @@ cv::Mat Image4DLeaf::getDepthCovariance() const
     return depthCovariance;
 }
 
-void Image4DLeaf::setDepthCovariance(const cv::Mat &value)
+void Image4DLeaf::setDepthCovariance(const cv::Mat& value)
 {
     depthCovariance = value;
 }

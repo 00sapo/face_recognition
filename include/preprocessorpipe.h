@@ -28,7 +28,7 @@ public:
      * @param i
      * @return a pointer to the Filter at position i in the pipe
      */
-    Filter& filterPipeAt(uint i);
+    Filter* filterPipeAt(uint i);
 
     /**
      * @brief removeFilter remove filter
@@ -43,14 +43,14 @@ public:
      */
     bool processPipe();
 
-    vector<Filter> getFilterPipe() const;
-    void setFilterPipe(const vector<Filter>& value);
+    vector<Filter*> getFilterPipe() const;
+    void setFilterPipe(const vector<Filter*>& value);
 
     Image4DComponent* getImageSet() const;
     void setImageSet(Image4DComponent* value);
 
 protected:
-    vector<Filter> filterPipe;
+    vector<Filter*> filterPipe;
     Image4DComponent* imageSet;
 };
 }

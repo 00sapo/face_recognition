@@ -12,18 +12,18 @@ namespace face {
 
 class SVMTrainer : SVMManager {
 public:
-    SVMTrainer(int c = 3);
+    SVMTrainer();
 
     //    SVMTrainer(const std::string& fileName);
 
     /**
      * @brief Given a vector of faces trains an SVM model to recognize those faces
-     * @param trainingSamples: a set of vectors each one containing faces of a different person
+     * @param trainingSamples: a set faces of a different person, clusterized by pose and with
+     *                         and normalized covariances matrix
      * @param labels: labels to be assigned to each identity; these labels will be returned
      *                by FaceRecognizer::predict() when identifies a person
      */
-    void train(const Image4DSetComponentMatrix& trainingSamples,
-        const std::vector<std::string>& samplLabels = std::vector<std::string>());
+    void train(Image4DComponent& trainingSamples, const vector<string>& samplIDs);
 
     /**
      * @brief saves a trained model

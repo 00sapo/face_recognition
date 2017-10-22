@@ -5,7 +5,6 @@
 #include <opencv2/opencv.hpp>
 
 #include "covariancecomputer.h"
-#include "face.h"
 
 using cv::Mat;
 using std::string;
@@ -17,7 +16,7 @@ namespace face {
 
 const string SVMTester::unknownIdentity = "unknown_ID";
 
-bool SVMTester::load(const string& directoryName)
+/*bool SVMTester::load(const string& directoryName)
 {
     IDs.clear();
     grayscaleSVMs.clear();
@@ -62,7 +61,7 @@ SVMTester::SVMTester(int c)
 {
 }
 
-string SVMTester::predict(const vector<Face>& identity) const
+string SVMTester::predict(const Image4DComponent& identity) const
 {
     vector<Mat> grayscaleCovar, depthmapCovar;
     getNormalizedCovariances(identity, c, grayscaleCovar, depthmapCovar);
@@ -130,4 +129,4 @@ Mat SVMTester::formatDataForPrediction(const vector<Mat>& data) const
 
     return dataOut;
 }
-}
+*/}

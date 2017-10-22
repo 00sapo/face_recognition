@@ -1,7 +1,6 @@
 #ifndef SVMTESTER_H
 #define SVMTESTER_H
 #include "svmstein.h"
-#include <face.h>
 #include <opencv2/opencv.hpp>
 #include <string>
 #include <svmmanager.h>
@@ -22,7 +21,7 @@ public:
      * @return person label if the identity was in the training samples and is recognized,
      *         unknownIdentity otherwise
      */
-    std::string predict(const std::vector<Face>& identity) const;
+    std::string predict(const Image4DComponent& identity) const;
 
     /**
      * @brief loads a pretrained model

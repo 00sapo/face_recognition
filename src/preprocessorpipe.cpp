@@ -7,15 +7,15 @@ PreprocessorPipe::PreprocessorPipe()
 
 void PreprocessorPipe::push_back(Filter& f)
 {
-    filterPipe.push_back(f);
+    filterPipe.push_back(&f);
 }
 
 void PreprocessorPipe::insert(uint i, Filter& f)
 {
-    filterPipe.insert(filterPipe.begin() + i, f);
+    filterPipe.insert(filterPipe.begin() + i, &f);
 }
 
-Filter& PreprocessorPipe::filterPipeAt(uint i)
+Filter* PreprocessorPipe::filterPipeAt(uint i)
 {
     return filterPipe.at(i);
 }
@@ -28,20 +28,20 @@ void PreprocessorPipe::removeFilter(uint i)
 bool PreprocessorPipe::processPipe()
 {
     bool result = false;
-    for (Filter& filter : filterPipe) {
-        filter.setImage4DComponent(imageSet);
-        result = filter.filter();
-        imageSet = filter.getImage4DComponent();
+    for (Filter* filter : filterPipe) {
+        filter->setImage4DComponent(imageSet);
+        result = filter->filter();
+        imageSet = filter->getImage4DComponent();
     }
     return result;
 }
 
-vector<Filter> PreprocessorPipe::getFilterPipe() const
+vector<Filter*> PreprocessorPipe::getFilterPipe() const
 {
     return filterPipe;
 }
 
-void PreprocessorPipe::setFilterPipe(const vector<Filter>& value)
+void PreprocessorPipe::setFilterPipe(const vector<Filter*>& value)
 {
     filterPipe = value;
 }

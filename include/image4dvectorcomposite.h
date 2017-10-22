@@ -1,7 +1,7 @@
 #ifndef CLUSTEROFIMAGES_H
 #define CLUSTEROFIMAGES_H
+#include <image4dcomponent.h>
 #include <image4dleaf.h>
-#include <image4dsetcomponent.h>
 #include <vector>
 
 using std::vector;
@@ -120,16 +120,16 @@ public:
 
     void forEachComponent(void (*func)(Image4DComponent*));
 
-    vector<Image4DComponent> getVec() const;
-    void setVec(const vector<Image4DComponent>& value);
+    vector<Image4DComponent*> getVec() const;
+    void setVec(const vector<Image4DComponent*>& value);
 
     size_t size() const;
 
     Image4DComponent* add(Image4DComponent& item);
     Image4DComponent* add(Image4DComponent& item, uint i);
 
-    vector<Image4DComponent>::iterator begin();
-    vector<Image4DComponent>::iterator end();
+    vector<Image4DComponent*>::iterator begin();
+    vector<Image4DComponent*>::iterator end();
 
     void clear();
     Image4DComponent* at(uint i);
@@ -157,7 +157,7 @@ public:
     void imageForEach(const std::function<void(int, int, boost::any&)>& function, const cv::Rect& ROI);
 
 protected:
-    vector<Image4DComponent> vec;
+    vector<Image4DComponent*> vec;
     cv::Mat depthCovariance;
     cv::Mat imageCovariance;
 };

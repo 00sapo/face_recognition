@@ -25,33 +25,3 @@ vector<string> SVMManager::generateLabels(int numOfLabels)
 
     return identities;
 }
-
-void SVMManager::getNormalizedCovariances(const vector<Face>& identity, int subsets, vector<Mat>& grayscaleCovarOut,
-    vector<Mat>& depthmapCovarOut) const
-{
-    grayscaleCovarOut.clear();
-    depthmapCovarOut.clear();
-
-    auto pairs = covariance::computeCovarianceRepresentation(identity, subsets);
-    for (const auto& pair : pairs) {
-        Mat normalizedGrayscale, normalizedDepthmap;
-        cv::normalize(pair.first, normalizedGrayscale);
-        cv::normalize(pair.second, normalizedDepthmap);
-        grayscaleCovarOut.push_back(normalizedGrayscale);
-        depthmapCovarOut.push_back(normalizedDepthmap);
-    }
-}
-
-void SVMManager::getNormalizedCovariances(const Image4DSetComponentMatrix& identities, int subsets, MatSet& grayscaleCovarOut,
-    MatSet& depthmapCovarOut) const
-{
-    grayscaleCovarOut.clear();
-    depthmapCovarOut.clear();
-
-    for (const auto& identity : identities) {
-        vector<Mat> grayscaleCovar, depthmapCovar;
-        getNormalizedCovariances(identity, subsets, grayscaleCovar, depthmapCovar);
-        grayscaleCovarOut.push_back(std::move(grayscaleCovar));
-        depthmapCovarOut.push_back(std::move(depthmapCovar));
-    }
-}

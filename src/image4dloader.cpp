@@ -13,8 +13,8 @@
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_types.h>
 
-#include "image4dvectorcomposite.h"
 #include "image4dleaf.h"
+#include "image4dvectorcomposite.h"
 #include "settings.h"
 
 using cv::Mat;
@@ -90,7 +90,7 @@ bool Image4DLoader::get(Image4DComponent& image4d)
     return true;
 }
 
-void Image4DLoader::getMultiThr(std::vector<Image4DComponent>& image4DSequence, int begin, int end, std::mutex& mutex) const
+void Image4DLoader::getMultiThr(std::vector<Image4DComponent*>& image4DSequence, int begin, int end, std::mutex& mutex) const
 {
     Mat K = Settings::getInstance().getK();
 
@@ -127,15 +127,15 @@ void Image4DLoader::getMultiThr(std::vector<Image4DComponent>& image4DSequence, 
 
         // lock needed to prevent concurrent writing
         std::lock_guard<std::mutex> lock(mutex);
-        image4DSequence[i] = Image4DLeaf(image, depthMap, K);
-        image4DSequence[i].setName(imageFile.substr(0, imageFile.length() - 4));
+        image4DSequence[i] = new Image4DLeaf(image, depthMap, K);
+        image4DSequence[i]->setName(imageFile.substr(0, imageFile.length() - 4));
     }
 }
 
 Image4DComponent* Image4DLoader::get()
 {
     const auto SIZE = imageFileNames.size();
-    vector<Image4DComponent> image4DSequence(SIZE);
+    vector<Image4DComponent*> image4DSequence(SIZE);
 
     // get number of concurrently executable threads
     const int numOfThreads = std::thread::hardware_concurrency();

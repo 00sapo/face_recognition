@@ -2,7 +2,7 @@
 #define FACE_IMAGE_4D_H
 
 #include <functional>
-#include <image4dsetcomponent.h>
+#include <image4dcomponent.h>
 #include <opencv2/opencv.hpp>
 
 namespace face {
@@ -98,8 +98,8 @@ public:
     Image4DComponent* add(Image4DComponent& item);
     Image4DComponent* add(Image4DComponent& item, uint i);
 
-    std::vector<Image4DComponent>::iterator begin();
-    std::vector<Image4DComponent>::iterator end();
+    std::vector<Image4DComponent*>::iterator begin();
+    std::vector<Image4DComponent*>::iterator end();
 
     void clear();
     Image4DComponent* at(uint i);

@@ -6,7 +6,7 @@
 #include <opencv2/opencv.hpp>
 
 #include "covariancecomputer.h"
-#include "face.h"
+#include <image4dcomponent.h>
 
 using cv::Mat;
 using std::string;
@@ -16,12 +16,11 @@ namespace fs = std::experimental::filesystem;
 
 namespace face {
 
-SVMTrainer::SVMTrainer(int c)
-    : SVMManager(c)
+SVMTrainer::SVMTrainer()
 {
 }
 
-void SVMTrainer::train(const Image4DSetComponentMatrix& trainingSamples, const vector<string>& samplIDs)
+void SVMTrainer::train(Image4DComponent& trainingSamples, const vector<string>& samplIDs)
 {
     N = trainingSamples.size();
 
@@ -37,7 +36,16 @@ void SVMTrainer::train(const Image4DSetComponentMatrix& trainingSamples, const v
 
     // compute normalized covariances, i.e. transform trainingSamples to feature vectors for the SVMs
     MatSet grayscaleCovar, depthmapCovar;
-    getNormalizedCovariances(trainingSamples, c, grayscaleCovar, depthmapCovar);
+    for (Image4DComponent* imageC1 : trainingSamples) {
+        vector<Mat> grayScaleVec;
+        vector<Mat> depthVec;
+        for (Image4DComponent* imageC2 : *imageC1) {
+            grayScaleVec.push_back(imageC2->getImageCovariance());
+            depthVec.push_back(imageC2->getDepthCovariance());
+        }
+        grayscaleCovar.push_back(grayScaleVec);
+        depthmapCovar.push_back(depthVec);
+    }
 
     // convert data format to be ready for SVMs, i.e. from Mat vector to Mat
     vector<int> grayscaleIndexes, depthmapIndexes;

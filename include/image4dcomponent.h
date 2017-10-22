@@ -9,7 +9,7 @@ namespace face {
 
 class Image4DComponent {
 public:
-    Image4DComponent();
+    Image4DComponent(){};
 
     /**
          * @brief depthForEach applies a function to every pixel
@@ -60,7 +60,7 @@ public:
          *        with 3 channels (X, Y, Z) using intrinsicMatrix.
          * @return 3D representation of the face
          */
-    virtual cv::Mat get3DImage() const;
+    virtual cv::Mat get3DImage() const = 0;
 
     /**
          * @brief This function crops both the image and the cloud removing
@@ -68,56 +68,56 @@ public:
          *        the intrinsicMatrix accordingly to take into account the resolution change
          * @param cropRegion region of interest
          */
-    virtual void crop(const cv::Rect& cropRegion);
+    virtual void crop(const cv::Rect& cropRegion) = 0;
 
     /**
      * @brief getRotationMatrix
      * @return  a vector of Pose containing all rotation matrix of images in the set
      */
-    virtual std::vector<Pose> getRotationMatrix() const;
-    virtual cv::Vec3f getEulerAngles() const;
-    virtual cv::Vec3f getPosition() const;
+    virtual std::vector<Pose> getRotationMatrix() const = 0;
+    virtual cv::Vec3f getEulerAngles() const = 0;
+    virtual cv::Vec3f getPosition() const = 0;
 
-    virtual void setEulerAngles(const cv::Vec3f& value);
+    virtual void setEulerAngles(const cv::Vec3f& value) = 0;
 
-    virtual void setPosition(const cv::Vec3f& value);
+    virtual void setPosition(const cv::Vec3f& value) = 0;
 
     /**
          * @brief getCloudImageRatio
          * @return downscaling ratio applied to image by the constructor
          */
-    virtual float getDepthImageRatio() const;
+    virtual float getDepthImageRatio() const = 0;
 
-    virtual cv::Mat getIntrinsicMatrix() const;
+    virtual cv::Mat getIntrinsicMatrix() const = 0;
 
-    virtual std::string getName();
+    virtual std::string getName() = 0;
 
-    virtual void setName(std::string name);
+    virtual void setName(std::string name) = 0;
 
     /**
          * @brief resizeImage dowscales the image to match depth map dimensions
          */
-    virtual void resizeImage();
+    virtual void resizeImage() = 0;
 
     /**
      * @brief isLeaf
      * @return true if this component is a leaf, false otherwise
      */
-    virtual bool isLeaf() const;
+    virtual bool isLeaf() const = 0;
 
     /**
      * @brief forEachComponent execute function func on each sub component (on this component if it is a leaf)
      */
-    virtual void forEachComponent(void (*func)(Image4DComponent*));
+    virtual void forEachComponent(void (*func)(Image4DComponent*)) = 0;
 
-    virtual size_t size() const;
+    virtual size_t size() const = 0;
 
     /**
      * @brief add one item to this Image4DComponent
      * @param item the item to add
      * @return a pointer to the Image4DComponent resulting
      */
-    virtual Image4DComponent* add(Image4DComponent& item);
+    virtual Image4DComponent* add(Image4DComponent& item) = 0;
 
     /**
      * @brief add add one item to the Image4DComponent locted at index i of this Image4DComponent
@@ -125,28 +125,28 @@ public:
      * @param i the index at which add the item
      * @return the Image4DComponent resulting
      */
-    virtual Image4DComponent* add(Image4DComponent& item, uint i);
+    virtual Image4DComponent* add(Image4DComponent& item, uint i) = 0;
 
-    virtual void clear();
-    virtual Image4DComponent* at(uint i);
+    virtual void clear() = 0;
+    virtual Image4DComponent* at(uint i) = 0;
 
     /* method to make range based loops */
-    virtual std::vector<Image4DComponent>::iterator begin();
-    virtual std::vector<Image4DComponent>::iterator end();
+    virtual std::vector<Image4DComponent*>::iterator begin() = 0;
+    virtual std::vector<Image4DComponent*>::iterator end() = 0;
 
     /**
      * @brief getImageCovariance
      * @return the covariance of this set of rgb images
      */
-    virtual cv::Mat getImageCovariance() const;
-    virtual void setImageCovariance(const cv::Mat& value);
+    virtual cv::Mat getImageCovariance() const = 0;
+    virtual void setImageCovariance(const cv::Mat& value) = 0;
 
     /**
      * @brief getDepthCovariance
      * @return the covariance of this set of depth images
      */
-    virtual cv::Mat getDepthCovariance() const;
-    virtual void setDepthCovariance(const cv::Mat& value);
+    virtual cv::Mat getDepthCovariance() const = 0;
+    virtual void setDepthCovariance(const cv::Mat& value) = 0;
 };
 }
 #endif // IMAGESET_H

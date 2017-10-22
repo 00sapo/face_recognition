@@ -1,5 +1,6 @@
 #ifndef SVMMANAGER_H
 #define SVMMANAGER_H
+#include <image4dcomponent.h>
 #include <opencv2/opencv.hpp>
 #include <string>
 #include <svmstein.h>
@@ -11,7 +12,6 @@ using namespace cv;
 
 namespace face {
 
-using FaceMatrix = std::vector<std::vector<face::Face>>;
 using MatSet = std::vector<std::vector<cv::Mat>>;
 typedef std::vector<std::vector<SVMStein>> SVMSteinMatrix;
 
@@ -22,10 +22,6 @@ public:
 protected:
     // utility functions
     vector<string> generateLabels(int numOfLabels);
-    void getNormalizedCovariances(const vector<Face>& identity, int subsets, vector<Mat>& grayscaleCovarOut,
-        vector<Mat>& depthmapCovarOut) const;
-    void getNormalizedCovariances(const FaceMatrix& identities, int subsets, MatSet& grayscaleCovarOut,
-        MatSet& depthmapCovarOut) const;
 
     enum class ImgType {
         grayscale,

@@ -7,8 +7,8 @@ class Filter {
 public:
     virtual bool filter() = 0;
 
-    virtual Image4DComponent* getImage4DComponent() const;
-    virtual void setImage4DComponent(Image4DComponent* value);
+    virtual Image4DComponent* getImage4DComponent() const = 0;
+    virtual void setImage4DComponent(Image4DComponent* value) = 0;
 };
 }
 #endif // FILTER_H
