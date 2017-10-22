@@ -36,7 +36,7 @@ void SVMTrainer::train(const Image4DSetComponentMatrix& trainingSamples, const v
         svmVector.resize(c);
 
     // compute normalized covariances, i.e. transform trainingSamples to feature vectors for the SVMs
-    MatMatrix grayscaleCovar, depthmapCovar;
+    MatSet grayscaleCovar, depthmapCovar;
     getNormalizedCovariances(trainingSamples, c, grayscaleCovar, depthmapCovar);
 
     // convert data format to be ready for SVMs, i.e. from Mat vector to Mat
@@ -165,7 +165,7 @@ void SVMTrainer::restoreRows(Mat& data, Mat& removed, int baseIdIndex, int subse
  *         and a number of columns equal to Mat::rows x Mat::columns (assuming every Mat in dataIn
  *         has the same dimensions)
  */
-Mat SVMTrainer::formatDataForTraining(const MatMatrix& data, std::vector<int>& indexes)
+Mat SVMTrainer::formatDataForTraining(const MatSet& data, std::vector<int>& indexes)
 {
     indexes.clear();
 

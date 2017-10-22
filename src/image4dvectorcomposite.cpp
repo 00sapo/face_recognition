@@ -1,4 +1,4 @@
-#include "image4dclustercomposite.h"
+#include "image4dvectorcomposite.h"
 
 namespace face {
 Image4DVectorComposite::Image4DVectorComposite()
@@ -109,16 +109,36 @@ void Image4DVectorComposite::setName(std::string name)
     return vec[0].setName(name);
 }
 
-boost::any Image4DVectorComposite::virtualDepthForEach(const std::function<void(int, int, boost::any&)>& function, const cv::Rect& ROI)
+void Image4DVectorComposite::depthForEach(const std::function<void(int, int, boost::any&)>& function, const cv::Rect& ROI)
 {
     for (auto& image : vec)
-        image.depthForEach<boost::any>(function, ROI);
+        image.depthForEach(function, ROI);
 }
 
-boost::any Image4DVectorComposite::virtualImageForEach(const std::function<void(int, int, boost::any&)>& function, const cv::Rect& ROI)
+void Image4DVectorComposite::imageForEach(const std::function<void(int, int, boost::any&)>& function, const cv::Rect& ROI)
 {
     for (auto& image : vec)
-        image.imageForEach<boost::any>(function, ROI);
+        image.imageForEach(function, ROI);
+}
+
+cv::Mat Image4DVectorComposite::getDepthCovariance() const
+{
+    return depthCovariance;
+}
+
+void Image4DVectorComposite::setDepthCovariance(const cv::Mat& value)
+{
+    depthCovariance = value;
+}
+
+cv::Mat Image4DVectorComposite::getImageCovariance() const
+{
+    return imageCovariance;
+}
+
+void Image4DVectorComposite::setImageCovariance(const cv::Mat& value)
+{
+    imageCovariance = value;
 }
 
 vector<Image4DComponent> Image4DVectorComposite::getVec() const

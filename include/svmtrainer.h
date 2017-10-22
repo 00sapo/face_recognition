@@ -36,7 +36,7 @@ private:
     void trainSVMs(cv::Mat& data, const std::vector<int>& indexes, ImgType svmToTrain);
     cv::Mat removeRows(cv::Mat& data, cv::Mat& removed, int baseIdIndex, int subset) const;
     void restoreRows(cv::Mat& data, cv::Mat& removed, int baseIdIndex, int subset) const;
-    Mat formatDataForTraining(const MatMatrix& data, std::vector<int>& indexes);
+    Mat formatDataForTraining(const MatSet& data, std::vector<int>& indexes);
 };
 
 } // namespace face

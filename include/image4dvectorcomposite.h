@@ -134,14 +134,19 @@ public:
     void clear();
     Image4DComponent* at(uint i);
 
-protected:
+    cv::Mat getImageCovariance() const;
+    void setImageCovariance(const cv::Mat& value);
+
+    cv::Mat getDepthCovariance() const;
+    void setDepthCovariance(const cv::Mat& value);
+
     /**
      * @brief virtualDepthForEach depthForEach on all images of the vector
      * @param function
      * @param ROI
      * @return
      */
-    boost::any virtualDepthForEach(const std::function<void(int, int, boost::any&)>& function, const cv::Rect& ROI);
+    void depthForEach(const std::function<void(int, int, boost::any&)>& function, const cv::Rect& ROI);
 
     /**
      * @brief virtualImageForEach
@@ -149,9 +154,12 @@ protected:
      * @param ROI
      * @return imageForEach on all images of the vector
      */
-    boost::any virtualImageForEach(const std::function<void(int, int, boost::any&)>& function, const cv::Rect& ROI);
+    void imageForEach(const std::function<void(int, int, boost::any&)>& function, const cv::Rect& ROI);
 
+protected:
     vector<Image4DComponent> vec;
+    cv::Mat depthCovariance;
+    cv::Mat imageCovariance;
 };
 }
 #endif // CLUSTEROFIMAGES_H

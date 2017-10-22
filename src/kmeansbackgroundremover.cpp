@@ -102,12 +102,13 @@ void KmeansBackgroundRemover::removeBackgroundDynamic(cv::Rect& boundingBox) con
 {
     // take non-nan, non-zero points
     vector<float> depth;
-    auto lambda = [&depth](int x, int y, const uint16_t& dpt) {
+    auto lambda = [&depth](int x, int y, boost::any& d) {
+        uint16_t dpt = boost::any_cast<uint16_t>(d);
         if (!std::isnan(dpt) && dpt != 0)
             depth.push_back(dpt);
     };
 
-    image4d->depthForEach<uint16_t>(lambda, boundingBox);
+    image4d->depthForEach(lambda, boundingBox);
 
     // clustering
     vector<int> bestLabels;

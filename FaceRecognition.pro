@@ -3,41 +3,31 @@ CONFIG += console c++14
 CONFIG -= app_bundle
 CONFIG -= qt
 
-SOURCES += src/main.cpp \
-           src/image4dloader.cpp \
-           src/settings.cpp \
-           src/covariancecomputer.cpp \
-           src/svmstein.cpp \
-           extern_libs/head_pose_estimation/CRForestEstimator.cpp \
-           extern_libs/head_pose_estimation/CRTree.cpp \
-    svmtester.cpp \
-    src/svmtrainer.cpp \
-    svmmanager.cpp \
-    kmeansbackgroundremover.cpp \
-    facecropper.cpp \
-    src/image4dleaf.cpp \
-    image4dclustercomposite.cpp \
-    preprocessorpipe.cpp \
-    poseclusterizer.cpp
+SOURCES +=  extern_libs/head_pose_estimation/CRForestEstimator.cpp \
+            extern_libs/head_pose_estimation/CRTree.cpp \
+            src/covariancecomputer.cpp \
+            src/kmeansbackgroundremover.cpp \
+            src/svmmanager.cpp \
+            src/facecropper.cpp \
+            src/main.cpp \
+            src/svmstein.cpp \
+            src/image4dleaf.cpp \
+            src/poseclusterizer.cpp \
+            src/svmtester.cpp \
+            src/image4dloader.cpp \
+            src/preprocessorpipe.cpp \
+            src/svmtrainer.cpp \
+            src/image4dvectorcomposite.cpp \
+            src/settings.cpp \
 
 INCLUDEPATH += include $$(OPENCV_INCLUDE)
 
 HEADERS += include/*.h \
-           include/svmstein.h \
-           extern_libs/head_pose_estimation/CRForestEstimator.h \
-           extern_libs/head_pose_estimation/CRTree.h \
-    svmtester.h \
-    svmmanager.h \
-    filter.h \
-    kmeansbackgroundremover.h \
-    facecropper.h \
-    image4dsetcomponent.h \
-    image4dclustercomposite.h \
-    preprocessorpipe.h \
-    poseclusterizer.h
+        extern_libs/head_pose_estimation/CRForestEstimator.h \
+        extern_libs/head_pose_estimation/CRTree.h \
 
 DISTFILES += \
-    camera_info.yaml
+        camera_info.yaml
 
 
 

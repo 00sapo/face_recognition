@@ -1,120 +1,71 @@
 #include "covariancecomputer.h"
-
-#include "face.h"
-#include "lbp.h"
+#include <lbp.h>
 
 using cv::Mat;
-using std::cout;
-using std::endl;
-using std::string;
 using std::vector;
 
 namespace face {
 
-// FIXME: not a good name, it's not a matrix because it can have rows of different sizes
-using MatMatrix = vector<vector<Mat>>;
+using MatSet = vector<vector<Mat>>;
 
-
-namespace covariance {
-
-/**
- * @brief getNearestCenterId
- * @param poseEstimation
- * @return id of the nearest center to the input pose estimation
- */
-int getNearestCenterId(const Pose& pose, const std::vector<Pose>& centers);
-
-
-
-vector<std::pair<Mat, Mat>> computeCovarianceRepresentation(const vector<Face> &faces, int subsets)
+CovarianceComputer::CovarianceComputer()
 {
-    cout << "Clustering poses..." << endl;
-    auto centers = clusterizePoses(faces, subsets);
-    cout << "Assigning faces to clusters..." << endl;
-    auto clusters = assignFacesToClusters(faces, centers);
-
-    vector<std::pair<Mat, Mat>> covariances;
-    for (const auto& cluster : clusters) {
-        Mat imgCovariance, depthCovariance;
-
-        // compute covariance representation of the set
-        cout << "Set to covariance..." << endl;
-        setToCovariance(cluster, imgCovariance, depthCovariance);
-        covariances.emplace_back(imgCovariance, depthCovariance);
-    }
-
-    return covariances;
 }
 
-
-vector<Pose> clusterizePoses(const vector<Face> &faces, int numCenters)
+bool CovarianceComputer::filter()
 {
-    if (faces.size() < numCenters)
-        return vector<Pose>(0);
+    bool result = false;
 
-    // retrieve faces' poses
-    vector<Pose> poses;
-    poses.reserve(faces.size());
-    for (const auto& face : faces) {
-        poses.push_back(face.getRotationMatrix());
-    }
-
-    // clusterize poses
-    vector<int> bestLabels;
-    cv::Mat centers;
-    cv::TermCriteria criteria(cv::TermCriteria::EPS, 10, 1.0);
-    cv::kmeans(poses, numCenters, bestLabels, criteria, 3, cv::KMEANS_PP_CENTERS, centers);
-
-    if (centers.rows != numCenters) {
-        std::cout << "Clustering poses failed!" << std::endl;
-        return vector<Pose>(numCenters); // TODO: check default Pose value
-    }
-
-    // convert from Mat to vector<Pose>
-    vector<Pose> ctrs;
-    for (int i = 0; i < centers.rows; ++i) {
-        ctrs.emplace_back(centers.at<float>(i, 0), centers.at<float>(i, 1), centers.at<float>(i, 2),
-                          centers.at<float>(i, 3), centers.at<float>(i, 4), centers.at<float>(i, 5),
-                          centers.at<float>(i, 6), centers.at<float>(i, 7), centers.at<float>(i, 8));
-    }
-    return ctrs;
-}
-
-vector<vector<const Face*>> assignFacesToClusters(const vector<Face> &faces, const vector<Pose> &centers)
-{
-    vector<vector<const Face*>> clusters(centers.size());
-    for (const auto &face : faces) {
-        int index = getNearestCenterId(face.getRotationMatrix(), centers);
-        clusters[index].push_back(&face);
-    }
-    return clusters;
-}
-
-int getNearestCenterId(const Pose &pose, const vector<Pose> &centers)
-{
-    float min = std::numeric_limits<float>::max();
-    int index = 0;
-    for (size_t i = 0; i < centers.size(); ++i) {
-        float norm = cv::norm(centers[i], pose, cv::NORM_L2);
-        if (norm < min) {
-            min = norm;
-            index = i;
+    for (Image4DComponent& image : *imageSet) {
+        if (image.isLeaf()) {
+            if (leafCovarianceComputer) {
+                result = setToCovariance(image);
+                if (!result)
+                    return false;
+            }
+        } else {
+            result = setToCovariance(image);
+            if (!result)
+                return false;
         }
     }
-    return index;
+
+    return result;
 }
 
-void setToCovariance(const vector<const Face*> &set, Mat &imageCovariance, Mat &depthCovariance)
+Image4DComponent* CovarianceComputer::getImage4DComponent() const
 {
+    return imageSet;
+}
+
+void CovarianceComputer::setImage4DComponent(Image4DComponent* value)
+{
+    imageSet = value;
+}
+
+bool CovarianceComputer::isLeafCovarianceComputer()
+{
+    return leafCovarianceComputer;
+}
+
+void CovarianceComputer::setLeafCovarianceComputer(bool value)
+{
+    leafCovarianceComputer = value;
+}
+
+bool CovarianceComputer::setToCovariance(Image4DComponent& set)
+{
+    cv::Mat imageCovariance, depthCovariance;
+
     const int SET_SIZE = set.size();
     if (SET_SIZE == 0) {
         imageCovariance = Mat::zeros(16, 16, CV_32FC1);
         depthCovariance = Mat::zeros(16, 16, CV_32FC1);
-        return;
+        return false;
     }
 
-    MatMatrix imageBlocks(16);
-    MatMatrix depthBlocks(16);
+    MatSet imageBlocks(16);
+    MatSet depthBlocks(16);
     for (int i = 0; i < 16; ++i) {
         imageBlocks[i].resize(SET_SIZE);
         depthBlocks[i].resize(SET_SIZE);
@@ -125,14 +76,13 @@ void setToCovariance(const vector<const Face*> &set, Mat &imageCovariance, Mat &
 
     // for each face in the set...
     int i = 0;
-    for (const auto &face : set) {
+    for (const auto& image4d : set) {
 
-        assert (!face->image.empty() && !face->depthMap.empty()
-                && "ERROR! Empty image!!");
+        assert(!image4d.getImage().empty() && !image4d.getDepthMap().empty() && "ERROR! Empty image!!");
 
         // compute 4x4 blocks size
-        const auto HEIGHT = face->getHeight();
-        const auto WIDTH  = face->getWidth();
+        const auto HEIGHT = image4d.getHeight();
+        const auto WIDTH = image4d.getWidth();
         const auto BLOCK_H = HEIGHT / 4;
         const auto BLOCK_W = WIDTH / 4;
 
@@ -142,8 +92,8 @@ void setToCovariance(const vector<const Face*> &set, Mat &imageCovariance, Mat &
 
                 // crop block region
                 cv::Rect roi(x, y, BLOCK_W, BLOCK_H);
-                Mat image = face->image(roi);
-                Mat depth = face->depthMap(roi);
+                Mat image = image4d.getImage()(roi);
+                Mat depth = image4d.getDepthMap()(roi);
 
                 // compute LBP of the block
                 auto imageHist = OLBPHist(image);
@@ -177,9 +127,9 @@ void setToCovariance(const vector<const Face*> &set, Mat &imageCovariance, Mat &
         }
     }
 
-    return;
+    set.setDepthCovariance(depthCovariance);
+    set.setImageCovariance(imageCovariance);
+
+    return true;
 }
-
-} // namespace covariance
-
-} // namespace face
+}

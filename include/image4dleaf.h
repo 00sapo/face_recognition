@@ -49,7 +49,7 @@ public:
 
     void crop(const cv::Rect& cropRegion);
 
-    boost::any virtualDepthForEach(const std::function<void(int, int, boost::any&)>& function, const cv::Rect& ROI)
+    void depthForEach(const std::function<void(int, int, boost::any&)>& function, const cv::Rect& ROI)
     {
 
         const uint MAX_X = ROI.x + ROI.width;
@@ -62,14 +62,15 @@ public:
         }
     }
 
-    boost::any virtualImageForEach(const std::function<void(int, int, boost::any&)>& function, const cv::Rect& ROI)
+    void imageForEach(const std::function<void(int, int, boost::any&)>& function, const cv::Rect& ROI)
     {
         const uint MAX_X = ROI.x + ROI.width;
         const uint MAX_Y = ROI.y + ROI.height;
 
         for (uint y = ROI.y; y < MAX_Y; ++y) {
             for (uint x = ROI.x; x < MAX_X; ++x) {
-                function(x, y, image.at<boost::any>(y, x));
+                boost::any img = image.at<uint16_t>(y, x);
+                function(x, y, img);
             }
         }
     }
@@ -103,6 +104,12 @@ public:
     void clear();
     Image4DComponent* at(uint i);
 
+    cv::Mat getImageCovariance() const;
+    void setImageCovariance(const cv::Mat& value);
+
+    cv::Mat getDepthCovariance() const;
+    void setDepthCovariance(const cv::Mat& value);
+
 private:
     cv::Vec3f eulerAngles;
     cv::Vec3f position;
@@ -116,6 +123,8 @@ protected:
     float DEPTH_IMG_RATIO; // downscaling ratio applied to image by the constructor
 
     cv::Mat intrinsicMatrix;
+    cv::Mat depthCovariance;
+    cv::Mat imageCovariance;
 };
 
 } // face

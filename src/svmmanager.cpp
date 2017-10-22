@@ -42,8 +42,8 @@ void SVMManager::getNormalizedCovariances(const vector<Face>& identity, int subs
     }
 }
 
-void SVMManager::getNormalizedCovariances(const Image4DSetComponentMatrix& identities, int subsets, MatMatrix& grayscaleCovarOut,
-    MatMatrix& depthmapCovarOut) const
+void SVMManager::getNormalizedCovariances(const Image4DSetComponentMatrix& identities, int subsets, MatSet& grayscaleCovarOut,
+    MatSet& depthmapCovarOut) const
 {
     grayscaleCovarOut.clear();
     depthmapCovarOut.clear();

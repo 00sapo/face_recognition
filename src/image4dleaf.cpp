@@ -1,6 +1,6 @@
 #include "image4dleaf.h"
 
-#include <image4dclustercomposite.h>
+#include <image4dvectorcomposite.h>
 #include <math.h>
 
 using cv::Mat;
@@ -197,5 +197,25 @@ Image4DComponent* Image4DLeaf::at(uint i)
         return this;
     else
         return nullptr;
+}
+
+cv::Mat Image4DLeaf::getImageCovariance() const
+{
+    return imageCovariance;
+}
+
+void Image4DLeaf::setImageCovariance(const cv::Mat &value)
+{
+    imageCovariance = value;
+}
+
+cv::Mat Image4DLeaf::getDepthCovariance() const
+{
+    return depthCovariance;
+}
+
+void Image4DLeaf::setDepthCovariance(const cv::Mat &value)
+{
+    depthCovariance = value;
 }
 }

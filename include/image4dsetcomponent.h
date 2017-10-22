@@ -18,11 +18,7 @@ public:
          * @param function function to be called on each pixel
          * @param ROI region of interest to which apply function
          */
-    template <typename T>
-    void depthForEach(const std::function<void(int, int, T&)>& function, const cv::Rect& ROI)
-    {
-        return boost::any_cast<T>(virtualDepthForEach(function, ROI));
-    }
+    virtual void depthForEach(const std::function<void(int, int, boost::any&)>& function, const cv::Rect& ROI) = 0;
 
     /**
          * @brief imageForEach applies the function function to every point
@@ -31,11 +27,8 @@ public:
          * @param function function to be called on each point
          * @param ROI region of interest to which apply function
          */
-    template <typename T>
-    void imageForEach(const std::function<void(int, int, T&)>& function, const cv::Rect& ROI)
-    {
-        return boost::any_cast<T>(virtualImageForEach(function, ROI));
-    }
+
+    virtual void imageForEach(const std::function<void(int, int, boost::any&)>& function, const cv::Rect& ROI) = 0;
 
     virtual cv::Mat getImage() const = 0;
 
@@ -141,10 +134,19 @@ public:
     virtual std::vector<Image4DComponent>::iterator begin();
     virtual std::vector<Image4DComponent>::iterator end();
 
-protected:
-    virtual boost::any virtualDepthForEach(const std::function<void(int, int, boost::any&)>& function, const cv::Rect& ROI)
-        = 0;
-    virtual boost::any virtualImageForEach(const std::function<void(int, int, boost::any&)>& function, const cv::Rect& ROI) = 0;
+    /**
+     * @brief getImageCovariance
+     * @return the covariance of this set of rgb images
+     */
+    virtual cv::Mat getImageCovariance() const;
+    virtual void setImageCovariance(const cv::Mat& value);
+
+    /**
+     * @brief getDepthCovariance
+     * @return the covariance of this set of depth images
+     */
+    virtual cv::Mat getDepthCovariance() const;
+    virtual void setDepthCovariance(const cv::Mat& value);
 };
 }
 #endif // IMAGESET_H

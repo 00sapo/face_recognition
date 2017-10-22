@@ -13,7 +13,7 @@
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_types.h>
 
-#include "image4dclustercomposite.h"
+#include "image4dvectorcomposite.h"
 #include "image4dleaf.h"
 #include "settings.h"
 

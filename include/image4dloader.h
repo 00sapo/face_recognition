@@ -1,7 +1,7 @@
 #ifndef FACE_IMAGELOADER_HPP
 #define FACE_IMAGELOADER_HPP
 
-#include <image4dclustercomposite.h>
+#include <image4dvectorcomposite.h>
 #include <image4dsetcomponent.h>
 #include <mutex>
 #include <regex>
