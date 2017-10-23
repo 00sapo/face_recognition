@@ -22,6 +22,7 @@ public:
     bool isPoseEstimatorAvailable() const;
 
 private:
+    bool crop();
     void removeOutliers() const;
     bool estimateFacePose() const;
 

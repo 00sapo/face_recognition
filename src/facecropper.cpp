@@ -9,7 +9,7 @@ FaceCropper::FaceCropper()
 {
     // load forest for face pose estimation
     const char* estimatorPath = Settings::getInstance().getPoseEstimatorPath().c_str();
-    if (!estimator.loadForest(estimatorPath)) {
+    if (!estimator.loadForest(estimatorPath, 10)) {
         std::cerr << "ERROR! Unable to load forest files" << std::endl;
         return;
     }
@@ -61,10 +61,21 @@ void FaceCropper::filterImage4DComponent(Image4DComponent* image4d)
 bool FaceCropper::filter()
 {
 
-    if (!image4d->isLeaf()) {
-        image4d->forEachComponent(filterImage4DComponent);
-        return true;
+    Image4DComponent* backupImage = image4d;
+    if (image4d->isLeaf()) {
+        crop();
+    } else {
+        for (Image4DComponent* img4d : *backupImage) {
+            setImage4DComponent(img4d);
+            filter();
+        }
     }
+    setImage4DComponent(backupImage);
+    return true;
+}
+
+bool FaceCropper::crop()
+{
     removeOutliers();
 
     if (!estimateFacePose()) {

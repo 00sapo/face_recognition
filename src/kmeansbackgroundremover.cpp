@@ -20,6 +20,7 @@ KmeansBackgroundRemover::KmeansBackgroundRemover(uint16_t fixedThreshold)
 
 bool KmeansBackgroundRemover::filter()
 {
+    Image4DComponent* backupImage = image4d;
     if (image4d->isLeaf()) {
         cv::Rect boundingBox;
         // ... detect foreground face...
@@ -29,8 +30,12 @@ bool KmeansBackgroundRemover::filter()
             removeBackgroundDynamic(boundingBox);
 
     } else {
-        image4d->forEachComponent(filterImage4DComponent);
+        for (Image4DComponent* img4d : *backupImage) {
+            setImage4DComponent(img4d);
+            filter();
+        }
     }
+    setImage4DComponent(backupImage);
     return 1;
 }
 
