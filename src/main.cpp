@@ -21,13 +21,16 @@ void training(string trainingSetDir, string outputDir)
     Image4DLoader loader(dirPath, "000_.*");
 
     PreprocessorPipe pipe;
-    for (int i = 0; i <= 25; ++i) {
+    Image4DVectorComposite set;
+    for (int i = 0; i <= 1; ++i) {
         string fileNameRegEx = i / 10 >= 1 ? "0" : "00";
         fileNameRegEx += std::to_string(i) + "_.*";
 
         loader.setFileNameRegEx(fileNameRegEx);
-        pipe.setImageSet(loader.get());
+        set.add(*loader.get());
     }
+
+    pipe.setImageSet(&set);
 
     KmeansBackgroundRemover backgroundRemover;
     FaceCropper faceCropper;
@@ -40,10 +43,10 @@ void training(string trainingSetDir, string outputDir)
     pipe.push_back(covarianceComputer);
     pipe.processPipe();
 
-    //    SVMTrainer faceRec;
-    //    faceRec.train(pipe.getImageSet());
+    SVMTrainer faceRec;
+    faceRec.train(pipe.getImageSet());
 
-    //    faceRec.save(outputDir);
+    faceRec.save(outputDir);
 }
 
 void testing(string testingSetDir, string outputDir)

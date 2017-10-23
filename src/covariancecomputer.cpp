@@ -16,17 +16,16 @@ bool CovarianceComputer::filter()
 {
     bool result = false;
 
-    for (Image4DComponent* image : *imageSet) {
-        if (image->isLeaf()) {
-            if (leafCovarianceComputer) {
-                result = setToNormalizedCovariance(*image);
-                if (!result)
-                    return false;
-            }
-        } else {
-            result = setToNormalizedCovariance(*image);
-            if (!result)
-                return false;
+    if ((imageSet->isLeaf() && leafCovarianceComputer)
+        || imageSet->at(0)->isLeaf()) {
+        // leaf or second-last level
+        result = setToNormalizedCovariance(*imageSet);
+        if (!result)
+            return false;
+    } else {
+        for (Image4DComponent* image : *imageSet) {
+            imageSet = image;
+            filter();
         }
     }
 

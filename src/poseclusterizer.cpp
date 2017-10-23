@@ -82,9 +82,13 @@ void PoseClusterizer::assignFacesToClusters()
 
 bool PoseClusterizer::filter()
 {
-    bool result = clusterizePoses();
-    if (result)
-        assignFacesToClusters();
+    bool result = false;
+    for (Image4DComponent* imgSet : *imageSet) {
+        imageSet = imgSet;
+        result = clusterizePoses();
+        if (!result)
+            assignFacesToClusters();
+    }
     return result;
 }
 

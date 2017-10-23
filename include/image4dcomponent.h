@@ -120,7 +120,7 @@ public:
     virtual Image4DComponent* add(Image4DComponent& item) = 0;
 
     /**
-     * @brief add add one item to the Image4DComponent locted at index i of this Image4DComponent
+     * @brief add add one item to the Image4DComponent located at index i of this Image4DComponent
      * @param item the item to add
      * @param i the index at which add the item
      * @return the Image4DComponent resulting

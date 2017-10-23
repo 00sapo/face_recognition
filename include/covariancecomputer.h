@@ -11,9 +11,9 @@ namespace face {
      *        of an input Face set. Input faces are clusterized in subsets based on their pose
      *        and then for each subset a pair of covariance matrixes, one for images and the other
      *        for the depth maps, representative of the set are computed. If this is a leaf
-     *        covariance computer, it computes covariances also for single leaves. Anyway, it does
+     *        covariance computer, it computes covariances for single leaves, otherwise it does
      *        not compute covariance for the whole Image4DComponent setted in this Filter, but only
-     *        for its subcomponents.
+     *        for its subcomponents in the second-last level.
      */
 class CovarianceComputer : public Filter {
 public:

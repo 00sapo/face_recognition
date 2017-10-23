@@ -49,20 +49,34 @@ public:
 
     void crop(const cv::Rect& cropRegion);
 
+    /**
+     * @brief depthForEach Execute a function on each pixel of the depth mat. Works for uint16_t type.
+     *                          Override it if you need another type.
+     * @param function The function to be executed on each pixel. Its arguments are coordinates [x, y] as int
+     *                  and the value of the pixel at position [x, y]
+     * @param ROI      A rect on which act
+     */
     void depthForEach(const std::function<void(int, int, boost::any&)>& function, const cv::Rect& ROI)
     {
 
         const uint MAX_X = ROI.x + ROI.width;
         const uint MAX_Y = ROI.y + ROI.height;
 
-        std::cout << "mat type: " << depthMap.type() << std::endl;
         for (uint y = ROI.y; y < MAX_Y; ++y) {
             for (uint x = ROI.x; x < MAX_X; ++x) {
-                function(x, y, depthMap.at<boost::any>(y, x));
+                boost::any dpt = depthMap.at<uint16_t>(y, x);
+                function(x, y, dpt);
             }
         }
     }
 
+    /**
+     * @brief imageForEach Execute a function on each pixel of the rgb mat. Works for uchar type
+     *                          [i.e. gray scale images]. Override it if you needed another type.
+     * @param function The function to be executed on each pixel. Its arguments are coordinates [x, y] as int
+     *                  and the value of the pixel at position [x, y]
+     * @param ROI      A rect on which act
+     */
     void imageForEach(const std::function<void(int, int, boost::any&)>& function, const cv::Rect& ROI)
     {
         const uint MAX_X = ROI.x + ROI.width;
@@ -70,7 +84,7 @@ public:
 
         for (uint y = ROI.y; y < MAX_Y; ++y) {
             for (uint x = ROI.x; x < MAX_X; ++x) {
-                boost::any img = image.at<uint16_t>(y, x);
+                boost::any img = image.at<uchar>(y, x);
                 function(x, y, img);
             }
         }

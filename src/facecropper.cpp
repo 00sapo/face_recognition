@@ -53,9 +53,9 @@ void FaceCropper::removeOutliers() const
 
 void FaceCropper::filterImage4DComponent(Image4DComponent* image4d)
 {
-    FaceCropper remover;
-    remover.setImage4DComponent(image4d);
-    remover.filter();
+    FaceCropper cropper;
+    cropper.setImage4DComponent(image4d);
+    cropper.filter();
 }
 
 bool FaceCropper::filter()

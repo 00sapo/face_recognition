@@ -18,13 +18,13 @@ SOURCES +=  extern_libs/head_pose_estimation/CRForestEstimator.cpp \
             src/preprocessorpipe.cpp \
             src/svmtrainer.cpp \
             src/image4dvectorcomposite.cpp \
-            src/settings.cpp \
+            src/settings.cpp
 
 INCLUDEPATH += include $$(OPENCV_INCLUDE)
 
 HEADERS += include/*.h \
         extern_libs/head_pose_estimation/CRForestEstimator.h \
-        extern_libs/head_pose_estimation/CRTree.h \
+        extern_libs/head_pose_estimation/CRTree.h
 
 DISTFILES += \
         camera_info.yaml

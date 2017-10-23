@@ -20,12 +20,9 @@ SVMTrainer::SVMTrainer()
 {
 }
 
-void SVMTrainer::train(Image4DComponent& trainingSamples, const vector<string>& samplIDs)
+void SVMTrainer::train(Image4DComponent* trainingSamples)
 {
-    N = trainingSamples.size();
-
-    // if not enough IDs automatically generate them
-    IDs = (N > samplIDs.size()) ? generateLabels(N) : samplIDs;
+    N = trainingSamples->size();
 
     grayscaleSVMs.resize(N);
     depthmapSVMs.resize(N);
@@ -34,9 +31,9 @@ void SVMTrainer::train(Image4DComponent& trainingSamples, const vector<string>& 
     for (auto& svmVector : depthmapSVMs)
         svmVector.resize(c);
 
-    // compute normalized covariances, i.e. transform trainingSamples to feature vectors for the SVMs
+    //  transform trainingSamples to feature vectors for the SVMs
     MatSet grayscaleCovar, depthmapCovar;
-    for (Image4DComponent* imageC1 : trainingSamples) {
+    for (Image4DComponent* imageC1 : *trainingSamples) {
         vector<Mat> grayScaleVec;
         vector<Mat> depthVec;
         for (Image4DComponent* imageC2 : *imageC1) {

@@ -1,4 +1,5 @@
 #include "preprocessorpipe.h"
+#include <image4dvectorcomposite.h>
 
 namespace face {
 PreprocessorPipe::PreprocessorPipe()
