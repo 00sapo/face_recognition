@@ -40,8 +40,8 @@ Image4DLoader::Image4DLoader(const string& dirPath, const string& fileNameRegEx)
     : currentPath(dirPath)
     , fileTemplate(fileNameRegEx)
 {
-    if (!loadFileNames(currentPath))
-        cout << "Failed!" << endl;
+    //    if (!loadFileNames(currentPath))
+    //        cout << "Failed!" << endl;
 }
 
 bool Image4DLoader::hasNext() const

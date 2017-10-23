@@ -22,11 +22,11 @@ void training(string trainingSetDir, string outputDir)
 
     PreprocessorPipe pipe;
     Image4DVectorComposite set;
-    for (int i = 0; i <= 1; ++i) {
-        string fileNameRegEx = i / 10 >= 1 ? "0" : "00";
-        fileNameRegEx += std::to_string(i) + "_.*";
+    for (int i = 0; i < 26; ++i) {
+        stringstream fileNameRegEx;
+        fileNameRegEx << setw(3) << setfill('0') << i << "_.*";
 
-        loader.setFileNameRegEx(fileNameRegEx);
+        loader.setFileNameRegEx(fileNameRegEx.str());
         set.add(*loader.get());
     }
 

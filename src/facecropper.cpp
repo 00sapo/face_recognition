@@ -61,6 +61,7 @@ void FaceCropper::filterImage4DComponent(Image4DComponent* image4d)
 bool FaceCropper::filter()
 {
 
+    std::cout << "Cropping faces..." << std::endl;
     Image4DComponent* backupImage = image4d;
     if (image4d->isLeaf()) {
         crop();

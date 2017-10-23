@@ -14,8 +14,10 @@ CovarianceComputer::CovarianceComputer()
 
 bool CovarianceComputer::filter()
 {
+    std::cout << " Computing covariances..." << std::endl;
     bool result = false;
 
+    Image4DComponent* backupImage = imageSet;
     if ((imageSet->isLeaf() && leafCovarianceComputer)
         || imageSet->at(0)->isLeaf()) {
         // leaf or second-last level
@@ -23,11 +25,12 @@ bool CovarianceComputer::filter()
         if (!result)
             return false;
     } else {
-        for (Image4DComponent* image : *imageSet) {
+        for (Image4DComponent* image : *backupImage) {
             imageSet = image;
             filter();
         }
     }
+    imageSet = backupImage;
 
     return result;
 }
@@ -74,8 +77,8 @@ bool CovarianceComputer::setToNormalizedCovariance(Image4DComponent& set)
     Mat depthMean(16, SET_SIZE, CV_32FC1);
 
     // for each face in the set...
-    int i = 0;
-    for (const auto& image4d : set) {
+    for (uint i = 0; i < set.size(); i++) {
+        Image4DComponent* image4d = set.at(i);
 
         assert(!image4d->getImage().empty() && !image4d->getDepthMap().empty() && "ERROR! Empty image!!");
 
@@ -86,8 +89,8 @@ bool CovarianceComputer::setToNormalizedCovariance(Image4DComponent& set)
         const auto BLOCK_W = WIDTH / 4;
 
         // for each of the 16 blocks of the face...
-        for (size_t y = 0, q = 0; y <= HEIGHT - BLOCK_H; y += BLOCK_H, ++q) {
-            for (size_t x = 0, p = 0; x <= WIDTH - BLOCK_W; x += BLOCK_W, ++p) {
+        for (size_t y = 0, q = 0; q < 4; y += BLOCK_H, ++q) {
+            for (size_t x = 0, p = 0; p < 4; x += BLOCK_W, ++p) {
 
                 // crop block region
                 cv::Rect roi(x, y, BLOCK_W, BLOCK_H);
@@ -105,7 +108,6 @@ bool CovarianceComputer::setToNormalizedCovariance(Image4DComponent& set)
                 depthMean.at<float>(p + 4 * q, i) = mean(depthHist)[0];
             }
         }
-        ++i;
     }
 
     imageCovariance = Mat(16, 16, CV_32FC1);

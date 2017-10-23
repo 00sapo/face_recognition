@@ -57,38 +57,45 @@ int PoseClusterizer::getNearestCenterId(const Pose& pose)
 void PoseClusterizer::assignFacesToClusters()
 {
     //not the best, dependency from Image4DVectorComposite should be removed
-    vector<Image4DVectorComposite> clusters(numCenters);
-    for (auto& image : *imageSet) {
+    vector<Image4DComponent*> clusters(numCenters);
+    for (Image4DComponent*& img : clusters)
+        img = new Image4DVectorComposite();
+
+    for (Image4DComponent* image : *imageSet) {
         if (image->isLeaf()) {
             int index = getNearestCenterId(image->getRotationMatrix()[0]);
-            clusters.at(index).add(*image);
+            clusters.at(index)->add(*image);
         } else {
-            //It should ever eter this block, I inserted it for completeness --sapo
+            //It should never enter this block, I inserted it for completeness --sapo
             PoseClusterizer pc;
             pc.setImage4DComponent(imageSet);
             pc.assignFacesToClusters();
 
             for (int i = 0; i < numCenters; i++)
-                clusters[i].add(*pc.getImage4DComponent()->at(i));
+                clusters[i]->add(*pc.getImage4DComponent()->at(i));
         }
     }
 
     imageSet->clear();
 
-    for (auto& component : clusters) {
-        imageSet->add(component);
+    for (Image4DComponent* component : clusters) {
+        imageSet->add(*component);
     }
 }
 
 bool PoseClusterizer::filter()
 {
+    std::cout << "Clusterizing poses..." << std::endl;
+    Image4DComponent* backupImage = imageSet;
     bool result = false;
-    for (Image4DComponent* imgSet : *imageSet) {
+    for (Image4DComponent* imgSet : *backupImage) {
         imageSet = imgSet;
         result = clusterizePoses();
         if (!result)
-            assignFacesToClusters();
+            break;
+        assignFacesToClusters();
     }
+    imageSet = backupImage;
     return result;
 }
 

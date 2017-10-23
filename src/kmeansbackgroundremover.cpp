@@ -20,6 +20,7 @@ KmeansBackgroundRemover::KmeansBackgroundRemover(uint16_t fixedThreshold)
 
 bool KmeansBackgroundRemover::filter()
 {
+    std::cout << "Removing background by kmeans..." << std::endl;
     Image4DComponent* backupImage = image4d;
     if (image4d->isLeaf()) {
         cv::Rect boundingBox;
