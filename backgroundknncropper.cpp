@@ -7,7 +7,7 @@ BackgroundKNNCropper::BackgroundKNNCropper()
 
 void BackgroundKNNCropper::cropImage(cv::Mat& maskKNN, cv::Rect& roi)
 {
-    int x, y, width, height;
+    int x = 0, y = 0, width = 0, height = 0;
     bool flag = false;
     for (int i = 0; i < maskKNN.rows; ++i) {
         // looking for first non empty row
@@ -67,6 +67,8 @@ void BackgroundKNNCropper::cropImage(cv::Mat& maskKNN, cv::Rect& roi)
         if (flag)
             break;
     }
+    width = (width == 0 ? maskKNN.cols - x : width);
+    height = (height == 0 ? maskKNN.rows - y : height);
     roi = cv::Rect(x, y, width, height);
 }
 

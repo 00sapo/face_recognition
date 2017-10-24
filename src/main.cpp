@@ -23,7 +23,7 @@ void training(string trainingSetDir, string outputDir)
 
     PreprocessorPipe pipe;
     Image4DVectorComposite set;
-    for (int i = 0; i < 25; ++i) {
+    for (int i = 0; i < 26; ++i) {
         stringstream fileNameRegEx;
         fileNameRegEx << setw(3) << setfill('0') << i << "_.*";
         cout << "Loading identity " << i << endl;
@@ -41,8 +41,8 @@ void training(string trainingSetDir, string outputDir)
     BackgroundKNNCropper backgroundKNNCropper;
 
     pipe.push_back(backgroundKNNCropper);
-    //    pipe.push_back(backgroundRemover);
-    //    pipe.push_back(faceCropper);
+    pipe.push_back(backgroundRemover);
+    pipe.push_back(faceCropper);
     //    pipe.push_back(poseClusterizer);
     //    pipe.push_back(covarianceComputer);
     pipe.processPipe();
