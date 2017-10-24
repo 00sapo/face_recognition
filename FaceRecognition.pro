@@ -18,20 +18,22 @@ SOURCES +=  extern_libs/head_pose_estimation/CRForestEstimator.cpp \
             src/preprocessorpipe.cpp \
             src/svmtrainer.cpp \
             src/image4dvectorcomposite.cpp \
-            src/settings.cpp
+            src/settings.cpp \
+    backgroundknncropper.cpp
 
 INCLUDEPATH += include $$(OPENCV_INCLUDE)
 
 HEADERS += include/*.h \
         extern_libs/head_pose_estimation/CRForestEstimator.h \
-        extern_libs/head_pose_estimation/CRTree.h
+        extern_libs/head_pose_estimation/CRTree.h \
+    backgroundknncropper.h
 
 DISTFILES += \
         camera_info.yaml
 
 
 
-unix: LIBS += -L$$(OPENCV_LIBS) -lopencv_core -lopencv_imgproc -lopencv_highgui -lopencv_imgcodecs -lopencv_objdetect -lopencv_ml
+unix: LIBS += -L$$(OPENCV_LIBS) -lopencv_core -lopencv_imgproc -lopencv_highgui -lopencv_imgcodecs -lopencv_objdetect -lopencv_ml -lopencv_video
 
 unix: LIBS += -lpcl_io -lpcl_common
 

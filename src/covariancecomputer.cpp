@@ -14,7 +14,6 @@ CovarianceComputer::CovarianceComputer()
 
 bool CovarianceComputer::filter()
 {
-    std::cout << " Computing covariances..." << std::endl;
     bool result = false;
 
     Image4DComponent* backupImage = imageSet;

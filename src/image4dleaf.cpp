@@ -220,4 +220,14 @@ void Image4DLeaf::setDepthCovariance(const cv::Mat& value)
 {
     depthCovariance = value;
 }
+
+void Image4DLeaf::setDepthMap(const cv::Mat &value)
+{
+    depthMap = value;
+}
+
+void Image4DLeaf::setImage(const cv::Mat &value)
+{
+    image = value;
+}
 }

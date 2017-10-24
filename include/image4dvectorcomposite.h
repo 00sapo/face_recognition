@@ -24,6 +24,18 @@ public:
     cv::Mat getDepthMap() const;
 
     /**
+     * @brief setDepthMap set the depth map of the first image of this vector
+     * @param value
+     */
+    void setDepthMap(const cv::Mat& value);
+
+    /**
+     * @brief setImage set the first rgb image of this vector
+     * @param value
+     */
+    void setImage(const cv::Mat& value);
+
+    /**
      * @brief getHeight
      * @return the height of the first image of this vector
      */

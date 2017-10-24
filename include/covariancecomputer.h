@@ -17,6 +17,7 @@ namespace face {
      */
 class CovarianceComputer : public Filter {
 public:
+    std::string actionToPrint() { return "Computing covariances..."; }
     CovarianceComputer();
 
     bool filter();

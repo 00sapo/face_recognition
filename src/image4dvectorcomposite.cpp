@@ -189,4 +189,14 @@ Image4DComponent* face::Image4DVectorComposite::at(uint i)
 {
     return vec.at(i);
 }
+
+void face::Image4DVectorComposite::setDepthMap(const cv::Mat& value)
+{
+    vec.at(0)->setDepthMap(value);
+}
+
+void face::Image4DVectorComposite::setImage(const cv::Mat& value)
+{
+    vec.at(0)->setImage(value);
+}
 }

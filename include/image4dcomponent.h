@@ -34,6 +34,9 @@ public:
 
     virtual cv::Mat getDepthMap() const = 0;
 
+    virtual void setDepthMap(const cv::Mat& value) = 0;
+
+    virtual void setImage(const cv::Mat& value) = 0;
     /**
          * @brief getHeight gives the height (in pixels) of image and cloud
          *        (which have the same dimensions)

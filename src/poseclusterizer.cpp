@@ -85,7 +85,6 @@ void PoseClusterizer::assignFacesToClusters()
 
 bool PoseClusterizer::filter()
 {
-    std::cout << "Clusterizing poses..." << std::endl;
     Image4DComponent* backupImage = imageSet;
     bool result = false;
     for (Image4DComponent* imgSet : *backupImage) {

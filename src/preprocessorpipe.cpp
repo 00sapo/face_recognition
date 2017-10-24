@@ -30,6 +30,7 @@ bool PreprocessorPipe::processPipe()
 {
     bool result = false;
     for (Filter* filter : filterPipe) {
+        std::cout << filter->actionToPrint() << std::endl;
         filter->setImage4DComponent(imageSet);
         result = filter->filter();
         imageSet = filter->getImage4DComponent();

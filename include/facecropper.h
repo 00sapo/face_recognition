@@ -9,6 +9,7 @@ using cv::Vec3f;
 namespace face {
 class FaceCropper : public Filter {
 public:
+    std::string actionToPrint() { return "Face cropping..."; }
     FaceCropper();
 
     bool filter();

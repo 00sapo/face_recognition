@@ -6,6 +6,8 @@ namespace face {
 
 class KmeansBackgroundRemover : public Filter {
 public:
+    std::string actionToPrint() { return "Removing background by kmeans..."; }
+
     KmeansBackgroundRemover(uint16_t fixedThreshold = 1600);
 
     /**

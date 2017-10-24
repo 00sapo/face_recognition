@@ -11,6 +11,7 @@ using Pose = cv::Matx<float, 9, 1>;
 
 class PoseClusterizer : public Filter {
 public:
+    std::string actionToPrint() { return "Clusterizing poses..."; }
     PoseClusterizer(int numCenters = 3);
 
     /**

@@ -125,6 +125,10 @@ public:
     cv::Mat getDepthCovariance() const;
     void setDepthCovariance(const cv::Mat& value);
 
+    void setDepthMap(const cv::Mat& value);
+
+    void setImage(const cv::Mat& value);
+
 private:
     cv::Vec3f eulerAngles;
     cv::Vec3f position;
