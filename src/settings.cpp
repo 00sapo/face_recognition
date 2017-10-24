@@ -44,7 +44,6 @@ Settings::Settings()
 bool Settings::readCameraInfo()
 {
     // Opening file
-    cout << "\nReading: " << endl;
     FileStorage fs(cameraInfoPath, FileStorage::READ); // FileStorage destructor is going to close the file.
 
     if (!fs.isOpened()) {

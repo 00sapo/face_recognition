@@ -23,9 +23,10 @@ void training(string trainingSetDir, string outputDir)
 
     PreprocessorPipe pipe;
     Image4DVectorComposite set;
-    for (int i = 0; i < 255555; ++i) {
+    for (int i = 0; i < 25; ++i) {
         stringstream fileNameRegEx;
         fileNameRegEx << setw(3) << setfill('0') << i << "_.*";
+        cout << "Loading identity " << i << endl;
 
         loader.setFileNameRegEx(fileNameRegEx.str());
         set.add(*loader.get());
