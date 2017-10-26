@@ -221,13 +221,21 @@ void Image4DLeaf::setDepthCovariance(const cv::Mat& value)
     depthCovariance = value;
 }
 
-void Image4DLeaf::setDepthMap(const cv::Mat &value)
+void Image4DLeaf::setDepthMap(const cv::Mat& value)
 {
     depthMap = value;
+    HEIGHT = depthMap.rows;
+    WIDTH = depthMap.cols;
+
+    DEPTH_IMG_RATIO = static_cast<float>(HEIGHT) / WIDTH;
 }
 
-void Image4DLeaf::setImage(const cv::Mat &value)
+void Image4DLeaf::setImage(const cv::Mat& value)
 {
     image = value;
+    HEIGHT = depthMap.rows;
+    WIDTH = depthMap.cols;
+
+    DEPTH_IMG_RATIO = static_cast<float>(HEIGHT) / WIDTH;
 }
 }

@@ -8,64 +8,64 @@ BackgroundKNNCropper::BackgroundKNNCropper()
 void BackgroundKNNCropper::cropImage(cv::Mat& maskKNN, cv::Rect& roi)
 {
     int x = 0, y = 0, width = 0, height = 0;
-    bool flag = false;
+    int NONZERO_TH = 5;
     for (int i = 0; i < maskKNN.rows; ++i) {
         // looking for first non empty row
 
+        int nonzero = 0;
         for (int j = 0; j < maskKNN.cols; ++j) {
             if (maskKNN.at<uchar>(i, j) == 255) {
-                flag = true;
-                y = i;
-                break;
+                nonzero++;
             }
         }
-        if (flag)
+        if (nonzero > NONZERO_TH) {
+            y = i;
             break;
+        }
     }
 
-    flag = false;
     for (int j = 0; j < maskKNN.cols; ++j) {
         // looking for first non empty col
-
+        int nonzero = 0;
         for (int i = 0; i < maskKNN.rows; ++i) {
             if (maskKNN.at<uchar>(i, j) == 255) {
-                flag = true;
-                x = j;
-                break;
+                nonzero++;
             }
         }
-        if (flag)
+        if (nonzero > NONZERO_TH) {
+            x = j;
             break;
+        }
     }
 
-    flag = false;
     for (int i = maskKNN.rows - 1; i > 0; --i) {
         // looking for last non empty row
 
+        int nonzero = 0;
         for (int j = 0; j < maskKNN.cols; ++j) {
             if (maskKNN.at<uchar>(i, j) == 255) {
-                flag = true;
-                height = i - y;
-                break;
+                nonzero++;
             }
         }
-        if (flag)
+        if (nonzero > NONZERO_TH) {
+            height = i - y;
             break;
+        }
     }
 
-    flag = false;
     for (int j = maskKNN.cols - 1; j > 0; --j) {
         // looking for last non empty col
 
+        int nonzero = 0;
         for (int i = 0; i < maskKNN.rows; ++i) {
             if (maskKNN.at<uchar>(i, j) == 255) {
-                flag = true;
-                width = j - x;
-                break;
+                nonzero++;
             }
         }
-        if (flag)
+        if (nonzero > NONZERO_TH) {
+            width = j - x;
             break;
+        }
     }
     width = (width == 0 ? maskKNN.cols - x : width);
     height = (height == 0 ? maskKNN.rows - y : height);
@@ -74,10 +74,8 @@ void BackgroundKNNCropper::cropImage(cv::Mat& maskKNN, cv::Rect& roi)
 
 bool face::BackgroundKNNCropper::filter()
 {
-    std::cout << "Debugging: removing background using KNN" << std::endl;
     cv::Mat frame, maskKNN;
     for (Image4DComponent* id : *imageSet) {
-        std::cout << "processing " << id->getName() << std::endl;
         subtractor = cv::createBackgroundSubtractorKNN(1, 400, true);
         // creating model
         for (Image4DComponent* img : *id) {

@@ -24,8 +24,13 @@ void FaceCropper::removeOutliers() const
     cv::Mat booleanDepthMap(image4d->getHeight(), image4d->getWidth(), CV_8U);
     cv::Mat labels, stats, centroids;
     auto boolIter = booleanDepthMap.begin<bool>();
-    for (auto iter = image4d->getDepthMap().begin<uint16_t>(); iter < image4d->getDepthMap().end<uint16_t>(); ++iter, ++boolIter) {
+    cv::Mat depthMap = image4d->getDepthMap();
+    auto iter = depthMap.begin<uint16_t>();
+    auto endIter = depthMap.end<uint16_t>();
+    while (iter < endIter) {
         *boolIter = *iter != 0;
+        ++iter;
+        ++boolIter;
     }
 
     int numOfComponents = cv::connectedComponentsWithStats(booleanDepthMap, labels, stats, centroids, 4);

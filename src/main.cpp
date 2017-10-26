@@ -43,8 +43,8 @@ void training(string trainingSetDir, string outputDir)
     pipe.push_back(backgroundKNNCropper);
     pipe.push_back(backgroundRemover);
     pipe.push_back(faceCropper);
-    //    pipe.push_back(poseClusterizer);
-    //    pipe.push_back(covarianceComputer);
+    pipe.push_back(poseClusterizer);
+    pipe.push_back(covarianceComputer);
     pipe.processPipe();
 
     for (Image4DComponent* id : *pipe.getImageSet()) {

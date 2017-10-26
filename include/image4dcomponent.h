@@ -38,21 +38,21 @@ public:
 
     virtual void setImage(const cv::Mat& value) = 0;
     /**
-         * @brief getHeight gives the height (in pixels) of image and cloud
+         * @brief getHeight gives the height (in pixels) of the depth image
          *        (which have the same dimensions)
          * @return height of the 4D image
          */
     virtual size_t getHeight() const = 0;
 
     /**
-         * @brief getWidth gives the width (in pixels) of image and depthmap
+         * @brief getWidth gives the width (in pixels) of the depth image
          *        (which have the same dimensions)
          * @return width of the 4D image
          */
     virtual size_t getWidth() const = 0;
 
     /**
-         * @brief getArea gives the area (in pixel) of image and depthMap
+         * @brief getArea gives the area (in pixel) of the depth image
          *        (which have the same dimensions)
          * @return area of the face
          */
