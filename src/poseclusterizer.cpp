@@ -86,15 +86,27 @@ void PoseClusterizer::assignFacesToClusters()
 bool PoseClusterizer::filter()
 {
     Image4DComponent* backupImage = imageSet;
+    vector<vector<Image4DComponent*>> newImageSet(numCenters);
+
     bool result = false;
-    for (Image4DComponent* imgSet : *backupImage) {
-        imageSet = imgSet;
+    for (Image4DComponent* identity : *backupImage) {
+        imageSet = identity;
         result = clusterizePoses();
         if (!result)
             break;
         assignFacesToClusters();
+
+        for (int i = 0; i < identity->size(); i++) {
+            newImageSet[i].push_back(identity->at(i));
+        }
     }
-    imageSet = backupImage;
+    imageSet->clear();
+    for (auto& cluster : newImageSet) {
+        Image4DVectorComposite vec;
+        vec.setVec(cluster);
+        imageSet->add(vec);
+    }
+
     return result;
 }
 

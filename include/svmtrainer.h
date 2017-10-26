@@ -31,10 +31,10 @@ public:
     bool save(const std::string& directoryName);
 
 private:
-    void trainSVMs(cv::Mat& data, const std::vector<int>& indexes, ImgType svmToTrain);
-    cv::Mat removeRows(cv::Mat& data, cv::Mat& removed, int baseIdIndex, int subset) const;
-    void restoreRows(cv::Mat& data, cv::Mat& removed, int baseIdIndex, int subset) const;
-    Mat formatDataForTraining(const MatSet& data, std::vector<int>& indexes);
+    void trainSVMs(vector<Mat> &data, ImgType svmToTrain);
+    cv::Mat removeRow(cv::Mat& data, cv::Mat& removed, int id) const;
+    void restoreRow(cv::Mat& data, cv::Mat& removed, int id) const;
+    vector<Mat> formatDataForTraining(const MatSet& data);
 };
 
 } // namespace face

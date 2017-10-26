@@ -161,6 +161,7 @@ void Image4DVectorComposite::resizeImage()
 Image4DComponent* Image4DVectorComposite::add(Image4DComponent& item)
 {
     vec.push_back(&item);
+    (vector<Image4DComponent*>)vec;
     return this;
 }
 

@@ -24,7 +24,7 @@ void training(string trainingSetDir, string outputDir)
 
     PreprocessorPipe pipe;
     Image4DVectorComposite set;
-    for (int i = 0; i < 26; ++i) {
+    for (int i = 0; i < 1; ++i) {
         stringstream fileNameRegEx;
         fileNameRegEx << setw(3) << setfill('0') << i << "_.*";
         cout << "Loading identity " << i << endl;
@@ -41,7 +41,7 @@ void training(string trainingSetDir, string outputDir)
     CovarianceComputer covarianceComputer;
     BackgroundKNNCropper backgroundKNNCropper;
 
-    pipe.push_back(backgroundKNNCropper);
+    //    pipe.push_back(backgroundKNNCropper);
     pipe.push_back(backgroundRemover);
     pipe.push_back(faceCropper);
     pipe.push_back(poseClusterizer);
@@ -83,9 +83,10 @@ void testing(string testingSetDir, string inputModelDir)
     FaceCropper faceCropper;
     PoseClusterizer poseClusterizer;
     CovarianceComputer covarianceComputer;
-    BackgroundKNNCropper backgroundKNNCropper;
+    covarianceComputer.setLeafCovarianceComputer(true);
+    //    BackgroundKNNCropper backgroundKNNCropper;
 
-    pipe.push_back(backgroundKNNCropper);
+    //    pipe.push_back(backgroundKNNCropper);
     pipe.push_back(backgroundRemover);
     pipe.push_back(faceCropper);
     pipe.push_back(poseClusterizer);
