@@ -7,6 +7,7 @@
 #include <poseclusterizer.h>
 #include <preprocessorpipe.h>
 #include <string.h>
+#include <svmtester.h>
 #include <svmtrainer.h>
 #include <vector>
 
@@ -23,7 +24,7 @@ void training(string trainingSetDir, string outputDir)
 
     PreprocessorPipe pipe;
     Image4DVectorComposite set;
-    for (int i = 0; i < 10; ++i) {
+    for (int i = 0; i < 26; ++i) {
         stringstream fileNameRegEx;
         fileNameRegEx << setw(3) << setfill('0') << i << "_.*";
         cout << "Loading identity " << i << endl;
@@ -59,9 +60,46 @@ void training(string trainingSetDir, string outputDir)
     faceRec.save(outputDir);
 }
 
-void testing(string testingSetDir, string outputDir)
+void testing(string testingSetDir, string inputModelDir)
 {
-    //TODO
+    // loading testing set
+
+    Image4DLoader loader(testingSetDir, "000_.*");
+
+    PreprocessorPipe pipe;
+    Image4DVectorComposite set;
+    for (int i = 0; i < 19; ++i) {
+        stringstream fileNameRegEx;
+        fileNameRegEx << setw(3) << setfill('0') << i << "_.*";
+        cout << "Loading identity " << i << endl;
+
+        loader.setFileNameRegEx(fileNameRegEx.str());
+        set.add(*loader.get());
+    }
+
+    pipe.setImageSet(&set);
+
+    KmeansBackgroundRemover backgroundRemover;
+    FaceCropper faceCropper;
+    PoseClusterizer poseClusterizer;
+    CovarianceComputer covarianceComputer;
+    BackgroundKNNCropper backgroundKNNCropper;
+
+    pipe.push_back(backgroundKNNCropper);
+    pipe.push_back(backgroundRemover);
+    pipe.push_back(faceCropper);
+    pipe.push_back(poseClusterizer);
+    pipe.push_back(covarianceComputer);
+    pipe.processPipe();
+
+    // loading input model
+    SVMTester faceRec;
+    faceRec.load(inputModelDir);
+
+    // predicting
+    for (Image4DComponent* identity : *pipe.getImageSet()) {
+        cout << identity->getName() << "is the id: " << faceRec.predict(*identity) << endl;
+    }
 }
 
 int main(int count, char* args[])
@@ -69,7 +107,7 @@ int main(int count, char* args[])
     if (count != 4) {
         cout << "This software has two commands: " << endl;
         cout << "\t* training <training set directory> <model output directory>\t\t- to train the model" << endl;
-        cout << "\t* testing <testing set directory> <model directory>\t\t- to test the model" << endl;
+        cout << "\t* testing <testing set directory> <model input directory>\t\t- to test the model" << endl;
         return 1;
     }
     if (!strncmp(args[1], "training", 8))

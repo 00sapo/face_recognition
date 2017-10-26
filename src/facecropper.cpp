@@ -144,8 +144,9 @@ bool FaceCropper::crop()
         }
     }
 
+    int width = (xBase - xTop == 0 ? image4d->getWidth() - xTop : xBase - xTop);
     faceROI.x = xTop;
-    faceROI.width = xBase - xTop;
+    faceROI.width = width;
 
     image4d->crop(faceROI);
     return true;
