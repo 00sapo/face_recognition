@@ -1,8 +1,8 @@
 #ifndef FACE_LBP_H
 #define FACE_LBP_H
 
-#include <opencv2/opencv.hpp>
 #include <bitset>
+#include <opencv2/opencv.hpp>
 
 namespace face {
 
@@ -14,6 +14,8 @@ namespace face {
 template <typename _Tp>
 cv::Mat OLBP_(const cv::Mat src)
 {
+    if (src.rows <= 2 || src.cols <= 2)
+        return cv::Mat::zeros(3, 3, CV_8UC1);
     cv::Mat dst = cv::Mat::zeros(src.rows - 2, src.cols - 2, CV_8UC1);
     for (int i = 1; i < src.rows - 1; i++) {
         for (int j = 1; j < src.cols - 1; j++) {
@@ -91,7 +93,6 @@ inline cv::Mat OLBPHist(const cv::Mat src)
     return hist;
 }
 
-
 /**
  * @brief HistMean_ computes the mean of a histogram
  * @param hist a Mat containing a histogram (i.e. returned by cv::calcHist())
@@ -140,7 +141,6 @@ inline float HistMean(const cv::Mat src)
     }
     return mean;
 }
-
 }
 
 #endif // FACE_LBP_H

@@ -23,7 +23,7 @@ void training(string trainingSetDir, string outputDir)
 
     PreprocessorPipe pipe;
     Image4DVectorComposite set;
-    for (int i = 0; i < 26; ++i) {
+    for (int i = 0; i < 10; ++i) {
         stringstream fileNameRegEx;
         fileNameRegEx << setw(3) << setfill('0') << i << "_.*";
         cout << "Loading identity " << i << endl;
@@ -47,16 +47,16 @@ void training(string trainingSetDir, string outputDir)
     pipe.push_back(covarianceComputer);
     pipe.processPipe();
 
-    for (Image4DComponent* id : *pipe.getImageSet()) {
-        for (Image4DComponent* img : *id) {
-            imshow(img->getName(), img->getImage());
-            waitKey(0);
-        }
-    }
-    //    SVMTrainer faceRec;
-    //    faceRec.train(pipe.getImageSet());
+    //    for (Image4DComponent* id : *pipe.getImageSet()) {
+    //        for (Image4DComponent* img : *id) {
+    //            imshow(img->getName(), img->getImage());
+    //            waitKey(0);
+    //        }
+    //    }
+    SVMTrainer faceRec;
+    faceRec.train(pipe.getImageSet());
 
-    //    faceRec.save(outputDir);
+    faceRec.save(outputDir);
 }
 
 void testing(string testingSetDir, string outputDir)
