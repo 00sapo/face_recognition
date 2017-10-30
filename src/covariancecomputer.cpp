@@ -22,7 +22,7 @@ namespace covariance {
  * @param poseEstimation
  * @return id of the nearest center to the input pose estimation
  */
-int getNearestCenterId(const Pose& pose, const std::vector<Pose>& centers);
+int getNearestCenterId(const cv::Vec3f &pose, const vector<float> &centers);
 
 
 
@@ -32,6 +32,20 @@ vector<std::pair<Mat, Mat>> computeCovarianceRepresentation(const vector<Face> &
     auto centers = clusterizePoses(faces, subsets);
     cout << "Assigning faces to clusters..." << endl;
     auto clusters = assignFacesToClusters(faces, centers);
+
+    /*
+    for (auto i = 0; i < clusters.size(); ++i) {
+        cout << "Showing identity " << faces[0].name << ", subset " << i << endl;
+        std::stringstream winName;
+        winName << "Identity " << faces[0].name << " subset " << i;
+        for (auto face : clusters[i]) {
+            cout << "Face rotation: " << face->getEulerAngles() << endl;
+            cv::imshow(winName.str(), face->image);
+            cv::waitKey(0);
+        }
+    }
+    */
+
 
     vector<std::pair<Mat, Mat>> covariances;
     for (const auto& cluster : clusters) {
@@ -47,16 +61,16 @@ vector<std::pair<Mat, Mat>> computeCovarianceRepresentation(const vector<Face> &
 }
 
 
-vector<Pose> clusterizePoses(const vector<Face> &faces, int numCenters)
+vector<float> clusterizePoses(const vector<Face> &faces, int numCenters)
 {
     if (faces.size() < numCenters)
-        return vector<Pose>(0);
+        return vector<float>(0);
 
     // retrieve faces' poses
-    vector<Pose> poses;
+    vector<float> poses;
     poses.reserve(faces.size());
     for (const auto& face : faces) {
-        poses.push_back(face.getRotationMatrix());
+        poses.push_back(face.getEulerAngles()[1]);
     }
 
     // clusterize poses
@@ -67,37 +81,39 @@ vector<Pose> clusterizePoses(const vector<Face> &faces, int numCenters)
 
     if (centers.rows != numCenters) {
         std::cout << "Clustering poses failed!" << std::endl;
-        return vector<Pose>(numCenters); // TODO: check default Pose value
+        return vector<float>(numCenters); // TODO: check default Pose value
     }
 
-    // convert from Mat to vector<Pose>
-    vector<Pose> ctrs;
+    // convert from Mat to vector<float>
+    vector<float> ctrs;
     for (int i = 0; i < centers.rows; ++i) {
-        ctrs.emplace_back(centers.at<float>(i, 0), centers.at<float>(i, 1), centers.at<float>(i, 2),
-                          centers.at<float>(i, 3), centers.at<float>(i, 4), centers.at<float>(i, 5),
-                          centers.at<float>(i, 6), centers.at<float>(i, 7), centers.at<float>(i, 8));
+        ctrs.push_back(centers.at<float>(i));
     }
+
+    std::sort(begin(ctrs), end(ctrs));
+
     return ctrs;
 }
 
-vector<vector<const Face*>> assignFacesToClusters(const vector<Face> &faces, const vector<Pose> &centers)
+vector<vector<const Face*>> assignFacesToClusters(const vector<Face> &faces, const vector<float> &centers)
 {
     vector<vector<const Face*>> clusters(centers.size());
     for (const auto &face : faces) {
-        int index = getNearestCenterId(face.getRotationMatrix(), centers);
+        int index = getNearestCenterId(face.getEulerAngles(), centers);
         clusters[index].push_back(&face);
     }
+
     return clusters;
 }
 
-int getNearestCenterId(const Pose &pose, const vector<Pose> &centers)
+int getNearestCenterId(const cv::Vec3f &pose, const vector<float> &centers)
 {
     float min = std::numeric_limits<float>::max();
     int index = 0;
     for (size_t i = 0; i < centers.size(); ++i) {
-        float norm = cv::norm(centers[i], pose, cv::NORM_L2);
-        if (norm < min) {
-            min = norm;
+        float distance = std::abs(pose[1] - centers[i]);
+        if (distance < min) {
+            min = distance;
             index = i;
         }
     }

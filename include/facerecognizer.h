@@ -73,9 +73,22 @@ private:
     SVMSteinMatrix depthmapSVMs;   // thus resulting in a Nxc matrix where N is the number of identities
                                    // and c the number of head rotation subsets
 
-    void trainSVMs(cv::Mat &data, const std::vector<int> &indexes, ImgType svmToTrain);
-    cv::Mat removeRows(cv::Mat &data, cv::Mat &removed, int baseIdIndex, int subset) const;
-    void restoreRows(cv::Mat &data, cv::Mat &removed, int baseIdIndex, int subset) const;
+    void trainSVMs(const cv::Mat &data, ImgType svmToTrain);
+
+
+    /**
+     * @brief formatDataForTraining transforms the input dataset in a suitable format to be used by
+     *        grayscaleSVMs and depthmapSVMs
+     * @param data: vector of identities. For each identity it contains a vector of covariance matrixes
+     * @param indexes: a vector with the starting rows indexes for each identity (with length = dataIn.size())
+     *
+     * @return formatted data to be feed into SVMModel. It has one row for each Mat contained in dataIn
+     *         and a number of columns equal to Mat::rows x Mat::columns (assuming every Mat in dataIn
+     *         has the same dimensions)
+     */
+    cv::Mat formatDataForTraining(const MatMatrix& data) const;
+
+    cv::Mat formatDataForPrediction(const std::vector<cv::Mat>& data) const;
 };
 
 }   // namespace face

@@ -17,6 +17,7 @@ class Image4D;
 class Image4DLoader {
 public:
     static const std::string MATCH_ALL;
+    //static const std::string NO_MATCH;
 
     /**
      * @brief ImageLoader, basic constructor.
@@ -60,6 +61,9 @@ public:
      * Changes the regular expression used for file name matching
      */
     void setFileNameRegEx(const std::string& fileNameRegEx);
+
+
+    //void clearFileNameRegEx();
 
     /**
      * @brief setCurrentPath

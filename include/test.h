@@ -39,7 +39,7 @@ namespace test {
     void testSVM()
     {
         string dirPath = "../RGBD_Face_dataset_training/";
-        Image4DLoader loader(dirPath, "000_.*");
+        Image4DLoader loader(dirPath);
 
         Image4DMatrix identities;
         for (int i = 0; i <= 25; ++i) {

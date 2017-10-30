@@ -34,9 +34,9 @@ namespace covariance {
      * @brief clusterizePoses: computes the centers of the clusters using an L2
      *        metric over the poses of input faces
      * @param numCenters: num of centers/clusters
-     * @return a vector containing clusters centers
+     * @return a vector containing clusters centers (sorted in increasing order)
      */
-    std::vector<Pose> clusterizePoses(const std::vector<Face> &faces, int numCenters);
+    std::vector<float> clusterizePoses(const std::vector<Face> &faces, int numCenters);
 
     /**
      * @brief assignFacesToClusters assigns every face to the nearest cluster center (using L2 metric)
@@ -45,7 +45,7 @@ namespace covariance {
      * @return vector containing in each position a list of faces assigned to that cluster
      */
     std::vector<std::vector<const Face*>> assignFacesToClusters(const std::vector<Face> &faces,
-                                                                const std::vector<Pose> &centers);
+                                                                const std::vector<float> &centers);
 
     /**
      * @brief setToCovariance: computes the covariance matrix representation of an image set

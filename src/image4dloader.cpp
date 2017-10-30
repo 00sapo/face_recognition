@@ -30,9 +30,10 @@ namespace fs = std::experimental::filesystem;
 namespace face {
 
 const string Image4DLoader::MATCH_ALL = ".*";
+//const string Image4DLoader::NO_MATCH  = "\+";
 
 Image4DLoader::Image4DLoader()
-    : Image4DLoader(fs::current_path().string(), ".*(png|jpg|bmp)")
+    : Image4DLoader(fs::current_path().string())
 {
 }
 
@@ -174,9 +175,18 @@ vector<Image4D> Image4DLoader::get()
 
 void Image4DLoader::setFileNameRegEx(const string& fileNameRegEx)
 {
+    imageFileNames.clear();
+    cloudFileNames.clear();
     fileTemplate = std::regex(fileNameRegEx);
     loadFileNames(currentPath);
 }
+/*
+void Image4DLoader::clearFileNameRegEx()
+{
+    imageFileNames.clear();
+    cloudFileNames.clear();
+}
+*/
 
 void Image4DLoader::setCurrentPath(const string& dirPath)
 {
