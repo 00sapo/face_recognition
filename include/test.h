@@ -131,7 +131,7 @@ namespace test {
     void testPreprocessing()
     {
         cout << "\n\nDetect face pose..." << endl;
-        Image4DLoader loader("../RGBD_Face_dataset_training/", ".*");
+        Image4DLoader loader("../RGBD_Face_dataset_training/", "002.*");
         auto image4d = loader.get();
 
         Preprocessor prep;
@@ -165,7 +165,9 @@ namespace test {
         //        }
 
         Preprocessor prep;
-        prep.segment(images);
+        for (auto& image : images) {
+            prep.segment(image);
+        }
 
         for (auto& image4d : images) {
             imshow("Original image", image4d.depthMap);

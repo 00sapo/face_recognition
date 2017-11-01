@@ -12,6 +12,25 @@ using std::vector;
 
 namespace face {
 
+enum class ScanOrder {
+    top_down,
+    bottom_up,
+    left_to_right,
+    right_to_left
+};
+
+/**
+ * @brief gives the index of the first row or column with at least minNonemptySquares
+ *        squares different != 0
+ * The matrix is scanned according to the specified scanOrder wich establishes if
+ * it is scanned by row or by column and if by increasing or decreasing indexes
+ *
+ * @note template T specifies the data type stored in the Mat
+ */
+template<typename T>
+int getFirstNonempty(cv::Mat matrix, int minNonemptySquares, ScanOrder scanOrder);
+
+
 const string Preprocessor::FACE_DETECTOR_PATH = "../haarcascade_frontalface_default.xml";
 const string Preprocessor::POSE_ESTIMATOR_PATH = "../trees/";
 
@@ -41,16 +60,29 @@ Preprocessor::Preprocessor(const string& faceDetectorPath, const string& poseEst
 
 vector<Face> Preprocessor::preprocess(vector<Image4D>& images)
 {
-    segment(images);
+    for (auto& image : images)
+        segment(image);
+
     return cropFaces(images);
 }
 
+
 void Preprocessor::segment(std::vector<Image4D>& images)
 {
-    // for each image...
-    for (auto& image : images) {
+    for (auto& image : images)
         segment(image);
-    }
+
+    return;
+}
+
+
+void Preprocessor::segment(Image4D& image4d)
+{
+    cv::Rect boundingBox;
+    if (!detectForegroundFace(image4d, boundingBox))
+        removeBackgroundFixed(image4d, FIXED_THRESHOLD);
+    else
+        removeBackgroundDynamic(image4d, boundingBox);
 
     return;
 }
@@ -64,27 +96,74 @@ vector<Face> Preprocessor::cropFaces(vector<Image4D>& images)
 
     for (auto& face : images) {
         Vec3f position, eulerAngles;
-        cropFace(face, position, eulerAngles);
-        croppedFaces.emplace_back(face, position, eulerAngles);
+        auto area = face.getArea();
+        //cv::imshow("Non cropped face", face.depthMap);
+        //cv::waitKey(0);
+        auto cropped = cropFace(face, position, eulerAngles);
+        //cv::imshow("Cropped face", face.depthMap);
+        //cv::waitKey(0);
+        if (!cropped || face.getArea() != area) // keep only images where a face has been detected and cropped
+            croppedFaces.emplace_back(face, position, eulerAngles);
     }
 
     return croppedFaces;
 }
 
-// ---------- private member functions ----------
-
-void Preprocessor::segment(Image4D& image4d)
+bool Preprocessor::cropFace(Image4D& image4d, Vec3f& position, Vec3f& eulerAngles) const
 {
-    cv::Rect boundingBox;
-    // ... detect foreground face...
-    if (!detectForegroundFace(image4d, boundingBox))
-        removeBackgroundFixed(image4d, 1600);
-    else
-        removeBackgroundDynamic(image4d, boundingBox);
+    removeOutliers(image4d);
 
-    return;
+    if (!estimateFacePose(image4d, position, eulerAngles))
+        return false;
+
+    cv::Mat normalized;
+    cv::normalize(image4d.depthMap, normalized, 0, 255, CV_MINMAX, CV_8U);
+    cv::imshow("Depth map", normalized);
+    std::cout << eulerAngles << std::endl;
+    cv::waitKey(0);
+
+    const int NONZERO_PXL = 5;
+
+    auto yTop = getFirstNonempty<uint16_t>(image4d.depthMap, NONZERO_PXL, ScanOrder::top_down);
+
+    if (std::abs(eulerAngles[0]) > 35)  // TODO: is this if really necessary?
+        eulerAngles[0] = 0;
+
+    // necessary corrections to take into account head rotations
+    const float BETA  = (eulerAngles[0] > 0) ? 20/8.f : 0.f;
+    const float GAMMA = 5/8;
+    const float DELTA = 1.1f;
+    const float PHI   = 1.f;
+
+    yTop += BETA*eulerAngles[0] + GAMMA*eulerAngles[2];
+    if (yTop < 0)
+        yTop = 0;
+
+    int rotationFactor = DELTA*std::abs(eulerAngles[0]);
+    int distanceFactor = 130 / (position[2] / 1000.f);
+    int yBase = yTop + distanceFactor - rotationFactor;
+    if (yBase > image4d.getHeight())
+        yBase = image4d.getHeight();
+
+    cv::Rect scanROI(0, yTop, image4d.getWidth(), (yBase - yTop) / 2);
+    auto roiMat = image4d.depthMap(scanROI);
+    auto xTop  = getFirstNonempty<uint16_t>(roiMat, NONZERO_PXL, ScanOrder::left_to_right);
+    auto xBase = getFirstNonempty<uint16_t>(roiMat, NONZERO_PXL, ScanOrder::right_to_left);
+
+    // TODO: use a sigmoidal function to minimize lateral cropping for small
+    //       values of eulerAngles[1] (but where should it be centered?, in 15?)
+    if (eulerAngles[1] > 0)
+        xBase -= PHI * std::abs(eulerAngles[1]) - 10;
+    else
+        xTop  += PHI * std::abs(eulerAngles[1]); // aumentare xTop
+
+
+    cv::Rect faceROI (xTop, yTop, xBase - xTop, yBase - yTop);
+    image4d.crop(faceROI);
+    return true;
 }
 
+// ---------- private member functions ----------
 bool Preprocessor::detectForegroundFace(const Image4D &face, cv::Rect &boundingBox)
 {
     if (!faceDetectorAvailable) {
@@ -111,7 +190,7 @@ void Preprocessor::removeBackgroundDynamic(Image4D &face, const cv::Rect &boundi
     // take non-nan, non-zero points
     vector<float> depth;
     auto lambda = [&depth](int x, int y, const uint16_t &dpt) {
-        if (!std::isnan(dpt) && dpt != 0)
+        if (std::isnormal(dpt)) // if is not NaN, 0 or INF
             depth.push_back(dpt);
     };
 
@@ -187,77 +266,7 @@ void Preprocessor::removeOutliers(Image4D &image4d) const
     });
 }
 
-bool Preprocessor::cropFace(Image4D& image4d, Vec3f& position, Vec3f& eulerAngles) const
-{
-    removeOutliers(image4d);
 
-    if (!estimateFacePose(image4d, position, eulerAngles)) {
-        return false;
-    }
-
-    const auto HEIGHT = image4d.getHeight();
-    const auto WIDTH = image4d.getWidth();
-    const int NONZERO_PXL_THRESHOLD = 5;
-
-    int yTop = 0;
-    for (std::size_t i = 0; i < HEIGHT; ++i) { // look for first non-empty row
-        int nonzeroPixels = 0;
-        for (std::size_t j = 0; j < WIDTH; ++j) {
-            if (image4d.depthMap.at<uint16_t>(i, j) != 0)
-                ++nonzeroPixels;
-        }
-        if (nonzeroPixels >= NONZERO_PXL_THRESHOLD) {
-            yTop = i;
-            break;
-        }
-    }
-
-    if (std::abs(eulerAngles[0]) > 35)
-        eulerAngles[0] = 0;
-
-    // necessary corrections to take into account head rotations
-    yTop += 10 / 8 * eulerAngles[0] + 5 / 8 * eulerAngles[2];
-    if (yTop < 0)
-        yTop = 0;
-    int yBase = yTop + (145 / (position[2] / 1000.f));
-    if (yBase > HEIGHT)
-        yBase = HEIGHT;
-    cv::Rect faceROI(0, yTop, WIDTH, yBase - yTop);
-
-    const int MAX_Y = faceROI.y + faceROI.height - 30; // stay 30px higher to avoid shoulders
-
-    int xTop = 0;
-    for (size_t i = 0; i < WIDTH; ++i) { // look for first non-empty column from left
-        int nonzeroPixels = 0;
-        for (int j = faceROI.y; j < MAX_Y; ++j) {
-            if (image4d.depthMap.at<uint16_t>(j, i) != 0)
-                ++nonzeroPixels;
-        }
-        if (nonzeroPixels >= NONZERO_PXL_THRESHOLD) {
-            xTop = i;
-            break;
-        }
-    }
-
-    int xBase = 0;
-    for (int i = WIDTH - 1; i >= 0; --i) { // look for last non-empty column from right
-        int nonzeroPixels = 0;
-        for (int j = faceROI.y; j < MAX_Y; ++j) {
-            if (image4d.depthMap.at<uint16_t>(j, i) != 0)
-                ++nonzeroPixels;
-        }
-        if (nonzeroPixels >= NONZERO_PXL_THRESHOLD) {
-            xBase = i;
-            break;
-        }
-    }
-
-    faceROI.x = xTop;
-    faceROI.width = xBase - xTop;
-
-    image4d.crop(faceROI);
-    return true;
-}
 
 bool Preprocessor::estimateFacePose(const Image4D& image4d, cv::Vec3f& position, cv::Vec3f& eulerAngles) const
 {
@@ -294,6 +303,38 @@ bool Preprocessor::estimateFacePose(const Image4D& image4d, cv::Vec3f& position,
     eulerAngles = { pose[3], pose[4], pose[5] };
 
     return true;
+}
+
+
+
+// -----------------------------------------------
+// ----------- Non member functions --------------
+// -----------------------------------------------
+
+template<typename T>
+int getFirstNonempty(cv::Mat matrix, int minNonemptySquares, ScanOrder scanOrder)
+{
+    auto scanByRow  = (scanOrder == ScanOrder::bottom_up || scanOrder == ScanOrder::top_down);
+    auto increasing = (scanOrder == ScanOrder::top_down  || scanOrder == ScanOrder::left_to_right);
+
+    int i, j;
+    auto &u = scanByRow ? i : j;
+    auto &v = scanByRow ? j : i;
+    const auto firstDim  = scanByRow ? matrix.rows : matrix.cols;
+    const auto secondDim = scanByRow ? matrix.cols : matrix.rows;
+
+    for (auto k = 0; k < firstDim; ++k) { // look for first non-empty row
+        int nonzeroSquares = 0;
+        i = increasing ? k : firstDim - k - 1;  // TODO: double check this
+        for (j = 0; j < secondDim; ++j) {
+            if (matrix.at<T>(u, v) != 0)
+                ++nonzeroSquares;
+        }
+        if (nonzeroSquares >= minNonemptySquares) {
+            return i;
+        }
+    }
+    return -1;
 }
 
 } // nemaspace face

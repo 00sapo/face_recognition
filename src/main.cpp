@@ -23,7 +23,7 @@ void testFunctions()
     //
     //test::testKmeans();
     //
-    //face::test::testPreprocessing();
+    face::test::testPreprocessing();
     //
     //test::testLoadSpeed();
     //
@@ -35,7 +35,7 @@ void testFunctions()
     //
     //face::test::covarianceTest();
     //
-    face::test::testSVM();
+    //face::test::testSVM();
     //
     //face::test::testSVMLoad();
     //

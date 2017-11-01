@@ -46,7 +46,6 @@ vector<std::pair<Mat, Mat>> computeCovarianceRepresentation(const vector<Face> &
     }
     */
 
-
     vector<std::pair<Mat, Mat>> covariances;
     for (const auto& cluster : clusters) {
         Mat imgCovariance, depthCovariance;

@@ -203,13 +203,13 @@ bool FaceRecognizer::save(const string& directoryName)
 
 void FaceRecognizer::trainSVMs(const Mat& data, ImgType svmToTrain)
 {
-    assert(data.size() == N*c && "data must be an Nxc matrix!");
+    assert(data.rows == N*c && "data must be an Nxc matrix!");
 
     SVMSteinMatrix& svms = (svmToTrain == ImgType::grayscale) ? grayscaleSVMs : depthmapSVMs;
     vector<Mat> trainingData = { keepSubset(data,0), keepSubset(data,1), keepSubset(data,2) };
     vector<int> labels(N, -1);
 
-    for (auto id = 0; id < N; ++id) {
+    for (auto id = 0; id < 1 /*N*/; ++id) {
         for (auto i = 0; i < c; ++i) {
             std::cout << "id: " << id << ", subset: " << i << std::endl;
             labels[id] = 1;

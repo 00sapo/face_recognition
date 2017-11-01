@@ -34,6 +34,9 @@ public:
      */
     void segment(std::vector<Image4D> &images);
 
+    void segment(Image4D &face);
+
+
     /**
      * @brief cropFaces is the second preprocessing step. Precisely
      *        crops the region around the detected face
@@ -41,6 +44,13 @@ public:
      * @return a vector containing the cropped faces
      */
     std::vector<face::Face> cropFaces(std::vector<face::Image4D> &images);
+
+    /**
+     * @brief cropFace: crops face region taking into account face orientation
+     * @param face: image containing face to crop
+     * @return false if no face was detected
+     */
+    bool cropFace(face::Image4D &image4d, cv::Vec3f &position, cv::Vec3f &eulerAngles) const;
 
     /**
      * @brief estimateFacePose
@@ -54,14 +64,13 @@ private:
     static const std::string FACE_DETECTOR_PATH;
     static const std::string POSE_ESTIMATOR_PATH;
 
+    static constexpr float FIXED_THRESHOLD = 1600;
+
     bool faceDetectorAvailable = false;
     bool poseEstimatorAvailable = false;
 
     cv::CascadeClassifier classifier;
     CRForestEstimator estimator;
-
-
-    void segment(Image4D &face);
 
     /**
      * @brief detectForegroundFace detects the nearest face in the image
@@ -88,13 +97,6 @@ private:
      * @param threshold: max allowed distance
      */
     void removeOutliers(Image4D &image4d) const;
-
-    /**
-     * @brief cropFace: crops face region taking into account face orientation
-     * @param face: image containing face to crop
-     * @return false if no face was detected
-     */
-    bool cropFace(face::Image4D &image4d, cv::Vec3f &position, cv::Vec3f &eulerAngles) const;
 
 };
 
