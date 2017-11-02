@@ -116,22 +116,24 @@ bool Preprocessor::cropFace(Image4D& image4d, Vec3f& position, Vec3f& eulerAngle
     if (!estimateFacePose(image4d, position, eulerAngles))
         return false;
 
+    /*
     cv::Mat normalized;
     cv::normalize(image4d.depthMap, normalized, 0, 255, CV_MINMAX, CV_8U);
     cv::imshow("Depth map", normalized);
     std::cout << eulerAngles << std::endl;
     cv::waitKey(0);
+    */
 
     const int NONZERO_PXL = 5;
 
     auto yTop = getFirstNonempty<uint16_t>(image4d.depthMap, NONZERO_PXL, ScanOrder::top_down);
 
-    if (std::abs(eulerAngles[0]) > 35)  // TODO: is this if really necessary?
-        eulerAngles[0] = 0;
+    //if (std::abs(eulerAngles[0]) > 35)  // TODO: is this if really necessary?
+    //    eulerAngles[0] = 0;
 
     // necessary corrections to take into account head rotations
-    const float BETA  = (eulerAngles[0] > 0) ? 20/8.f : 0.f;
-    const float GAMMA = 5/8;
+    const float BETA  = (eulerAngles[0] > 0) ? 15/8.f : 0.f;
+    const float GAMMA = 5/8.f;
     const float DELTA = 1.1f;
     const float PHI   = 1.f;
 

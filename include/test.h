@@ -59,10 +59,27 @@ namespace test {
             peoples.push_back(preproc.preprocess(id));
         }
 
-        FaceRecognizer faceRec;
+        FaceRecognizer faceRec(1);
         faceRec.train(peoples);
 
-        faceRec.save("../svms");
+        //faceRec.save("../svms");
+
+
+        std::cout << "-----------------------------------------------" << std::endl;
+        std::cout << "----------------- Testing ---------------------" << std::endl;
+        std::cout << "-----------------------------------------------" << std::endl;
+
+        std::cout << "\nLoading..." << std::endl;
+
+        dirPath = "../RGBD_Face_dataset_testing/Test1";
+        Image4DLoader testLoader(dirPath, "002_.*");
+        auto testImage4dID = testLoader.get();
+
+        std::cout << "\nPreprocessing..." << std::endl;
+        auto testID = preproc.preprocess(testImage4dID);
+
+        std::cout << "\nPrediction..." << std::endl;
+        std::cout << faceRec.predict(testID) << std::endl;
     }
 
     void testSettings()
@@ -131,7 +148,7 @@ namespace test {
     void testPreprocessing()
     {
         cout << "\n\nDetect face pose..." << endl;
-        Image4DLoader loader("../RGBD_Face_dataset_training/", "002.*");
+        Image4DLoader loader("../RGBD_Face_dataset_training/", "016_.*");
         auto image4d = loader.get();
 
         Preprocessor prep;

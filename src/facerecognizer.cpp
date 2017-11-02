@@ -24,13 +24,15 @@ void getNormalizedCovariances(const FaceMatrix& identities, int subsets, MatMatr
     MatMatrix& depthmapCovarOut);
 
 
-Mat keepSubset(const Mat& data, int subset)
+Mat keepSubset(const Mat& data, int subsetIndex, int totalSubsets)
 {
-    Mat out(data.rows/3, data.cols, data.type());
+    const auto HEIGHT = data.rows / totalSubsets;
+    Mat out(HEIGHT, data.cols, data.type());
 
-    for (auto i = 0; i < data.rows/3; ++i) {
+    for (auto i = 0; i < HEIGHT; ++i) {
+        auto identityIndex = totalSubsets*i;
         for (auto j = 0; j < data.cols; ++j) {
-            out.at<float>(i,j) = data.at<float>(3*i + subset,j);
+            out.at<float>(i,j) = data.at<float>(identityIndex + subsetIndex,j);
         }
     }
 
@@ -73,7 +75,7 @@ void FaceRecognizer::train(const FaceMatrix& trainingSamples, const vector<strin
     auto depthmapMat  = formatDataForTraining(depthmapCovar);
 
     trainSVMs(grayscaleMat, ImgType::grayscale); // grayscale images training
-    //trainSVMs(depthmapMat, ImgType::depthmap); // depthmap  images training
+    trainSVMs(depthmapMat, ImgType::depthmap); // depthmap  images training
 }
 
 string FaceRecognizer::predict(const vector<Face>& identity) const
@@ -81,7 +83,7 @@ string FaceRecognizer::predict(const vector<Face>& identity) const
     vector<Mat> grayscaleCovar, depthmapCovar;
     getNormalizedCovariances(identity, c, grayscaleCovar, depthmapCovar);
     auto grayscaleData = formatDataForPrediction(grayscaleCovar);
-    auto depthmapData = formatDataForPrediction(depthmapCovar);
+    auto depthmapData  = formatDataForPrediction(depthmapCovar);
 
     // count votes for each identity
     vector<int> votes(N);
@@ -89,10 +91,12 @@ string FaceRecognizer::predict(const vector<Face>& identity) const
     for (auto i = 0; i < N; ++i) {
         int vote = 0;
         for (auto j = 0; j < c; ++j) {
-            if (grayscaleSVMs[i][j].predict(grayscaleData.row(j)) == 1)
-                ++vote;
-            if (depthmapSVMs[i][j].predict(depthmapData.row(j)) == 1)
-                ++vote;
+            auto row = grayscaleData.row(j);
+            auto prediction = grayscaleSVMs[i][j].predict(row);
+            if (prediction == 1) ++vote;
+            row = depthmapData.row(j);
+            prediction = depthmapSVMs[i][j].predict(row);
+            if (prediction == 1) ++vote;
         }
         if (vote > maxVotes)
             maxVotes = vote;
@@ -108,13 +112,17 @@ string FaceRecognizer::predict(const vector<Face>& identity) const
     }
 
     // pick the identity with maximum mean distance from the hyperplane
-    float maxDistance = std::numeric_limits<float>::min();
+    auto maxDistance = std::numeric_limits<float>::min();
     int bestIndex = -1;
     for (auto i : ties) {
         float distance = 0;
         for (auto j = 0; j < c; ++j) {
-            distance += grayscaleSVMs[i][j].getDistanceFromHyperplane(grayscaleData.row(j));
-            distance += depthmapSVMs[i][j].getDistanceFromHyperplane(depthmapData.row(j));
+            auto dist = grayscaleSVMs[i][j].getDistanceFromHyperplane(grayscaleData.row(j));
+            if (std::isnormal(dist))
+                distance += dist;
+            dist = depthmapSVMs[i][j].getDistanceFromHyperplane(depthmapData.row(j));
+            if (std::isnormal(dist))
+                distance += dist;
         }
         if (distance > maxDistance) {
             maxDistance = distance;
@@ -206,10 +214,12 @@ void FaceRecognizer::trainSVMs(const Mat& data, ImgType svmToTrain)
     assert(data.rows == N*c && "data must be an Nxc matrix!");
 
     SVMSteinMatrix& svms = (svmToTrain == ImgType::grayscale) ? grayscaleSVMs : depthmapSVMs;
-    vector<Mat> trainingData = { keepSubset(data,0), keepSubset(data,1), keepSubset(data,2) };
+    vector<Mat> trainingData;
+    for (auto i = 0; i < c; ++i)
+        trainingData.push_back(keepSubset(data,i,c));
     vector<int> labels(N, -1);
 
-    for (auto id = 0; id < 1 /*N*/; ++id) {
+    for (auto id = 0; id < N; ++id) {
         for (auto i = 0; i < c; ++i) {
             std::cout << "id: " << id << ", subset: " << i << std::endl;
             labels[id] = 1;
