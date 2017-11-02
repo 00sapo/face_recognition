@@ -72,7 +72,7 @@ namespace test {
         std::cout << "\nLoading..." << std::endl;
 
         dirPath = "../RGBD_Face_dataset_testing/Test1";
-        Image4DLoader testLoader(dirPath, "002_.*");
+        Image4DLoader testLoader(dirPath, "004_.*");
         auto testImage4dID = testLoader.get();
 
         std::cout << "\nPreprocessing..." << std::endl;

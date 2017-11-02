@@ -12,6 +12,11 @@ namespace face {
 
 class Face;
 
+class NotImplementedException : public std::logic_error {
+public:
+    NotImplementedException() : std::logic_error("Function not yet implemented") { }
+};
+
 using FaceMatrix     = std::vector<std::vector<face::Face>>;
 using MatMatrix      = std::vector<std::vector<cv::Mat>>;
 using SVMSteinMatrix = std::vector<std::vector<SVMStein>>;
@@ -69,8 +74,8 @@ private:
     int c = 3;  // number of head rotation subsets for each identity
     int N = 0;  // number of identities provided for training
     std::vector<std::string> IDs;  // labels associated to each identity in the same order as in grayscaleSVMs and depthmapSVMs
-    SVMSteinMatrix grayscaleSVMs;  // a row for each identity and a column for each head rotation subset
-    SVMSteinMatrix depthmapSVMs;   // thus resulting in a Nxc matrix where N is the number of identities
+    std::vector<SVMStein> grayscaleSVMs;  // a row for each identity and a column for each head rotation subset
+    std::vector<SVMStein> depthmapSVMs;   // thus resulting in a Nxc matrix where N is the number of identities
                                    // and c the number of head rotation subsets
 
     void trainSVMs(const cv::Mat &data, ImgType svmToTrain);
