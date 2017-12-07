@@ -98,8 +98,8 @@ namespace test {
     void testImage4DLoader()
     {
         cout << "\n\nFace loader test..." << endl;
-        string dirPath = "../RGBD_Face_dataset_training/";
-        Image4DLoader loader(dirPath, "014.*");
+        string dirPath = "/home/alberto/Downloads/hpdb/01";//"../RGBD_Face_dataset_training/";
+        Image4DLoader loader(dirPath, "frame_[0-9]*_(rgb|depth).*");
         auto begin = std::chrono::high_resolution_clock::now();
         auto faceSequence = loader.get();
         if (faceSequence.empty()) {

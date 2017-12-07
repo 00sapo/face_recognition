@@ -15,7 +15,7 @@ void testFunctions()
 {
     //test::testSingletonSettings();
     //
-    //test::testImage4DLoader();
+    face::test::testImage4DLoader();
     //
     //test::testFindThreshold();
     //
@@ -35,7 +35,7 @@ void testFunctions()
     //
     //face::test::covarianceTest();
     //
-    face::test::testSVM();
+    //face::test::testSVM();
     //
     //face::test::testSVMLoad();
     //
