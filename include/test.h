@@ -107,19 +107,18 @@ namespace test {
             return;
         }
         auto end = std::chrono::high_resolution_clock::now();
-        cout << "\n\nFaces loaded!" << endl;
+        cout << "\n\n" << faceSequence.size() << " faces loaded!" << endl;
         cout << "Time elapsed: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "ms" << endl;
 
-        cv::namedWindow("image", cv::WINDOW_NORMAL);
-        for (const auto& face : faceSequence) {
-            imshow("image", face.image);
-            while (waitKey(0) != 'm') {
-            }
-
-            //viewPointCloud(face.depthMap);
-            imshow("Depth map", face.depthMap);
+        //for (const auto& face : faceSequence) {
+            imshow("Image", faceSequence[0].image);
+            imshow("Depth map", faceSequence[0].depthMap);
             waitKey(0);
-        }
+        //}
+
+            imshow("Image", faceSequence[27].image);
+            imshow("Depth map", faceSequence[27].depthMap);
+            waitKey(0);
         system("read -p 'Press [enter] to continue'");
     }
 

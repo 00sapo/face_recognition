@@ -9,19 +9,11 @@
 #include <opencv2/imgproc.hpp>
 #include <opencv2/opencv.hpp>
 
-//#include <pcl/common/common.h>
-//#include <pcl/filters/filter.h>
-//#include <pcl/filters/voxel_grid.h>
-//#include <pcl/io/pcd_io.h>
-//#include <pcl/point_types.h>
-
 #include "settings.h"
 
 #include "image4d.h"
 
 using cv::Mat;
-using pcl::PointCloud;
-using pcl::PointXYZ;
 using std::cout;
 using std::endl;
 using std::string;

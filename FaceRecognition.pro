@@ -29,6 +29,4 @@ DISTFILES += \
 
 unix: LIBS += -L$$(OPENCV_LIBS) -lopencv_core -lopencv_imgproc -lopencv_highgui -lopencv_imgcodecs -lopencv_objdetect -lopencv_ml
 
-unix: LIBS += -lpcl_io -lpcl_common
-
-unix: LIBS += -lboost_system -lpthread -lstdc++fs
+unix: LIBS += -lpthread -lstdc++fs
