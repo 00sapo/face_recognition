@@ -18,6 +18,11 @@ class Face;
  */
 namespace covariance {
 
+
+    void getNormalizedCovariances(const std::vector<Face>& identity, int subsets, std::vector<cv::Mat>& grayscaleCovarOut,
+        std::vector<cv::Mat>& depthmapCovarOut);
+
+
     /**
      * @brief computeCovarianceRepresentation: extracts a covariance matrix based representation
      *        of an input Face set. Input faces are clusterized in subsets based on their pose

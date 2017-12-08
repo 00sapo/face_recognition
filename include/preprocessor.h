@@ -24,7 +24,7 @@ public:
      * @param images
      * @return a vector of cropped faces
      */
-    std::vector<Face> preprocess(std::vector<Image4D> &images);
+    std::vector<Face> preprocess(std::vector<Image4D> images);
 
     /**
      * @brief segment is the first preprocessing step. Removes the background

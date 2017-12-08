@@ -39,7 +39,7 @@ public:
      * @param labels: labels to be assigned to each identity; these labels will be returned
      *                by FaceRecognizer::predict() when identifies a person
      */
-    void train(const FaceMatrix &trainingSamples,
+    void train(const MatMatrix &grayscaleCovar, const MatMatrix &depthmapCovar,
                const std::vector<std::string> &samplLabels = std::vector<std::string>());
 
     /**
@@ -48,7 +48,7 @@ public:
      * @return person label if the identity was in the training samples and is recognized,
      *         unknownIdentity otherwise
      */
-    std::string predict(const std::vector<Face> &identity) const;
+    std::string predict(const std::vector<cv::Mat>& grayscaleCovar, const std::vector<cv::Mat>& depthmapCovar) const;
 
     /**
      * @brief loads a pretrained model

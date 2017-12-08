@@ -26,6 +26,23 @@ int getNearestCenterId(const cv::Vec3f &pose, const vector<float> &centers);
 
 
 
+void getNormalizedCovariances(const vector<Face>& identity, int subsets, vector<Mat>& grayscaleCovarOut,
+    vector<Mat>& depthmapCovarOut)
+{
+    grayscaleCovarOut.clear();
+    depthmapCovarOut.clear();
+
+    auto pairs = computeCovarianceRepresentation(identity, subsets);
+    for (const auto& pair : pairs) {
+        Mat normalizedGrayscale, normalizedDepthmap;
+        cv::normalize(pair.first, normalizedGrayscale);
+        cv::normalize(pair.second, normalizedDepthmap);
+        grayscaleCovarOut.push_back(normalizedGrayscale);
+        depthmapCovarOut.push_back(normalizedDepthmap);
+    }
+}
+
+
 vector<std::pair<Mat, Mat>> computeCovarianceRepresentation(const vector<Face> &faces, int subsets)
 {
     cout << "Clustering poses..." << endl;

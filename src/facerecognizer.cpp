@@ -37,9 +37,10 @@ FaceRecognizer::FaceRecognizer(const string& fileName)
     load(fileName);
 }
 
-void FaceRecognizer::train(const FaceMatrix& trainingSamples, const vector<string>& samplIDs)
+void FaceRecognizer::train(const MatMatrix& grayscaleCovar, const MatMatrix& depthmapCovar, const vector<string>& samplIDs)
 {
-    N = trainingSamples.size();
+    assert(grayscaleCovar.size() == depthmapCovar.size());
+    N = grayscaleCovar.size();
 
     // if not enough IDs automatically generate them
     IDs = (N > samplIDs.size()) ? generateLabels(N) : samplIDs;
@@ -51,22 +52,18 @@ void FaceRecognizer::train(const FaceMatrix& trainingSamples, const vector<strin
     //for (auto& svmVector : depthmapSVMs)
     //    svmVector.resize(c);
 
-    // compute normalized covariances, i.e. transform trainingSamples to feature vectors for the SVMs
-    MatMatrix grayscaleCovar, depthmapCovar;
-    getNormalizedCovariances(trainingSamples, c, grayscaleCovar, depthmapCovar);
-
     // convert data format to be ready for SVMs, i.e. from Mat vector to Mat
     auto grayscaleMat = formatDataForTraining(grayscaleCovar);
     auto depthmapMat  = formatDataForTraining(depthmapCovar);
 
     trainSVMs(grayscaleMat, ImgType::grayscale); // grayscale images training
-    trainSVMs(depthmapMat,  ImgType::depthmap); // depthmap  images training
+    trainSVMs(depthmapMat,  ImgType::depthmap);  // depthmap  images training
 }
 
-string FaceRecognizer::predict(const vector<Face>& identity) const
+string FaceRecognizer::predict(const vector<Mat>& grayscaleCovar, const vector<Mat>& depthmapCovar) const
 {
-    vector<Mat> grayscaleCovar, depthmapCovar;
-    getNormalizedCovariances(identity, 1 /*c*/, grayscaleCovar, depthmapCovar);
+    //vector<Mat> grayscaleCovar, depthmapCovar;
+    //getNormalizedCovariances(identity, 1 /*c*/, grayscaleCovar, depthmapCovar);
     auto grayscaleData = formatDataForPrediction(grayscaleCovar);
     auto depthmapData  = formatDataForPrediction(depthmapCovar);
 
@@ -287,7 +284,7 @@ vector<string> generateLabels(int numOfLabels)
     return identities;
 }
 
-
+/*
 void getNormalizedCovariances(const vector<Face>& identity, int subsets, vector<Mat>& grayscaleCovarOut,
     vector<Mat>& depthmapCovarOut)
 {
@@ -317,6 +314,7 @@ void getNormalizedCovariances(const FaceMatrix& identities, int subsets, MatMatr
         depthmapCovarOut.push_back(std::move(depthmapCovar));
     }
 }
+*/
 
 Mat extractSubset(const Mat& data, int subsetIndex, int totalSubsets)
 {

@@ -58,7 +58,7 @@ Preprocessor::Preprocessor(const string& faceDetectorPath, const string& poseEst
 
 // ---------- public member functions ----------
 
-vector<Face> Preprocessor::preprocess(vector<Image4D>& images)
+vector<Face> Preprocessor::preprocess(vector<Image4D> images)
 {
     for (auto& image : images)
         segment(image);

@@ -38,29 +38,31 @@ namespace test {
 
     void testSVM()
     {
-        string dirPath = "../RGBD_Face_dataset_training/";
-        Image4DLoader loader(dirPath);
-
-        Image4DMatrix identities;
-        for (int i = 0; i <= 25; ++i) {
-            string fileNameRegEx = i / 10 >= 1 ? "0" : "00";
-            fileNameRegEx += std::to_string(i) + "_.*";
-
-            loader.setFileNameRegEx(fileNameRegEx);
-            identities.push_back(loader.get());
-        }
-
+        string dirPath = "/home/alberto/Downloads/hpdb/";
         Preprocessor preproc;
+        Image4DLoader loader(dirPath);
+        loader.setFileNameRegEx("frame_[0-9]*_(rgb|depth).*");
 
-        int i = 0;
-        FaceMatrix peoples;
-        for (auto& id : identities) {
-            cout << "Preprocessing images of person " << i++ << endl;
-            peoples.push_back(preproc.preprocess(id));
+        const int SUBSETS = 3;
+
+        MatMatrix grayscale, depthmap;
+        for (int i = 1; i < 25; ++i) {
+            std::cout << "Identity " << i << std::endl;
+            auto path = dirPath + (i < 10 ? "0" : "") + std::to_string(i);
+            loader.setCurrentPath(path);
+
+            std::cout << "Loading and preprocessing images..." << std::endl;
+            auto preprocessdFaces  = preproc.preprocess(loader.get());
+
+            std::cout << "Computing covariance representation..." << std::endl;
+            std::vector<Mat> grayscaleCovar, depthmapCovar;
+            covariance::getNormalizedCovariances(preprocessdFaces, SUBSETS, grayscaleCovar, depthmapCovar);
+            grayscale.push_back(std::move(grayscaleCovar));
+            depthmap.push_back(std::move(depthmapCovar));
         }
 
-        FaceRecognizer faceRec(1);
-        faceRec.train(peoples);
+        FaceRecognizer faceRec(SUBSETS);
+        faceRec.train(grayscale, depthmap);
 
         //faceRec.save("../svms");
 
@@ -79,7 +81,9 @@ namespace test {
         auto testID = preproc.preprocess(testImage4dID);
 
         std::cout << "\nPrediction..." << std::endl;
-        std::cout << faceRec.predict(testID) << std::endl;
+        std::vector<Mat> grayscaleCovar, depthmapCovar;
+        covariance::getNormalizedCovariances(testID, SUBSETS, grayscaleCovar, depthmapCovar);
+        std::cout << faceRec.predict(grayscaleCovar, depthmapCovar) << std::endl;
     }
 
     void testSettings()
