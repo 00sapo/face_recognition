@@ -27,9 +27,8 @@ enum class ScanOrder {
  *
  * @note template T specifies the data type stored in the Mat
  */
-template<typename T>
+template <typename T>
 int getFirstNonempty(cv::Mat matrix, int minNonemptySquares, ScanOrder scanOrder);
-
 
 const string Preprocessor::FACE_DETECTOR_PATH = "../haarcascade_frontalface_default.xml";
 const string Preprocessor::POSE_ESTIMATOR_PATH = "../trees/";
@@ -60,12 +59,22 @@ Preprocessor::Preprocessor(const string& faceDetectorPath, const string& poseEst
 
 vector<Face> Preprocessor::preprocess(vector<Image4D> images)
 {
-    for (auto& image : images)
-        segment(image);
+    for (auto& image : images) {
+        cv::Mat imgNoBackground, mask;
+        image.depthMap.convertTo(mask, CV_8U);
+        image.image.copyTo(imgNoBackground, mask);
+        image.image = imgNoBackground;
+
+        //cv::imshow("depth", image.depthMap);
+        //cv::waitKey();
+        //cv::imshow("rgb", image.image);
+        //cv::waitKey();
+        //cv::destroyAllWindows();
+        //segment(image);
+    }
 
     return cropFaces(images);
 }
-
 
 void Preprocessor::segment(std::vector<Image4D>& images)
 {
@@ -74,7 +83,6 @@ void Preprocessor::segment(std::vector<Image4D>& images)
 
     return;
 }
-
 
 void Preprocessor::segment(Image4D& image4d)
 {
@@ -132,16 +140,16 @@ bool Preprocessor::cropFace(Image4D& image4d, Vec3f& position, Vec3f& eulerAngle
     //    eulerAngles[0] = 0;
 
     // necessary corrections to take into account head rotations
-    const float BETA  = (eulerAngles[0] > 0) ? 15/8.f : 0.f;
-    const float GAMMA = 5/8.f;
+    const float BETA = (eulerAngles[0] > 0) ? 15 / 8.f : 0.f;
+    const float GAMMA = 5 / 8.f;
     const float DELTA = 1.1f;
-    const float PHI   = 1.f;
+    const float PHI = 1.f;
 
-    yTop += BETA*eulerAngles[0] + GAMMA*eulerAngles[2];
+    yTop += BETA * eulerAngles[0] + GAMMA * eulerAngles[2];
     if (yTop < 0)
         yTop = 0;
 
-    int rotationFactor = DELTA*std::abs(eulerAngles[0]);
+    int rotationFactor = DELTA * std::abs(eulerAngles[0]);
     int distanceFactor = 130 / (position[2] / 1000.f);
     int yBase = yTop + distanceFactor - rotationFactor;
     if (yBase > image4d.getHeight())
@@ -149,7 +157,7 @@ bool Preprocessor::cropFace(Image4D& image4d, Vec3f& position, Vec3f& eulerAngle
 
     cv::Rect scanROI(0, yTop, image4d.getWidth(), (yBase - yTop) / 2);
     auto roiMat = image4d.depthMap(scanROI);
-    auto xTop  = getFirstNonempty<uint16_t>(roiMat, NONZERO_PXL, ScanOrder::left_to_right);
+    auto xTop = getFirstNonempty<uint16_t>(roiMat, NONZERO_PXL, ScanOrder::left_to_right);
     auto xBase = getFirstNonempty<uint16_t>(roiMat, NONZERO_PXL, ScanOrder::right_to_left);
 
     // TODO: use a sigmoidal function to minimize lateral cropping for small
@@ -157,16 +165,15 @@ bool Preprocessor::cropFace(Image4D& image4d, Vec3f& position, Vec3f& eulerAngle
     if (eulerAngles[1] > 0)
         xBase -= PHI * std::abs(eulerAngles[1]) - 10;
     else
-        xTop  += PHI * std::abs(eulerAngles[1]); // aumentare xTop
+        xTop += PHI * std::abs(eulerAngles[1]); // aumentare xTop
 
-
-    cv::Rect faceROI (xTop, yTop, xBase - xTop, yBase - yTop);
+    cv::Rect faceROI(xTop, yTop, xBase - xTop, yBase - yTop);
     image4d.crop(faceROI);
     return true;
 }
 
 // ---------- private member functions ----------
-bool Preprocessor::detectForegroundFace(const Image4D &face, cv::Rect &boundingBox)
+bool Preprocessor::detectForegroundFace(const Image4D& face, cv::Rect& boundingBox)
 {
     if (!faceDetectorAvailable) {
         std::cout << "Error! Face detector unavailable!" << std::endl;
@@ -182,16 +189,16 @@ bool Preprocessor::detectForegroundFace(const Image4D &face, cv::Rect &boundingB
 
     // take face in foregound (the one with bigger bounding box)
     boundingBox = *std::max_element(faces.begin(), faces.end(),
-        [](const cv::Rect &r1, const cv::Rect &r2) { return r1.area() < r2.area(); });
+        [](const cv::Rect& r1, const cv::Rect& r2) { return r1.area() < r2.area(); });
 
     return true;
 }
 
-void Preprocessor::removeBackgroundDynamic(Image4D &face, const cv::Rect &boundingBox) const
+void Preprocessor::removeBackgroundDynamic(Image4D& face, const cv::Rect& boundingBox) const
 {
     // take non-nan, non-zero points
     vector<float> depth;
-    auto lambda = [&depth](int x, int y, const uint16_t &dpt) {
+    auto lambda = [&depth](int x, int y, const uint16_t& dpt) {
         if (std::isnormal(dpt)) // if is not NaN, 0 or INF
             depth.push_back(dpt);
     };
@@ -216,7 +223,7 @@ void Preprocessor::removeBackgroundDynamic(Image4D &face, const cv::Rect &boundi
     const int MIN_X = boundingBox.x - boundingBox.width;
     const int MAX_X = boundingBox.x + 2 * boundingBox.width;
 
-    face.depthMap.forEach<uint16_t>([&](uint16_t &p, const int *pos) {
+    face.depthMap.forEach<uint16_t>([&](uint16_t& p, const int* pos) {
         if (float(p) > threshold || std::isnan(p) || pos[1] < MIN_X || pos[1] > MAX_X)
             p = 0;
     });
@@ -224,9 +231,9 @@ void Preprocessor::removeBackgroundDynamic(Image4D &face, const cv::Rect &boundi
     return;
 }
 
-void Preprocessor::removeBackgroundFixed(Image4D &face, uint16_t threshold) const
+void Preprocessor::removeBackgroundFixed(Image4D& face, uint16_t threshold) const
 {
-    face.depthMap.forEach<uint16_t>([threshold](uint16_t &p, const int *pos) {
+    face.depthMap.forEach<uint16_t>([threshold](uint16_t& p, const int* pos) {
         if (p > threshold || std::isnan(p))
             p = 0;
     });
@@ -234,7 +241,7 @@ void Preprocessor::removeBackgroundFixed(Image4D &face, uint16_t threshold) cons
     return;
 }
 
-void Preprocessor::removeOutliers(Image4D &image4d) const
+void Preprocessor::removeOutliers(Image4D& image4d) const
 {
     // TODO: a full resolution booleanDepthMap is probably too much
     //       maybe the same result is achievable with a sampling of a pixel every 4 or 8
@@ -258,17 +265,15 @@ void Preprocessor::removeOutliers(Image4D &image4d) const
 
     int x = stats.at<int>(index, cv::CC_STAT_LEFT);
     int y = stats.at<int>(index, cv::CC_STAT_TOP);
-    int width  = stats.at<int>(index, cv::CC_STAT_WIDTH);
+    int width = stats.at<int>(index, cv::CC_STAT_WIDTH);
     int height = stats.at<int>(index, cv::CC_STAT_HEIGHT);
     cv::Rect roi(x, y, width, height);
 
-    image4d.depthMap.forEach<uint16_t>([&](uint16_t &depth, const int *pos) {
+    image4d.depthMap.forEach<uint16_t>([&](uint16_t& depth, const int* pos) {
         if (!roi.contains(cv::Point(pos[1], pos[0])))
             depth = 0;
     });
 }
-
-
 
 bool Preprocessor::estimateFacePose(const Image4D& image4d, cv::Vec3f& position, cv::Vec3f& eulerAngles) const
 {
@@ -296,38 +301,36 @@ bool Preprocessor::estimateFacePose(const Image4D& image4d, cv::Vec3f& position,
     if (means.empty())
         return false;
 
-    auto &pose = means[0];
+    auto& pose = means[0];
 
     position = { -pose[1] + image4d.getHeight() / 2,
-                  pose[0] + image4d.getWidth()  / 2,
-                  pose[2] };
+        pose[0] + image4d.getWidth() / 2,
+        pose[2] };
 
     eulerAngles = { pose[3], pose[4], pose[5] };
 
     return true;
 }
 
-
-
 // -----------------------------------------------
 // ----------- Non member functions --------------
 // -----------------------------------------------
 
-template<typename T>
+template <typename T>
 int getFirstNonempty(cv::Mat matrix, int minNonemptySquares, ScanOrder scanOrder)
 {
-    auto scanByRow  = (scanOrder == ScanOrder::bottom_up || scanOrder == ScanOrder::top_down);
-    auto increasing = (scanOrder == ScanOrder::top_down  || scanOrder == ScanOrder::left_to_right);
+    auto scanByRow = (scanOrder == ScanOrder::bottom_up || scanOrder == ScanOrder::top_down);
+    auto increasing = (scanOrder == ScanOrder::top_down || scanOrder == ScanOrder::left_to_right);
 
     int i, j;
-    auto &u = scanByRow ? i : j;
-    auto &v = scanByRow ? j : i;
-    const auto firstDim  = scanByRow ? matrix.rows : matrix.cols;
+    auto& u = scanByRow ? i : j;
+    auto& v = scanByRow ? j : i;
+    const auto firstDim = scanByRow ? matrix.rows : matrix.cols;
     const auto secondDim = scanByRow ? matrix.cols : matrix.rows;
 
     for (auto k = 0; k < firstDim; ++k) { // look for first non-empty row
         int nonzeroSquares = 0;
-        i = increasing ? k : firstDim - k - 1;  // TODO: double check this
+        i = increasing ? k : firstDim - k - 1; // TODO: double check this
         for (j = 0; j < secondDim; ++j) {
             if (matrix.at<T>(u, v) != 0)
                 ++nonzeroSquares;
