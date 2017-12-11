@@ -112,8 +112,10 @@ void Preprocessor::cropFaceThread(Image4D& face, vector<Face>& croppedFaces)
     Vec3f position, eulerAngles;
     auto area = face.getArea();
     bool cropped = cropFace(face, position, eulerAngles);
-    if (!cropped || face.getArea() != area) // keep only images where a face has been detected and cropped
+    if (cropped && face.getArea() != area) { // keep only images where a face has been detected and cropped
+        std::lock_guard<std::mutex> lock(cropMutex);
         croppedFaces.emplace_back(face, position, eulerAngles);
+    }
 }
 
 vector<Face> Preprocessor::cropFaces(vector<Image4D>& images)

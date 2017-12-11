@@ -67,6 +67,8 @@ private:
     cv::CascadeClassifier classifier;
     CRForestEstimator estimator;
 
+    std::mutex cropMutex;
+
     /**
      * @brief detectForegroundFace detects the nearest face in the image
      * @param face: Face containing the image
