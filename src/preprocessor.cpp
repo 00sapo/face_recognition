@@ -1,6 +1,8 @@
 #include "preprocessor.h"
+#include <thread>
 
 #include <cmath>
+#include <preprocessor.h>
 #include <thread>
 
 #include "face.h"
@@ -57,21 +59,31 @@ Preprocessor::Preprocessor(const string& faceDetectorPath, const string& poseEst
 
 // ---------- public member functions ----------
 
+void Preprocessor::maskRGBToDepth(Image4D& image)
+{
+    cv::Mat imgNoBackground, mask;
+    image.depthMap.convertTo(mask, CV_8U);
+    image.image.copyTo(imgNoBackground, mask);
+    image.image = imgNoBackground;
+}
+
 vector<Face> Preprocessor::preprocess(vector<Image4D> images)
 {
+    int n_proc = std::thread::hardware_concurrency();
+    std::thread threads[n_proc];
+    int i = 0;
     for (auto& image : images) {
-        cv::Mat imgNoBackground, mask;
-        image.depthMap.convertTo(mask, CV_8U);
-        image.image.copyTo(imgNoBackground, mask);
-        image.image = imgNoBackground;
-
-        //cv::imshow("depth", image.depthMap);
-        //cv::waitKey();
-        //cv::imshow("rgb", image.image);
-        //cv::waitKey();
-        //cv::destroyAllWindows();
-        //segment(image);
+        if (i >= n_proc) {
+            for (auto& t : threads)
+                if (t.joinable())
+                    t.join();
+            i = 0;
+        }
+        threads[i++] = std::thread(&Preprocessor::maskRGBToDepth, this, std::ref(image));
     }
+    for (auto& t : threads)
+        if (t.joinable())
+            t.join();
 
     return cropFaces(images);
 }
@@ -95,6 +107,15 @@ void Preprocessor::segment(Image4D& image4d)
     return;
 }
 
+void Preprocessor::cropFaceThread(Image4D& face, vector<Face>& croppedFaces)
+{
+    Vec3f position, eulerAngles;
+    auto area = face.getArea();
+    bool cropped = cropFace(face, position, eulerAngles);
+    if (!cropped || face.getArea() != area) // keep only images where a face has been detected and cropped
+        croppedFaces.emplace_back(face, position, eulerAngles);
+}
+
 vector<Face> Preprocessor::cropFaces(vector<Image4D>& images)
 {
     const auto SIZE = images.size();
@@ -102,18 +123,22 @@ vector<Face> Preprocessor::cropFaces(vector<Image4D>& images)
     vector<Face> croppedFaces;
     croppedFaces.reserve(SIZE);
 
-    for (auto& face : images) {
-        Vec3f position, eulerAngles;
-        auto area = face.getArea();
-        //cv::imshow("Non cropped face", face.depthMap);
-        //cv::waitKey(0);
-        auto cropped = cropFace(face, position, eulerAngles);
-        //cv::imshow("Cropped face", face.depthMap);
-        //cv::waitKey(0);
-        if (!cropped || face.getArea() != area) // keep only images where a face has been detected and cropped
-            croppedFaces.emplace_back(face, position, eulerAngles);
-    }
+    int n_proc = std::thread::hardware_concurrency();
+    std::thread threads[n_proc];
+    int i = 0;
 
+    for (auto& face : images) {
+        if (i >= n_proc) {
+            for (auto& t : threads)
+                if (t.joinable())
+                    t.join();
+            i = 0;
+        }
+        threads[i++] = std::thread(&Preprocessor::cropFaceThread, this, std::ref(face), std::ref(croppedFaces));
+    }
+    for (auto& t : threads)
+        if (t.joinable())
+            t.join();
     return croppedFaces;
 }
 
@@ -169,6 +194,7 @@ bool Preprocessor::cropFace(Image4D& image4d, Vec3f& position, Vec3f& eulerAngle
 
     cv::Rect faceROI(xTop, yTop, xBase - xTop, yBase - yTop);
     image4d.crop(faceROI);
+
     return true;
 }
 

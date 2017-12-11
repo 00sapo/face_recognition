@@ -1,23 +1,20 @@
 #ifndef FACE_PREPROCESSOR_H
 #define FACE_PREPROCESSOR_H
 
-#include <opencv2/objdetect.hpp>
-#include <mutex>
 #include <atomic>
+#include <mutex>
+#include <opencv2/objdetect.hpp>
 
 #include "extern_libs/head_pose_estimation/CRForestEstimator.h"
 
 namespace face {
 
-
-class Image4D;  // forward declarations
+class Image4D; // forward declarations
 class Face;
 
-
-class Preprocessor
-{
+class Preprocessor {
 public:
-    Preprocessor(const std::string& faceDetectorPath = FACE_DETECTOR_PATH, const std::string &poseEstimatorPath = POSE_ESTIMATOR_PATH);
+    Preprocessor(const std::string& faceDetectorPath = FACE_DETECTOR_PATH, const std::string& poseEstimatorPath = POSE_ESTIMATOR_PATH);
 
     /**
      * @brief preprocess cleans up and prepares the 4D images to be processed
@@ -32,10 +29,9 @@ public:
      * @param faces
      * @return true if all images background have been removed successfully
      */
-    void segment(std::vector<Image4D> &images);
+    void segment(std::vector<Image4D>& images);
 
-    void segment(Image4D &face);
-
+    void segment(Image4D& face);
 
     /**
      * @brief cropFaces is the second preprocessing step. Precisely
@@ -43,24 +39,23 @@ public:
      * @param faces
      * @return a vector containing the cropped faces
      */
-    std::vector<face::Face> cropFaces(std::vector<face::Image4D> &images);
+    std::vector<face::Face> cropFaces(std::vector<face::Image4D>& images);
 
     /**
      * @brief cropFace: crops face region taking into account face orientation
      * @param face: image containing face to crop
      * @return false if no face was detected
      */
-    bool cropFace(face::Image4D &image4d, cv::Vec3f &position, cv::Vec3f &eulerAngles) const;
+    bool cropFace(face::Image4D& image4d, cv::Vec3f& position, cv::Vec3f& eulerAngles) const;
 
     /**
      * @brief estimateFacePose
      * @param face
      * @return True if pose estimation was successful and rotation matrix was added to posesData, false otherwise
      */
-    bool estimateFacePose(const face::Image4D &image4d, cv::Vec3f &position, cv::Vec3f &eulerAngles) const;
+    bool estimateFacePose(const face::Image4D& image4d, cv::Vec3f& position, cv::Vec3f& eulerAngles) const;
 
 private:
-
     static const std::string FACE_DETECTOR_PATH;
     static const std::string POSE_ESTIMATOR_PATH;
 
@@ -78,16 +73,16 @@ private:
      * @param detectedFace: ROI of the detected face
      * @return false if no face was detected, true otherwise
      */
-    bool detectForegroundFace(const Image4D &face, cv::Rect &boundingBox);
+    bool detectForegroundFace(const Image4D& face, cv::Rect& boundingBox);
 
     /**
      * @brief removeBackground splits the face cloud in two clusters, discarding
      *        furthest one
      * @param face
      */
-    void removeBackgroundDynamic(Image4D &face, const cv::Rect &boundingBox) const;
+    void removeBackgroundDynamic(Image4D& face, const cv::Rect& boundingBox) const;
 
-    void removeBackgroundFixed(Image4D &face, uint16_t threshold) const;
+    void removeBackgroundFixed(Image4D& face, uint16_t threshold) const;
 
     /**
      * @brief removeOutliers computes the centroid of the depth map
@@ -96,10 +91,11 @@ private:
      * @param image4d
      * @param threshold: max allowed distance
      */
-    void removeOutliers(Image4D &image4d) const;
-
+    void removeOutliers(Image4D& image4d) const;
+    void cropFaceThread(Image4D& face, std::vector<Face>& croppedFaces);
+    void maskRGBToDepth(Image4D& image);
 };
 
-}   // namespace face
+} // namespace face
 
 #endif // FACE_PREPROCESSOR_H
