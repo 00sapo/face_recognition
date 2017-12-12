@@ -7,6 +7,7 @@
 
 #include "face.h"
 #include "image4d.h"
+#include "lbp.h"
 
 using cv::Vec3f;
 using std::string;
@@ -69,21 +70,7 @@ void Preprocessor::maskRGBToDepth(Image4D& image)
 
 vector<Face> Preprocessor::preprocess(vector<Image4D> images)
 {
-    int n_proc = std::thread::hardware_concurrency();
-    std::thread threads[n_proc];
-    int i = 0;
-    for (auto& image : images) {
-        if (i >= n_proc) {
-            for (auto& t : threads)
-                if (t.joinable())
-                    t.join();
-            i = 0;
-        }
-        threads[i++] = std::thread(&Preprocessor::maskRGBToDepth, this, std::ref(image));
-    }
-    for (auto& t : threads)
-        if (t.joinable())
-            t.join();
+    face::multiThreadVectorProcessing(images, &Preprocessor::maskRGBToDepth, this);
 
     return cropFaces(images);
 }
@@ -107,7 +94,7 @@ void Preprocessor::segment(Image4D& image4d)
     return;
 }
 
-void Preprocessor::cropFaceThread(Image4D& face, vector<Face>& croppedFaces)
+void Preprocessor::cropFaceThread(vector<Face>& croppedFaces, Image4D& face)
 {
     Vec3f position, eulerAngles;
     auto area = face.getArea();
@@ -125,22 +112,7 @@ vector<Face> Preprocessor::cropFaces(vector<Image4D>& images)
     vector<Face> croppedFaces;
     croppedFaces.reserve(SIZE);
 
-    int n_proc = std::thread::hardware_concurrency();
-    std::thread threads[n_proc];
-    int i = 0;
-
-    for (auto& face : images) {
-        if (i >= n_proc) {
-            for (auto& t : threads)
-                if (t.joinable())
-                    t.join();
-            i = 0;
-        }
-        threads[i++] = std::thread(&Preprocessor::cropFaceThread, this, std::ref(face), std::ref(croppedFaces));
-    }
-    for (auto& t : threads)
-        if (t.joinable())
-            t.join();
+    multiThreadVectorProcessing(images, &Preprocessor::cropFaceThread, this, std::ref(croppedFaces));
     return croppedFaces;
 }
 

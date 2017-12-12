@@ -6,8 +6,8 @@
 #include "image4dloader.h"
 #include "datasetcov.h"
 #include "facerecognizer.h"
+#include "image4dloader.h"
 #include "preprocessor.h"
-#include "covariancecomputer.h"
 #include "test.h"
 
 using std::string;
@@ -30,12 +30,12 @@ DatasetCov loadAndPreprocess(const string& datasetPath);
 bool savePreprocessedDataset(const string& path, const vector<vector<Mat>>& grayscale,
                              const vector<vector<Mat>>& depthmap);
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
-    cv::CommandLineParser parser(argc,argv,KEYS);      // opencv parser for command line arguments
+    cv::CommandLineParser parser(argc, argv, KEYS); // opencv parser for command line arguments
 
     // if wrong arguments, print usage
-    if(!parser.has("dataset") && !parser.has("preprocessedDataset")) {
+    if (!parser.has("dataset") && !parser.has("preprocessedDataset")) {
         parser.printMessage();
         return 0;
     }
@@ -89,7 +89,7 @@ DatasetCov loadAndPreprocess(const string& datasetPath)
         loader.setCurrentPath(path);
 
         std::cout << "Loading and preprocessing images..." << std::endl;
-        auto preprocessdFaces  = preproc.preprocess(loader.get());
+        auto preprocessdFaces = preproc.preprocess(loader.get());
 
         std::cout << "Computing covariance representation..." << std::endl;
         vector<Mat> grayscaleCovar, depthmapCovar;

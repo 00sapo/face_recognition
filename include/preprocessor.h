@@ -94,7 +94,7 @@ private:
      * @param threshold: max allowed distance
      */
     void removeOutliers(Image4D& image4d) const;
-    void cropFaceThread(Image4D& face, std::vector<Face>& croppedFaces);
+    void cropFaceThread(std::vector<Face>& croppedFaces, Image4D& face);
     void maskRGBToDepth(Image4D& image);
 };
 

@@ -52,7 +52,7 @@ namespace test {
             loader.setCurrentPath(path);
 
             std::cout << "Loading and preprocessing images..." << std::endl;
-            auto preprocessdFaces  = preproc.preprocess(loader.get());
+            auto preprocessdFaces = preproc.preprocess(loader.get());
 
             std::cout << "Computing covariance representation..." << std::endl;
             std::vector<Mat> grayscaleCovar, depthmapCovar;
@@ -65,7 +65,6 @@ namespace test {
         faceRec.train(grayscale, depthmap);
 
         //faceRec.save("../svms");
-
 
         std::cout << "-----------------------------------------------" << std::endl;
         std::cout << "----------------- Testing ---------------------" << std::endl;
@@ -102,7 +101,7 @@ namespace test {
     void testImage4DLoader()
     {
         cout << "\n\nFace loader test..." << endl;
-        string dirPath = "/home/alberto/Downloads/hpdb/01";//"../RGBD_Face_dataset_training/";
+        string dirPath = "/home/alberto/Downloads/hpdb/01"; //"../RGBD_Face_dataset_training/";
         Image4DLoader loader(dirPath, "frame_[0-9]*_(rgb|depth).*");
         auto begin = std::chrono::high_resolution_clock::now();
         auto faceSequence = loader.get();
@@ -111,18 +110,19 @@ namespace test {
             return;
         }
         auto end = std::chrono::high_resolution_clock::now();
-        cout << "\n\n" << faceSequence.size() << " faces loaded!" << endl;
+        cout << "\n\n"
+             << faceSequence.size() << " faces loaded!" << endl;
         cout << "Time elapsed: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "ms" << endl;
 
         //for (const auto& face : faceSequence) {
-            imshow("Image", faceSequence[0].image);
-            imshow("Depth map", faceSequence[0].depthMap);
-            waitKey(0);
+        imshow("Image", faceSequence[0].image);
+        imshow("Depth map", faceSequence[0].depthMap);
+        waitKey(0);
         //}
 
-            imshow("Image", faceSequence[27].image);
-            imshow("Depth map", faceSequence[27].depthMap);
-            waitKey(0);
+        imshow("Image", faceSequence[27].image);
+        imshow("Depth map", faceSequence[27].depthMap);
+        waitKey(0);
         system("read -p 'Press [enter] to continue'");
     }
 

@@ -1,8 +1,11 @@
 #ifndef FACE_LBP_H
 #define FACE_LBP_H
 
-#include <opencv2/opencv.hpp>
+#include "image4d.h"
+
 #include <bitset>
+#include <opencv2/opencv.hpp>
+#include <thread>
 
 namespace face {
 
@@ -91,7 +94,6 @@ inline cv::Mat OLBPHist(const cv::Mat src)
     return hist;
 }
 
-
 /**
  * @brief HistMean_ computes the mean of a histogram
  * @param hist a Mat containing a histogram (i.e. returned by cv::calcHist())
@@ -141,6 +143,32 @@ inline float HistMean(const cv::Mat src)
     return mean;
 }
 
+template <class Fn, class... Args>
+/**
+ * @brief multiThreadVectorProcessing takes a function and a vector of images and executes it in multiple threads
+ * @param images the vector of images
+ * @param function the function to execute. N.B. the @Image4D argument MUST be the last one
+ * @param args the arguments of the function, as you would pass to &std::thread constructor except of the @Image4D argument
+ */
+void multiThreadVectorProcessing(std::vector<Image4D> images, Fn function, Args... args)
+{
+    int n_proc = std::thread::hardware_concurrency();
+    std::thread threads[n_proc];
+    int i = 0;
+
+    for (auto& face : images) {
+        if (i >= n_proc) {
+            for (auto& t : threads)
+                if (t.joinable())
+                    t.join();
+            i = 0;
+        }
+        threads[i++] = std::thread(function, args..., std::ref(face));
+    }
+    for (auto& t : threads)
+        if (t.joinable())
+            t.join();
+}
 }
 
 #endif // FACE_LBP_H
