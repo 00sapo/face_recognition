@@ -1,5 +1,5 @@
-#ifndef FACE_IMAGELOADER_HPP
-#define FACE_IMAGELOADER_HPP
+#ifndef FACE_IMAGE4DLOADER_H
+#define FACE_IMAGE4DLOADER_H
 
 #include <mutex>
 #include <regex>
@@ -97,6 +97,6 @@ private:
     void getMultiThr(std::vector<Image4D>& image4DSequence, int begin, int end, std::mutex& mutex) const;
 };
 
-} // face
+} // namespace face
 
-#endif // IMAGELOADER_Hs
+#endif // FACE_IMAGE4DLOADER_H

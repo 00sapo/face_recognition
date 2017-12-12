@@ -107,27 +107,6 @@ bool Image4DLoader::get(Image4D& image4d)
         return false;
     }
 
-    /*
-    PointCloud<PointXYZ> cloud;
-    int result = pcl::io::loadPCDFile<PointXYZ>(cloudFile, cloud);
-    if (result == -1) {
-        cout << "Unable to load file " << cloudFile << endl;
-        return false;
-    }
-
-    if (!cloud.isOrganized()) {
-        std::cerr << "ERROR: loading unorganized point cloud!" << endl;
-        return false;
-    }
-
-    Mat depthMap(cloud.height, cloud.width, CV_16SC1);
-    for (uint x = 0; x < cloud.height; ++x) {
-        for (uint y = 0; y < cloud.width; ++y) {
-            depthMap.at<uint16_t>(x, y) = cloud.at(y, x).z * 10E2;
-        }
-    }
-    */
-
     auto depthMap = loadDepthImageCompressed(cloudFile);
     if (depthMap.empty()) {
         std::cerr << "Unable to load file " << cloudFile << std::endl;
@@ -157,27 +136,6 @@ void Image4DLoader::getMultiThr(vector<Image4D>& image4DSequence, int begin, int
             std::cerr << "Unable to load file " << imageFile << std::endl;
             return;
         }
-
-        /*
-        PointCloud<PointXYZ> cloud;
-        int result = pcl::io::loadPCDFile<PointXYZ>(cloudFile, cloud);
-        if (result == -1) {
-            cout << "Unable to load file " << cloudFile << endl;
-            return;
-        }
-
-        if (!cloud.isOrganized()) {
-            std::cerr << "ERROR: loading unorganized point cloud!" << endl;
-            return;
-        }
-
-        Mat depthMap(cloud.height, cloud.width, CV_16SC1);
-        for (uint x = 0; x < cloud.height; ++x) {
-            for (uint y = 0; y < cloud.width; ++y) {
-                depthMap.at<uint16_t>(x, y) = cloud.at(y, x).z * 10E2;
-            }
-        }
-        */
 
         auto depthMap = loadDepthImageCompressed(cloudFile);
         if (depthMap.empty()) {
@@ -239,13 +197,6 @@ void Image4DLoader::setFileNameRegEx(const string& fileNameRegEx)
     fileTemplate = std::regex(fileNameRegEx);
     loadFileNames(currentPath);
 }
-/*
-void Image4DLoader::clearFileNameRegEx()
-{
-    imageFileNames.clear();
-    cloudFileNames.clear();
-}
-*/
 
 void Image4DLoader::setCurrentPath(const string& dirPath)
 {
@@ -312,4 +263,4 @@ bool Image4DLoader::matchTemplate(const string& fileName)
     return std::regex_match(fileName, fileTemplate, std::regex_constants::match_any);
 }
 
-} // face
+} // namespace face

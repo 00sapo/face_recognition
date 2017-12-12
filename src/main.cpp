@@ -4,6 +4,7 @@
 #include <opencv2/highgui/highgui.hpp>
 
 #include "image4dloader.h"
+#include "datasetcov.h"
 #include "facerecognizer.h"
 #include "preprocessor.h"
 #include "covariancecomputer.h"
@@ -11,6 +12,7 @@
 
 using std::string;
 using std::vector;
+using cv::Mat;
 using namespace face;
 
 const int SUBSETS = 3;
@@ -24,8 +26,9 @@ const cv::String KEYS = "{ help h usage ?      | | print this message }"
                         "{ loadTrained         | | path to trained svms }";
 
 void testFunctions();
-void loadAndPreprocess(const std::string& datasetPath, vector<vector<cv::Mat>>& grayscale,
-                       vector<vector<cv::Mat>>& depthmap);
+DatasetCov loadAndPreprocess(const string& datasetPath);
+bool savePreprocessedDataset(const string& path, const vector<vector<Mat>>& grayscale,
+                             const vector<vector<Mat>>& depthmap);
 
 int main(int argc, char *argv[])
 {
@@ -37,31 +40,33 @@ int main(int argc, char *argv[])
         return 0;
     }
 
-    auto datasetPath = parser.get<string>("dataset");
-    auto preprocessedDatasetPath = parser.get<string>("preprocessedDataset");
-
-    vector<vector<cv::Mat>> grayscale, depthmap;
-    if (!preprocessedDatasetPath.empty()) {
-        // load preprocessed dataset
+    //vector<vector<Mat>> grayscale, depthmap;
+    DatasetCov dataset;
+    if (parser.has("preprocessedDataset")) {
+        auto path = parser.get<string>("preprocessedDataset");
+        // dataset = DatasetCov::load(path);
     }
-    else if (!datasetPath.empty()) {
+    else if (parser.has("dataset")) {
 
-        loadAndPreprocess(datasetPath, grayscale, depthmap);
+        dataset = loadAndPreprocess(parser.get<string>("dataset"));
 
-        if (parser.has("save-preprocessed")) {
-            // save preprocessed dataset
+        if (parser.has("savePreprocessed")) {
+            auto path = parser.get<string>("savePreprocessed");
+            auto success = dataset.save(path);
+            if (!success)
+                std::cerr << "Error saving preprocessed dataset to " << path << std::endl;
         }
     }
 
     FaceRecognizer faceRec(SUBSETS);
     if (!parser.has("loadTrained")) {
-        faceRec.train(grayscale, depthmap);
+        faceRec.train(dataset.grayscale, dataset.depthmap);
     }
     else {
         faceRec.load(parser.get<string>("loadTrained"));
     }
 
-    if (parser.has("save-trained")) {
+    if (parser.has("saveTrained")) {
         faceRec.save(parser.get<string>("saveTrained"));
     }
 
@@ -71,13 +76,13 @@ int main(int argc, char *argv[])
 }
 
 
-void loadAndPreprocess(const std::string& datasetPath, vector<vector<cv::Mat>>& grayscale,
-                       vector<vector<cv::Mat>>& depthmap)
+DatasetCov loadAndPreprocess(const string& datasetPath)
 {
     Image4DLoader loader(datasetPath);
     loader.setFileNameRegEx("frame_[0-9]*_(rgb|depth).*");
 
     Preprocessor preproc;
+    vector<vector<Mat>> grayscale, depthmap;
     for (int i = 1; i < 25; ++i) {
         std::cout << "Identity " << i << std::endl;
         auto path = datasetPath + "/" + (i < 10 ? "0" : "") + std::to_string(i);
@@ -87,12 +92,15 @@ void loadAndPreprocess(const std::string& datasetPath, vector<vector<cv::Mat>>& 
         auto preprocessdFaces  = preproc.preprocess(loader.get());
 
         std::cout << "Computing covariance representation..." << std::endl;
-        vector<cv::Mat> grayscaleCovar, depthmapCovar;
+        vector<Mat> grayscaleCovar, depthmapCovar;
         covariance::getNormalizedCovariances(preprocessdFaces, SUBSETS, grayscaleCovar, depthmapCovar);
         grayscale.push_back(std::move(grayscaleCovar));
         depthmap.push_back(std::move(depthmapCovar));
     }
+
+    return {grayscale, depthmap};
 }
+
 
 void testFunctions()
 {
