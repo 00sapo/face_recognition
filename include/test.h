@@ -13,9 +13,9 @@
 #include "facerecognizer.h"
 #include "image4d.h"
 #include "image4dloader.h"
-#include "lbp.h"
 #include "preprocessor.h"
 #include "settings.h"
+#include "utils.h"
 
 using cv::Mat;
 using cv::waitKey;

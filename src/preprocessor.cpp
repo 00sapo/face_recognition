@@ -7,7 +7,7 @@
 
 #include "face.h"
 #include "image4d.h"
-#include "lbp.h"
+#include "utils.h"
 
 using cv::Vec3f;
 using std::string;

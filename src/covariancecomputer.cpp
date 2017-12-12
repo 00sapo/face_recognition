@@ -1,7 +1,7 @@
 #include "covariancecomputer.h"
 
 #include "face.h"
-#include "lbp.h"
+#include "utils.h"
 
 using cv::Mat;
 using std::cout;
