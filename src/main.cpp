@@ -40,11 +40,16 @@ int main(int argc, char* argv[])
         return 0;
     }
 
-    //vector<vector<Mat>> grayscale, depthmap;
     DatasetCov dataset;
     if (parser.has("preprocessedDataset")) {
         auto path = parser.get<string>("preprocessedDataset");
-        // dataset = DatasetCov::load(path);
+        dataset = DatasetCov::load(path);
+        if (!dataset.isConsistent())
+            std::cout << "Warning! Loaded inconsistent dataset!" << std::endl;
+        if (dataset.empty()) {
+            std::cout << "Error! Loaded empty dataset!" << std::endl;
+            return 0;
+        }
     }
     else if (parser.has("dataset")) {
 
