@@ -186,7 +186,7 @@ namespace test {
 
         Preprocessor prep;
         for (auto& image : images) {
-            prep.segment(image);
+            //prep.segment(image);
         }
 
         for (auto& image4d : images) {

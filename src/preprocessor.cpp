@@ -71,50 +71,50 @@ void Preprocessor::maskRGBToDepth(Image4D& image)
 vector<Face> Preprocessor::preprocess(vector<Image4D> images)
 {
     face::multiThreadVectorProcessing(images, &Preprocessor::maskRGBToDepth, this);
-
-    return cropFaces(images);
-}
-
-void Preprocessor::segment(std::vector<Image4D>& images)
-{
-    for (auto& image : images)
-        segment(image);
-
-    return;
-}
-
-void Preprocessor::segment(Image4D& image4d)
-{
-    cv::Rect boundingBox;
-    if (!detectForegroundFace(image4d, boundingBox))
-        removeBackgroundFixed(image4d, FIXED_THRESHOLD);
-    else
-        removeBackgroundDynamic(image4d, boundingBox);
-
-    return;
-}
-
-void Preprocessor::cropFaceThread(vector<Face>& croppedFaces, Image4D& face)
-{
-    Vec3f position, eulerAngles;
-    auto area = face.getArea();
-    bool cropped = cropFace(face, position, eulerAngles);
-    if (cropped && face.getArea() != area) { // keep only images where a face has been detected and cropped
-        std::lock_guard<std::mutex> lock(cropMutex);
-        croppedFaces.emplace_back(face, position, eulerAngles);
-    }
-}
-
-vector<Face> Preprocessor::cropFaces(vector<Image4D>& images)
-{
     const auto SIZE = images.size();
 
     vector<Face> croppedFaces;
     croppedFaces.reserve(SIZE);
 
-    multiThreadVectorProcessing(images, &Preprocessor::cropFaceThread, this, std::ref(croppedFaces));
+    face::multiThreadVectorProcessing(images, &Preprocessor::cropFaceThread, this, std::ref(croppedFaces));
+
     return croppedFaces;
 }
+
+//void Preprocessor::segment(std::vector<Image4D>& images)
+//{
+//    for (auto& image : images)
+//        segment(image);
+//
+//    return;
+//}
+//
+//void Preprocessor::segment(Image4D& image4d)
+//{
+//    cv::Rect boundingBox;
+//    if (!detectForegroundFace(image4d, boundingBox))
+//        removeBackgroundFixed(image4d, FIXED_THRESHOLD);
+//    else
+//        removeBackgroundDynamic(image4d, boundingBox);
+//
+//    return;
+//}
+
+void Preprocessor::cropFaceThread(vector<Face>& croppedFaces, Image4D& face)
+{
+    Vec3f position, eulerAngles;
+    auto area = face.getArea();
+    std::lock_guard<std::mutex> lock(cropMutex);
+    bool cropped = cropFace(face, position, eulerAngles);
+    if (cropped && face.getArea() != area) { // keep only images where a face has been detected and cropped
+        croppedFaces.emplace_back(face, position, eulerAngles);
+    }
+}
+
+//vector<Face> Preprocessor::cropFaces(vector<Image4D>& images)
+//{
+//    return croppedFaces;
+//}
 
 bool Preprocessor::cropFace(Image4D& image4d, Vec3f& position, Vec3f& eulerAngles) const
 {
