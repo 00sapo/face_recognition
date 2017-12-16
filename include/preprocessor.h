@@ -46,14 +46,14 @@ public:
      * @param face: image containing face to crop
      * @return false if no face was detected
      */
-    bool cropFace(face::Image4D& image4d, cv::Vec3f& position, cv::Vec3f& eulerAngles) const;
+    bool cropFace(face::Image4D& image4d, cv::Vec3f& position, cv::Vec3f& eulerAngles);
 
     /**
      * @brief estimateFacePose
      * @param face
      * @return True if pose estimation was successful and rotation matrix was added to posesData, false otherwise
      */
-    bool estimateFacePose(const face::Image4D& image4d, cv::Vec3f& position, cv::Vec3f& eulerAngles) const;
+    bool estimateFacePose(const face::Image4D& image4d, cv::Vec3f& position, cv::Vec3f& eulerAngles);
 
 private:
     static const std::string FACE_DETECTOR_PATH;
@@ -93,7 +93,7 @@ private:
      * @param image4d
      * @param threshold: max allowed distance
      */
-    void removeOutliers(Image4D& image4d) const;
+    void removeOutliers(Image4D& image4d);
     void cropFaceThread(std::vector<Face>& croppedFaces, Image4D& face);
     void maskRGBToDepth(Image4D& image);
 };

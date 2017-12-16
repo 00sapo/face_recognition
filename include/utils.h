@@ -157,13 +157,14 @@ void multiThreadVectorProcessing(std::vector<Image4D> images, Fn function, Args.
     int i = 0;
 
     for (auto& face : images) {
-        if (i >= n_proc) {
-            for (auto& t : threads)
+        threads[i++] = std::thread(function, args..., std::ref(face));
+        if (i == n_proc) {
+            for (auto& t : threads) {
                 if (t.joinable())
                     t.join();
+            }
             i = 0;
         }
-        threads[i++] = std::thread(function, args..., std::ref(face));
     }
     for (auto& t : threads)
         if (t.joinable())

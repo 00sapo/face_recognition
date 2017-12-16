@@ -109,6 +109,7 @@ void Preprocessor::cropFaceThread(vector<Face>& croppedFaces, Image4D& face)
     if (cropped && face.getArea() != area) { // keep only images where a face has been detected and cropped
         croppedFaces.emplace_back(face, position, eulerAngles);
     }
+    lock.~lock_guard();
 }
 
 //vector<Face> Preprocessor::cropFaces(vector<Image4D>& images)
@@ -116,7 +117,7 @@ void Preprocessor::cropFaceThread(vector<Face>& croppedFaces, Image4D& face)
 //    return croppedFaces;
 //}
 
-bool Preprocessor::cropFace(Image4D& image4d, Vec3f& position, Vec3f& eulerAngles) const
+bool Preprocessor::cropFace(Image4D& image4d, Vec3f& position, Vec3f& eulerAngles)
 {
     removeOutliers(image4d);
 
@@ -241,7 +242,7 @@ void Preprocessor::removeBackgroundFixed(Image4D& face, uint16_t threshold) cons
     return;
 }
 
-void Preprocessor::removeOutliers(Image4D& image4d) const
+void Preprocessor::removeOutliers(Image4D& image4d)
 {
     // TODO: a full resolution booleanDepthMap is probably too much
     //       maybe the same result is achievable with a sampling of a pixel every 4 or 8
@@ -253,6 +254,7 @@ void Preprocessor::removeOutliers(Image4D& image4d) const
     }
 
     int numOfComponents = cv::connectedComponentsWithStats(booleanDepthMap, labels, stats, centroids, 4);
+
     int index = 1;
     int maxArea = stats.at<int>(1, cv::CC_STAT_AREA);
     for (int i = 2; i < numOfComponents; ++i) {
@@ -275,7 +277,7 @@ void Preprocessor::removeOutliers(Image4D& image4d) const
     });
 }
 
-bool Preprocessor::estimateFacePose(const Image4D& image4d, cv::Vec3f& position, cv::Vec3f& eulerAngles) const
+bool Preprocessor::estimateFacePose(const Image4D& image4d, cv::Vec3f& position, cv::Vec3f& eulerAngles)
 {
     if (!poseEstimatorAvailable) {
         std::cout << "Error! Face pose estimator unavailable!" << std::endl;

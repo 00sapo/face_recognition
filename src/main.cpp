@@ -3,16 +3,15 @@
 
 #include <opencv2/highgui/highgui.hpp>
 
-#include "image4dloader.h"
 #include "datasetcov.h"
 #include "facerecognizer.h"
 #include "image4dloader.h"
 #include "preprocessor.h"
 #include "test.h"
 
+using cv::Mat;
 using std::string;
 using std::vector;
-using cv::Mat;
 using namespace face;
 
 const int SUBSETS = 3;
@@ -28,7 +27,7 @@ const cv::String KEYS = "{ help h usage ?      | | print this message }"
 void testFunctions();
 DatasetCov loadAndPreprocess(const string& datasetPath);
 bool savePreprocessedDataset(const string& path, const vector<vector<Mat>>& grayscale,
-                             const vector<vector<Mat>>& depthmap);
+    const vector<vector<Mat>>& depthmap);
 
 int main(int argc, char* argv[])
 {
@@ -50,8 +49,7 @@ int main(int argc, char* argv[])
             std::cout << "Error! Loaded empty dataset!" << std::endl;
             return 0;
         }
-    }
-    else if (parser.has("dataset")) {
+    } else if (parser.has("dataset")) {
 
         dataset = loadAndPreprocess(parser.get<string>("dataset"));
 
@@ -66,8 +64,7 @@ int main(int argc, char* argv[])
     FaceRecognizer faceRec(SUBSETS);
     if (!parser.has("loadTrained")) {
         faceRec.train(dataset.grayscale, dataset.depthmap);
-    }
-    else {
+    } else {
         faceRec.load(parser.get<string>("loadTrained"));
     }
 
@@ -79,7 +76,6 @@ int main(int argc, char* argv[])
 
     return 0;
 }
-
 
 DatasetCov loadAndPreprocess(const string& datasetPath)
 {
@@ -103,9 +99,8 @@ DatasetCov loadAndPreprocess(const string& datasetPath)
         depthmap.push_back(std::move(depthmapCovar));
     }
 
-    return {grayscale, depthmap};
+    return { grayscale, depthmap };
 }
-
 
 void testFunctions()
 {
