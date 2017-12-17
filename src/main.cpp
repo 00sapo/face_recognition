@@ -49,6 +49,13 @@ int main(int argc, char* argv[])
             std::cout << "Error! Loaded empty dataset!" << std::endl;
             return 0;
         }
+
+        for (const auto& depthmap : dataset.depthmap[0]) {
+            std::cout << "Mat: \n" << depthmap << std::endl;
+            cv::imshow("Loaded covariance", depthmap);
+            cv::waitKey();
+        }
+
     } else if (parser.has("dataset")) {
 
         dataset = loadAndPreprocess(parser.get<string>("dataset"));
@@ -84,22 +91,22 @@ DatasetCov loadAndPreprocess(const string& datasetPath)
 
     Preprocessor preproc;
     vector<vector<Mat>> grayscale, depthmap;
-    for (int i = 1; i < 25; ++i) {
+    for (int i = 1; i < 2/*25*/; ++i) {
         std::cout << "Identity " << i << std::endl;
         auto path = datasetPath + "/" + (i < 10 ? "0" : "") + std::to_string(i);
         loader.setCurrentPath(path);
 
         std::cout << "Loading and preprocessing images..." << std::endl;
-        auto preprocessdFaces = preproc.preprocess(loader.get());
+        auto preprocessedFaces = preproc.preprocess(loader.get());
 
         std::cout << "Computing covariance representation..." << std::endl;
         vector<Mat> grayscaleCovar, depthmapCovar;
-        covariance::getNormalizedCovariances(preprocessdFaces, SUBSETS, grayscaleCovar, depthmapCovar);
+        covariance::getNormalizedCovariances(preprocessedFaces, SUBSETS, grayscaleCovar, depthmapCovar);
         grayscale.push_back(std::move(grayscaleCovar));
         depthmap.push_back(std::move(depthmapCovar));
     }
 
-    return { grayscale, depthmap };
+    return { std::move(grayscale), std::move(depthmap) };
 }
 
 void testFunctions()

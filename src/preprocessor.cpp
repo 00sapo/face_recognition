@@ -70,7 +70,7 @@ void Preprocessor::maskRGBToDepth(Image4D& image)
 
 vector<Face> Preprocessor::preprocess(vector<Image4D> images)
 {
-    face::multiThreadVectorProcessing(images, &Preprocessor::maskRGBToDepth, this);
+    //face::multiThreadVectorProcessing(images, &Preprocessor::maskRGBToDepth, this);
     const auto SIZE = images.size();
 
     vector<Face> croppedFaces;
@@ -104,12 +104,20 @@ void Preprocessor::cropFaceThread(vector<Face>& croppedFaces, Image4D& face)
 {
     Vec3f position, eulerAngles;
     auto area = face.getArea();
-    std::lock_guard<std::mutex> lock(cropMutex);
+    //std::lock_guard<std::mutex> lock(cropMutex);
+
+    //cv::imshow("Pre-crop", face.image);
+    //cv::waitKey();
+
     bool cropped = cropFace(face, position, eulerAngles);
+
+    //cv::imshow("Post-crop", face.image);
+
     if (cropped && face.getArea() != area) { // keep only images where a face has been detected and cropped
+        std::lock_guard<std::mutex> lock(cropMutex);
         croppedFaces.emplace_back(face, position, eulerAngles);
     }
-    lock.~lock_guard();
+    //lock.~lock_guard();
 }
 
 //vector<Face> Preprocessor::cropFaces(vector<Image4D>& images)
@@ -119,7 +127,7 @@ void Preprocessor::cropFaceThread(vector<Face>& croppedFaces, Image4D& face)
 
 bool Preprocessor::cropFace(Image4D& image4d, Vec3f& position, Vec3f& eulerAngles)
 {
-    removeOutliers(image4d);
+    //removeOutliers(image4d);
 
     if (!estimateFacePose(image4d, position, eulerAngles))
         return false;

@@ -11,6 +11,10 @@ using cv::Mat;
 
 namespace face {
 
+cv::Mat encode(const cv::Mat& image);
+cv::Mat decode(const cv::Mat& image);
+
+
 DatasetCov::DatasetCov() : consistent(true) { }
 
 DatasetCov::DatasetCov(vector<vector<Mat>> grayscale, vector<vector<Mat>> depthmap)
@@ -107,8 +111,20 @@ bool DatasetCov::save(const fs::path& path)
             auto grayscalePath = idPath / ("grayscale_" + std::to_string(j) + ".png");
             auto depthmapPath  = idPath / ("depthmap_" + std::to_string(j) + ".png");
 
-            success &= cv::imwrite(grayscalePath.string(), grayscaleID[j]);
-            success &= cv::imwrite(depthmapPath.string(),  depthmapID[j]);
+            cv::imshow("Grayscale", grayscaleID[j]);
+            cv::imshow("Depthmap", depthmapID[j]);
+            cv::waitKey();
+
+            std::cout << "Original: \n" << grayscaleID[j] << std::endl;
+            auto grayscaleImg = encode(grayscaleID[j]);
+            std::cout << "Encoded: \n" << grayscaleImg << std::endl;
+            auto decoded = decode(grayscaleImg);
+            std::cout << "Decoded: \n" << decoded << std::endl;
+
+            auto depthmapImg  = encode(depthmapID[j]);
+
+            success &= cv::imwrite(grayscalePath.string(), grayscaleImg);
+            success &= cv::imwrite(depthmapPath.string(),  depthmapImg);
         }
     }
 
@@ -137,10 +153,16 @@ DatasetCov DatasetCov::load(const std::string& path)
         for (const auto& dirEntry : fs::directory_iterator(subdir)) {
             auto file = dirEntry.path();
             auto fileName = file.filename();
-            if (std::regex_match(fileName.string(), grayscaleTemplate, std::regex_constants::match_any))
-                grayscaleID.push_back(cv::imread(file.string(), CV_16U));   // TODO: check image format
-            else if (std::regex_match(fileName.string(), depthmapTemplate, std::regex_constants::match_any))
-                depthmapID.push_back(cv::imread(file.string(), CV_16U));    // TODO: check image format
+            if (std::regex_match(fileName.string(), grayscaleTemplate, std::regex_constants::match_any)) {
+                auto image = cv::imread(file.string(), CV_8UC1);
+                auto decoded = decode(image);
+                grayscaleID.push_back(decoded);   // TODO: check image format
+            }
+            else if (std::regex_match(fileName.string(), depthmapTemplate, std::regex_constants::match_any)) {
+                auto image = cv::imread(file.string(), CV_8UC1);
+                auto decoded = decode(image);
+                depthmapID.push_back(decoded);    // TODO: check image format
+            }
         }
 
         grayscale.push_back(std::move(grayscaleID));
@@ -150,6 +172,45 @@ DatasetCov DatasetCov::load(const std::string& path)
     return { std::move(grayscale), std::move(depthmap) };
 }
 
+
+cv::Mat encode(const cv::Mat& image) {
+    const auto HEIGHT = image.rows;
+    const auto WIDTH  = image.cols;
+    cv::Mat encoded(HEIGHT, WIDTH*4, CV_8U);
+
+    for (auto i = 0; i < HEIGHT; ++i) {
+        for (auto j = 0; j < WIDTH; ++j) {
+            float floatVal = image.at<float>(i,j);
+            uint32_t value = *(reinterpret_cast<uint32_t*>(&floatVal));
+            for (auto k = 0; k < 4; ++k) {
+                encoded.at<uint8_t>(i, 4*j + k) = value & 0XFF;
+                value = value >> 8;
+            }
+        }
+    }
+
+    return encoded;
+}
+
+cv::Mat decode(const cv::Mat& image) {
+    const auto HEIGHT = image.rows;
+    const auto WIDTH  = image.cols/4;
+    auto decoded = cv::Mat(HEIGHT, WIDTH, CV_32FC1);
+
+    for (auto i = 0; i < HEIGHT; ++i) {
+        for (auto j = 0; j < WIDTH; ++j) {
+            uint32_t value = 0;
+            for (auto k = 0; k < 4; ++k) {
+                uint32_t tmp = image.at<uint8_t>(i,4*j + k);
+                value |= tmp << k*8;
+            }
+            float floatVal = *(reinterpret_cast<float*>(&value));
+            decoded.at<float>(i,j) = floatVal;
+        }
+    }
+
+    return decoded;
+}
 
 
 }
