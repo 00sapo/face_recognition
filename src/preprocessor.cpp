@@ -70,11 +70,8 @@ void Preprocessor::maskRGBToDepth(Image4D& image)
 
 vector<Face> Preprocessor::preprocess(vector<Image4D> images)
 {
-    //face::multiThreadVectorProcessing(images, &Preprocessor::maskRGBToDepth, this);
-    const auto SIZE = images.size();
-
     vector<Face> croppedFaces;
-    croppedFaces.reserve(SIZE);
+    croppedFaces.reserve(images.size());
 
     face::multiThreadVectorProcessing(images, &Preprocessor::cropFaceThread, this, std::ref(croppedFaces));
 
@@ -107,6 +104,9 @@ void Preprocessor::cropFaceThread(vector<Face>& croppedFaces, Image4D& face)
 
     bool cropped = cropFace(face, position, eulerAngles);
 
+    //cv::imshow("Cropped", face.image);
+    //cv::waitKey();
+
     if (cropped && face.getArea() != area) { // keep only images where a face has been detected and cropped
         std::lock_guard<std::mutex> lock(cropMutex);
         croppedFaces.emplace_back(face, position, eulerAngles);
@@ -120,12 +120,6 @@ bool Preprocessor::cropFace(Image4D& image4d, Vec3f& position, Vec3f& eulerAngle
 
     if (!estimateFacePose(image4d, position, eulerAngles))
         return false;
-/*
-    cv::normalize(image4d.depthMap, normalized, 0, 255, CV_MINMAX, CV_8U);
-    cv::imshow("Depth map", normalized);
-    std::cout << eulerAngles << std::endl;
-    cv::waitKey(0);
-*/
 
     const int NONZERO_PXL = 5;
 
@@ -145,7 +139,7 @@ bool Preprocessor::cropFace(Image4D& image4d, Vec3f& position, Vec3f& eulerAngle
         yTop = 0;
 
     int rotationFactor = DELTA * std::abs(eulerAngles[0]);
-    int distanceFactor = 100 / (position[2] / 1000.f);
+    int distanceFactor = 120 / (position[2] / 1000.f);
     int yBase = yTop + distanceFactor - rotationFactor;
     if (yBase > image4d.getHeight())
         yBase = image4d.getHeight();
@@ -158,7 +152,7 @@ bool Preprocessor::cropFace(Image4D& image4d, Vec3f& position, Vec3f& eulerAngle
     // TODO: use a sigmoidal function to minimize lateral cropping for small
     //       values of eulerAngles[1] (but where should it be centered?, in 15?)
     if (eulerAngles[1] > 0)
-        xBase -= PHI * std::abs(eulerAngles[1]) - 10;
+        xBase -= PHI * std::abs(eulerAngles[1]);// - 10;
     else
         xTop += PHI * std::abs(eulerAngles[1]); // aumentare xTop
 

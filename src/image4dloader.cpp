@@ -67,21 +67,37 @@ Mat loadDepthImageCompressed( const string& fname ){
     return Mat();
 }
 
-Mat loadCalibrationData(const std::string& path) {
-    std::ifstream file(path);
-    if (!file.is_open())
+Mat loadCalibrationData(const std::string& path, cv::Vec3f& outTraslVec) {
+
+    auto depthCalibFile = path + "/" + "depth.cal";
+    auto rgbCalibFile   = path + "/" + "rgb.cal";
+
+    std::ifstream depthFile(depthCalibFile);
+    std::ifstream rgbFile(rgbCalibFile);
+    if (!depthFile.is_open() || !rgbFile.is_open())
         return Mat();
 
     Mat intrinsics = Mat::zeros(3,3,CV_32FC1);
-    file >> intrinsics.at<float>(0,0);
-    file >> intrinsics.at<float>(0,1);
-    file >> intrinsics.at<float>(0,2);
-    file >> intrinsics.at<float>(1,0);
-    file >> intrinsics.at<float>(1,1);
-    file >> intrinsics.at<float>(1,2);
-    file >> intrinsics.at<float>(2,0);
-    file >> intrinsics.at<float>(2,1);
-    file >> intrinsics.at<float>(2,2);
+    depthFile >> intrinsics.at<float>(0,0);
+    depthFile >> intrinsics.at<float>(0,1);
+    depthFile >> intrinsics.at<float>(0,2);
+    depthFile >> intrinsics.at<float>(1,0);
+    depthFile >> intrinsics.at<float>(1,1);
+    depthFile >> intrinsics.at<float>(1,2);
+    depthFile >> intrinsics.at<float>(2,0);
+    depthFile >> intrinsics.at<float>(2,1);
+    depthFile >> intrinsics.at<float>(2,2);
+
+    for (auto i = 0; i < 22; ++i) {
+        float useless;
+        rgbFile >> useless;
+
+        //std::cout << i << ": " << useless << std::endl;
+    }
+
+    rgbFile >> outTraslVec[0];
+    rgbFile >> outTraslVec[1];
+    rgbFile >> outTraslVec[2];
 
     return intrinsics;
 }
@@ -132,10 +148,10 @@ bool Image4DLoader::get(Image4D& image4d)
         return false;
     }
 
-    auto calibFile = currentPath + "/" + "depth.cal";
-    auto intrinsics = loadCalibrationData(calibFile);
+    cv::Vec3f traslVector;
+    auto intrinsics = loadCalibrationData(currentPath, traslVector);
     if (intrinsics.empty()) {
-        std::cerr << "Unable to load file " << calibFile << std::endl;
+        std::cerr << "Unable to load calibration file from " << currentPath << std::endl;
         return false;
     }
 
@@ -149,8 +165,6 @@ bool Image4DLoader::get(Image4D& image4d)
 
 void Image4DLoader::getMultiThr(vector<Image4D>& image4DSequence, int begin, int end, std::mutex& mutex) const
 {
-    //Mat K = Settings::getInstance().getK();
-
     for (int i = begin; i < end; ++i) {
 
         // no locks required since reading a const reference
@@ -168,12 +182,18 @@ void Image4DLoader::getMultiThr(vector<Image4D>& image4DSequence, int begin, int
             std::cerr << "Unable to load file " << cloudFile << std::endl;
             return;
         }
-        auto calibFile = currentPath + "/" + "depth.cal";
-        auto intrinsics = loadCalibrationData(calibFile);
+
+        cv::Vec3f translationVector;
+        auto intrinsics = loadCalibrationData(currentPath, translationVector);
         if (intrinsics.empty()) {
-            std::cerr << "Unable to load file " << calibFile << std::endl;
+            std::cerr << "Unable to load calibration file from " << currentPath << std::endl;
             return;
         }
+
+        Mat M = (cv::Mat_<float>(2, 3) << 1, 0, translationVector[1],
+                                          0, 1, translationVector[0]);
+
+        cv::warpAffine(image, image, M, cv::Size(image.cols, image.rows));
 
         // lock needed to prevent concurrent writing
         std::lock_guard<std::mutex> lock(mutex);
