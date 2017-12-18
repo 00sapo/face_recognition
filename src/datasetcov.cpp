@@ -80,6 +80,8 @@ bool DatasetCov::save(const std::string& path)
 
 bool DatasetCov::save(const fs::path& path)
 {
+    assert (checkConsistency() && "Error! Inconsistent dataset!");
+
     try {   // try creating dataset root directory
         if (!fs::create_directory(path))
             return false;
@@ -92,7 +94,6 @@ bool DatasetCov::save(const fs::path& path)
     for (std::size_t i = 0; i < grayscale.size(); ++i) {   // for each identity
         const auto& grayscaleID = grayscale[i];
         const auto& depthmapID  = depthmap[i];
-        assert (grayscaleID.size() == depthmapID.size() && "Identities size mismatch!");
 
         auto idPath = path / std::to_string(i);
 
@@ -111,16 +112,7 @@ bool DatasetCov::save(const fs::path& path)
             auto grayscalePath = idPath / ("grayscale_" + std::to_string(j) + ".png");
             auto depthmapPath  = idPath / ("depthmap_" + std::to_string(j) + ".png");
 
-            cv::imshow("Grayscale", grayscaleID[j]);
-            cv::imshow("Depthmap", depthmapID[j]);
-            cv::waitKey();
-
-            std::cout << "Original: \n" << grayscaleID[j] << std::endl;
             auto grayscaleImg = encode(grayscaleID[j]);
-            std::cout << "Encoded: \n" << grayscaleImg << std::endl;
-            auto decoded = decode(grayscaleImg);
-            std::cout << "Decoded: \n" << decoded << std::endl;
-
             auto depthmapImg  = encode(depthmapID[j]);
 
             success &= cv::imwrite(grayscalePath.string(), grayscaleImg);

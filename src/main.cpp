@@ -25,7 +25,7 @@ const cv::String KEYS = "{ help h usage ?      | | print this message }"
                         "{ loadTrained         | | path to trained svms }";
 
 void testFunctions();
-DatasetCov loadAndPreprocess(const string& datasetPath);
+DatasetCov loadAndPreprocess(const string& datasetPath, std::size_t covarianceSubsets);
 bool savePreprocessedDataset(const string& path, const vector<vector<Mat>>& grayscale,
     const vector<vector<Mat>>& depthmap);
 
@@ -42,23 +42,18 @@ int main(int argc, char* argv[])
     DatasetCov dataset;
     if (parser.has("preprocessedDataset")) {
         auto path = parser.get<string>("preprocessedDataset");
+
         dataset = DatasetCov::load(path);
+
         if (!dataset.isConsistent())
             std::cout << "Warning! Loaded inconsistent dataset!" << std::endl;
         if (dataset.empty()) {
             std::cout << "Error! Loaded empty dataset!" << std::endl;
             return 0;
         }
-
-        for (const auto& depthmap : dataset.depthmap[0]) {
-            std::cout << "Mat: \n" << depthmap << std::endl;
-            cv::imshow("Loaded covariance", depthmap);
-            cv::waitKey();
-        }
-
     } else if (parser.has("dataset")) {
 
-        dataset = loadAndPreprocess(parser.get<string>("dataset"));
+        dataset = loadAndPreprocess(parser.get<string>("dataset"), SUBSETS);
 
         if (parser.has("savePreprocessed")) {
             auto path = parser.get<string>("savePreprocessed");
@@ -84,14 +79,14 @@ int main(int argc, char* argv[])
     return 0;
 }
 
-DatasetCov loadAndPreprocess(const string& datasetPath)
+DatasetCov loadAndPreprocess(const string& datasetPath, std::size_t covarianceSubsets)
 {
     Image4DLoader loader(datasetPath);
     loader.setFileNameRegEx("frame_[0-9]*_(rgb|depth).*");
 
     Preprocessor preproc;
     vector<vector<Mat>> grayscale, depthmap;
-    for (int i = 1; i < 2/*25*/; ++i) {
+    for (int i = 1; i < 25; ++i) {  // TODO: load each folder using std::experimental::file_system
         std::cout << "Identity " << i << std::endl;
         auto path = datasetPath + "/" + (i < 10 ? "0" : "") + std::to_string(i);
         loader.setCurrentPath(path);
@@ -101,7 +96,7 @@ DatasetCov loadAndPreprocess(const string& datasetPath)
 
         std::cout << "Computing covariance representation..." << std::endl;
         vector<Mat> grayscaleCovar, depthmapCovar;
-        covariance::getNormalizedCovariances(preprocessedFaces, SUBSETS, grayscaleCovar, depthmapCovar);
+        covariance::getNormalizedCovariances(preprocessedFaces, covarianceSubsets, grayscaleCovar, depthmapCovar);
         grayscale.push_back(std::move(grayscaleCovar));
         depthmap.push_back(std::move(depthmapCovar));
     }
