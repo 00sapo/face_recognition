@@ -52,6 +52,12 @@ public:
     float gamma;
 };
 
+
+
+/**----------------------------------------------------------
+ * ------------------------ SVMStein ------------------------
+ * ----------------------------------------------------------*/
+
 SVMStein::SVMStein()
 {
     svm = ml::SVM::create();
@@ -96,12 +102,12 @@ SteinKernelParams SVMStein::trainAuto(const Mat& data, const vector<int>& labels
     for (auto gamma = gammaGrid.minVal; gamma < gammaGrid.maxVal; gamma *= gammaGrid.logStep) {
         setGamma(gamma);
         for (auto C = CGrid.minVal; C < CGrid.maxVal; C *= CGrid.logStep) {
-            //            std::cout << "C = " << C << "; gamma = " << gamma << std::endl;
+            //std::cout << "C = " << C << "; gamma = " << gamma << std::endl;
             setC(C);
-            //            std::cout << "Training..." << std::endl;
+            //std::cout << "Training..." << std::endl;
             svm->train(trainData);
             float fscore = evaluateFMeasure(data, labelsVector);
-            //            std::cout << "Score: " << fscore << std::endl;
+            //std::cout << "Score: " << fscore << std::endl;
             if (bestScore < fscore) {
                 bestGamma = { gamma };
                 bestC = { C };
@@ -123,6 +129,7 @@ SteinKernelParams SVMStein::trainAuto(const Mat& data, const vector<int>& labels
     auto fscore = evaluateFMeasure(data, labelsVector);
 
     std::cout << "Best score: " << bestScore << std::endl;
+    std::cout << "Best C: " << C << "\nBest gamma: " << gamma << std::endl;
     std::cout << "score obtained by avaraging best parameters: " << fscore << std::endl;
     return SteinKernelParams(C, gamma);
 }

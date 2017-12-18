@@ -1,5 +1,5 @@
-#ifndef FACE_IMAGELOADER_HPP
-#define FACE_IMAGELOADER_HPP
+#ifndef FACE_IMAGE4DLOADER_H
+#define FACE_IMAGE4DLOADER_H
 
 #include <image4dcomponent.h>
 #include <image4dvectorcomposite.h>
@@ -17,6 +17,7 @@ namespace face {
 class Image4DLoader {
 public:
     static const std::string MATCH_ALL;
+    //static const std::string NO_MATCH;
 
     /**
      * @brief ImageLoader, basic constructor.
@@ -61,6 +62,9 @@ public:
      */
     void setFileNameRegEx(const std::string& fileNameRegEx);
 
+
+    //void clearFileNameRegEx();
+
     /**
      * @brief setCurrentPath
      * @param dirPath: path to a new directory
@@ -93,6 +97,6 @@ private:
     void getMultiThr(std::vector<Image4DComponent*>& image4DSequence, int begin, int end, std::mutex& mutex) const;
 };
 
-} // face
+} // namespace face
 
-#endif // IMAGELOADER_Hs
+#endif // FACE_IMAGE4DLOADER_H

@@ -10,12 +10,12 @@
 
 #include "covariancecomputer.h"
 #include "face.h"
-#include "svmtrainer.h"
-#include "image4dleaf.h"
+#include "facerecognizer.h"
+#include "image4d.h"
 #include "image4dloader.h"
-#include "lbp.h"
 #include "preprocessor.h"
 #include "settings.h"
+#include "utils.h"
 
 using cv::Mat;
 using cv::waitKey;
@@ -27,13 +27,62 @@ using std::vector;
 
 namespace face {
 
-using Image4DMatrix = std::vector<std::vector<Image4DLeaf>>;
+using Image4DMatrix = std::vector<std::vector<Image4D>>;
 
 namespace test {
 
     void testSVMLoad()
     {
-        SVMTrainer rec("/home/alberto/Desktop/svms");
+        FaceRecognizer rec("/home/alberto/Desktop/svms");
+    }
+
+    void testSVM()
+    {
+        string dirPath = "/home/alberto/Downloads/hpdb/";
+        Preprocessor preproc;
+        Image4DLoader loader(dirPath);
+        loader.setFileNameRegEx("frame_[0-9]*_(rgb|depth).*");
+
+        const int SUBSETS = 3;
+
+        MatMatrix grayscale, depthmap;
+        for (int i = 1; i < 25; ++i) {
+            std::cout << "Identity " << i << std::endl;
+            auto path = dirPath + (i < 10 ? "0" : "") + std::to_string(i);
+            loader.setCurrentPath(path);
+
+            std::cout << "Loading and preprocessing images..." << std::endl;
+            auto preprocessdFaces = preproc.preprocess(loader.get());
+
+            std::cout << "Computing covariance representation..." << std::endl;
+            std::vector<Mat> grayscaleCovar, depthmapCovar;
+            covariance::getNormalizedCovariances(preprocessdFaces, SUBSETS, grayscaleCovar, depthmapCovar);
+            grayscale.push_back(std::move(grayscaleCovar));
+            depthmap.push_back(std::move(depthmapCovar));
+        }
+
+        FaceRecognizer faceRec(SUBSETS);
+        faceRec.train(grayscale, depthmap);
+
+        //faceRec.save("../svms");
+
+        std::cout << "-----------------------------------------------" << std::endl;
+        std::cout << "----------------- Testing ---------------------" << std::endl;
+        std::cout << "-----------------------------------------------" << std::endl;
+
+        std::cout << "\nLoading..." << std::endl;
+
+        dirPath = "../RGBD_Face_dataset_testing/Test1";
+        Image4DLoader testLoader(dirPath, "004_.*");
+        auto testImage4dID = testLoader.get();
+
+        std::cout << "\nPreprocessing..." << std::endl;
+        auto testID = preproc.preprocess(testImage4dID);
+
+        std::cout << "\nPrediction..." << std::endl;
+        std::vector<Mat> grayscaleCovar, depthmapCovar;
+        covariance::getNormalizedCovariances(testID, SUBSETS, grayscaleCovar, depthmapCovar);
+        std::cout << faceRec.predict(grayscaleCovar, depthmapCovar) << std::endl;
     }
 
     void testSettings()
@@ -52,8 +101,8 @@ namespace test {
     void testImage4DLoader()
     {
         cout << "\n\nFace loader test..." << endl;
-        string dirPath = "../RGBD_Face_dataset_training/";
-        Image4DLoader loader(dirPath, "014.*");
+        string dirPath = "/home/alberto/Downloads/hpdb/01"; //"../RGBD_Face_dataset_training/";
+        Image4DLoader loader(dirPath, "frame_[0-9]*_(rgb|depth).*");
         auto begin = std::chrono::high_resolution_clock::now();
         auto faceSequence = loader.get();
         if (faceSequence.empty()) {
@@ -61,19 +110,19 @@ namespace test {
             return;
         }
         auto end = std::chrono::high_resolution_clock::now();
-        cout << "\n\nFaces loaded!" << endl;
+        cout << "\n\n"
+             << faceSequence.size() << " faces loaded!" << endl;
         cout << "Time elapsed: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "ms" << endl;
 
-        cv::namedWindow("image", cv::WINDOW_NORMAL);
-        for (const auto& face : faceSequence) {
-            imshow("image", face.image);
-            while (waitKey(0) != 'm') {
-            }
+        //for (const auto& face : faceSequence) {
+        imshow("Image", faceSequence[0].image);
+        imshow("Depth map", faceSequence[0].depthMap);
+        waitKey(0);
+        //}
 
-            //viewPointCloud(face.depthMap);
-            imshow("Depth map", face.depthMap);
-            waitKey(0);
-        }
+        imshow("Image", faceSequence[27].image);
+        imshow("Depth map", faceSequence[27].depthMap);
+        waitKey(0);
         system("read -p 'Press [enter] to continue'");
     }
 
@@ -83,7 +132,7 @@ namespace test {
         string dirPath = "../RGBD_Face_dataset_training/";
         Image4DLoader loader(dirPath, "014.*"); // example: loads only .png files starting with 014
 
-        Image4DLeaf face;
+        Image4D face;
 
         if (!loader.get(face)) {
             cout << "Failed loading face" << endl;
@@ -102,7 +151,7 @@ namespace test {
     void testPreprocessing()
     {
         cout << "\n\nDetect face pose..." << endl;
-        Image4DLoader loader("../RGBD_Face_dataset_training/", ".*");
+        Image4DLoader loader("../RGBD_Face_dataset_training/", "016_.*");
         auto image4d = loader.get();
 
         Preprocessor prep;
@@ -136,7 +185,9 @@ namespace test {
         //        }
 
         Preprocessor prep;
-        prep.segment(images);
+        for (auto& image : images) {
+            //prep.segment(image);
+        }
 
         for (auto& image4d : images) {
             imshow("Original image", image4d.depthMap);
@@ -160,7 +211,7 @@ namespace test {
 
         loader = Image4DLoader("../RGBD_Face_dataset_training/", ".*");
         start = std::chrono::high_resolution_clock::now();
-        Image4DLeaf image;
+        Image4D image;
         while (loader.hasNext())
             loader.get(image);
         end = std::chrono::high_resolution_clock::now();

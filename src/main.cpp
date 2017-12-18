@@ -1,120 +1,143 @@
-#include <backgroundknncropper.h>
-#include <covariancecomputer.h>
-#include <facecropper.h>
-#include <image4dcomponent.h>
 #include <iostream>
-#include <kmeansbackgroundremover.h>
-#include <poseclusterizer.h>
-#include <preprocessorpipe.h>
-#include <string.h>
-#include <svmtester.h>
-#include <svmtrainer.h>
 #include <vector>
 
+#include <opencv2/highgui/highgui.hpp>
+
+#include "datasetcov.h"
+#include "facerecognizer.h"
 #include "image4dloader.h"
+#include "preprocessor.h"
+#include "test.h"
 
+using cv::Mat;
+using std::string;
+using std::vector;
 using namespace face;
-using namespace std;
 
-void training(string trainingSetDir, string outputDir)
+const int SUBSETS = 3;
+
+const cv::String KEYS = "{ help h usage ?      | | print this message }"
+                        "{ dataset             | | load images from dataset    }"
+                        "{ preprocessedDataset | | load images from preprocessed dataset }"
+                        "{ savePreprocessed    | | if set saves preprocessed images }"
+                        "{ query               | | path to query identity }"
+                        "{ saveTrained         | | path to store trained svms }"
+                        "{ loadTrained         | | path to trained svms }";
+
+void testFunctions();
+DatasetCov loadAndPreprocess(const string& datasetPath, std::size_t covarianceSubsets);
+bool savePreprocessedDataset(const string& path, const vector<vector<Mat>>& grayscale,
+    const vector<vector<Mat>>& depthmap);
+
+int main(int argc, char* argv[])
 {
+    cv::CommandLineParser parser(argc, argv, KEYS); // opencv parser for command line arguments
 
-    string dirPath = trainingSetDir;
-    Image4DLoader loader(dirPath, "000_.*");
-
-    PreprocessorPipe pipe;
-    Image4DVectorComposite set;
-    for (int i = 0; i < 1; ++i) {
-        stringstream fileNameRegEx;
-        fileNameRegEx << setw(3) << setfill('0') << i << "_.*";
-        cout << "Loading identity " << i << endl;
-
-        loader.setFileNameRegEx(fileNameRegEx.str());
-        set.add(*loader.get());
+    // if wrong arguments, print usage
+    if (!parser.has("dataset") && !parser.has("preprocessedDataset")) {
+        parser.printMessage();
+        return 0;
     }
 
-    pipe.setImageSet(&set);
+    DatasetCov dataset;
+    if (parser.has("preprocessedDataset")) {
+        auto path = parser.get<string>("preprocessedDataset");
 
-    KmeansBackgroundRemover backgroundRemover;
-    FaceCropper faceCropper;
-    PoseClusterizer poseClusterizer;
-    CovarianceComputer covarianceComputer;
-    BackgroundKNNCropper backgroundKNNCropper;
+        dataset = DatasetCov::load(path);
 
-    //    pipe.push_back(backgroundKNNCropper);
-    pipe.push_back(backgroundRemover);
-    pipe.push_back(faceCropper);
-    pipe.push_back(poseClusterizer);
-    pipe.push_back(covarianceComputer);
-    pipe.processPipe();
+        if (!dataset.isConsistent())
+            std::cout << "Warning! Loaded inconsistent dataset!" << std::endl;
+        if (dataset.empty()) {
+            std::cout << "Error! Loaded empty dataset!" << std::endl;
+            return 0;
+        }
+    } else if (parser.has("dataset")) {
 
-    //    for (Image4DComponent* id : *pipe.getImageSet()) {
-    //        for (Image4DComponent* img : *id) {
-    //            imshow(img->getName(), img->getImage());
-    //            waitKey(0);
-    //        }
-    //    }
-    SVMTrainer faceRec;
-    faceRec.train(pipe.getImageSet());
+        dataset = loadAndPreprocess(parser.get<string>("dataset"), SUBSETS);
 
-    faceRec.save(outputDir);
-}
-
-void testing(string testingSetDir, string inputModelDir)
-{
-    // loading testing set
-
-    Image4DLoader loader(testingSetDir, "000_.*");
-
-    PreprocessorPipe pipe;
-    Image4DVectorComposite set;
-    for (int i = 0; i < 19; ++i) {
-        stringstream fileNameRegEx;
-        fileNameRegEx << setw(3) << setfill('0') << i << "_.*";
-        cout << "Loading identity " << i << endl;
-
-        loader.setFileNameRegEx(fileNameRegEx.str());
-        set.add(*loader.get());
+        if (parser.has("savePreprocessed")) {
+            auto path = parser.get<string>("savePreprocessed");
+            auto success = dataset.save(path);
+            if (!success)
+                std::cerr << "Error saving preprocessed dataset to " << path << std::endl;
+        }
     }
 
-    pipe.setImageSet(&set);
-
-    KmeansBackgroundRemover backgroundRemover;
-    FaceCropper faceCropper;
-    PoseClusterizer poseClusterizer;
-    CovarianceComputer covarianceComputer;
-    covarianceComputer.setLeafCovarianceComputer(true);
-    //    BackgroundKNNCropper backgroundKNNCropper;
-
-    //    pipe.push_back(backgroundKNNCropper);
-    pipe.push_back(backgroundRemover);
-    pipe.push_back(faceCropper);
-    pipe.push_back(poseClusterizer);
-    pipe.push_back(covarianceComputer);
-    pipe.processPipe();
-
-    // loading input model
-    SVMTester faceRec;
-    faceRec.load(inputModelDir);
-
-    // predicting
-    for (Image4DComponent* identity : *pipe.getImageSet()) {
-        cout << identity->getName() << "is the id: " << faceRec.predict(*identity) << endl;
+    FaceRecognizer faceRec(SUBSETS);
+    if (!parser.has("loadTrained")) {
+        faceRec.train(dataset.grayscale, dataset.depthmap);
+    } else {
+        faceRec.load(parser.get<string>("loadTrained"));
     }
-}
 
-int main(int count, char* args[])
-{
-    if (count != 4) {
-        cout << "This software has two commands: " << endl;
-        cout << "\t* training <training set directory> <model output directory>\t\t- to train the model" << endl;
-        cout << "\t* testing <testing set directory> <model input directory>\t\t- to test the model" << endl;
-        return 1;
+    if (parser.has("saveTrained")) {
+        faceRec.save(parser.get<string>("saveTrained"));
     }
-    if (!strncmp(args[1], "training", 8))
-        training(args[2], args[3]);
-    if (!strncmp(args[1], "testing", 7))
-        testing(args[2], args[3]);
+
+    // prediction
+
+
+    //testFunctions();
 
     return 0;
+}
+
+DatasetCov loadAndPreprocess(const string& datasetPath, std::size_t covarianceSubsets)
+{
+    Image4DLoader loader(datasetPath);
+    loader.setFileNameRegEx("frame_[0-9]*_(rgb|depth).*");
+
+    Preprocessor preproc;
+    vector<vector<Mat>> grayscale, depthmap;
+    for (int i = 1; i < 25; ++i) {  // TODO: load each folder using std::experimental::file_system
+        std::cout << "Identity " << i << std::endl;
+        auto path = datasetPath + "/" + (i < 10 ? "0" : "") + std::to_string(i);
+        loader.setCurrentPath(path);
+
+        std::cout << "Loading and preprocessing images..." << std::endl;
+        auto preprocessedFaces = preproc.preprocess(loader.get());
+
+        std::cout << "Computing covariance representation..." << std::endl;
+        vector<Mat> grayscaleCovar, depthmapCovar;
+        covariance::getNormalizedCovariances(preprocessedFaces, covarianceSubsets, grayscaleCovar, depthmapCovar);
+        grayscale.push_back(std::move(grayscaleCovar));
+        depthmap.push_back(std::move(depthmapCovar));
+    }
+
+    return { std::move(grayscale), std::move(depthmap) };
+}
+
+void testFunctions()
+{
+    //test::testSingletonSettings();
+    //
+    //face::test::testImage4DLoader();
+    //
+    //test::testFindThreshold();
+    //
+    //test::testGetDepthMap();
+    //
+    //test::testKmeans();
+    //
+    face::test::testPreprocessing();
+    //
+    //test::testLoadSpeed();
+    //
+    //test::testEulerAnglesToRotationMatrix();
+    //
+    //test::testPoseClustering();
+    //
+    //test::testKmeans2();
+    //
+    //face::test::covarianceTest();
+    //
+    //face::test::testSVM();
+    //
+    //face::test::testSVMLoad();
+    //
+    //face::test::covarianceTest();
+    //
+    //face::test::testBackgroundRemoval();
+
+    std::cout << "\n\nTests finished!" << std::endl;
 }

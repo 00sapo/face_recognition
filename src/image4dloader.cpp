@@ -1,25 +1,19 @@
 #include "image4dloader.h"
 
-#include <experimental/filesystem>
-
 #include <thread>
+#include <iostream>
+#include <fstream>
+#include <cstdlib>
+#include <experimental/filesystem>
 
 #include <opencv2/imgproc.hpp>
 #include <opencv2/opencv.hpp>
 
-#include <pcl/common/common.h>
-#include <pcl/filters/filter.h>
-#include <pcl/filters/voxel_grid.h>
-#include <pcl/io/pcd_io.h>
-#include <pcl/point_types.h>
-
-#include "image4dleaf.h"
-#include "image4dvectorcomposite.h"
 #include "settings.h"
 
+#include "image4d.h"
+
 using cv::Mat;
-using pcl::PointCloud;
-using pcl::PointXYZ;
 using std::cout;
 using std::endl;
 using std::string;
@@ -29,19 +23,104 @@ namespace fs = std::experimental::filesystem;
 
 namespace face {
 
+Mat loadDepthImageCompressed( const string& fname ){
+
+    //now read the depth image
+    FILE* pFile = fopen(fname.c_str(), "rb");
+    if(!pFile){
+        std::cerr << "could not open file " << fname << std::endl;
+        return Mat();
+    }
+
+    int im_width = 0;
+    int im_height = 0;
+    bool success = true;
+
+    success &= ( fread(&im_width,sizeof(int),1,pFile) == 1 ); // read width of depthmap
+    success &= ( fread(&im_height,sizeof(int),1,pFile) == 1 ); // read height of depthmap
+
+    //int16_t* depth_img = new int16_t[im_width*im_height];
+    Mat depth(im_height, im_width, CV_16SC1);
+    auto depth_img = (uint16_t*)depth.data;
+
+    int numempty;
+    int numfull;
+    int p = 0;
+    while(p < im_width*im_height ){
+
+        success &= ( fread( &numempty,sizeof(int),1,pFile) == 1 );
+
+        for(int i = 0; i < numempty; i++)
+            depth_img[ p + i ] = 0;
+
+        success &= ( fread( &numfull,sizeof(int), 1, pFile) == 1 );
+        success &= ( fread( &depth_img[ p + numempty ], sizeof(int16_t), numfull, pFile) == (unsigned int) numfull );
+        p += numempty+numfull;
+
+    }
+
+    fclose(pFile);
+
+    if(success)
+        return depth;
+
+    return Mat();
+}
+
+Mat loadCalibrationData(const std::string& path, cv::Vec3f& outTraslVec) {
+
+    auto depthCalibFile = path + "/" + "depth.cal";
+    auto rgbCalibFile   = path + "/" + "rgb.cal";
+
+    std::ifstream depthFile(depthCalibFile);
+    std::ifstream rgbFile(rgbCalibFile);
+    if (!depthFile.is_open() || !rgbFile.is_open())
+        return Mat();
+
+    Mat intrinsics = Mat::zeros(3,3,CV_32FC1);
+    depthFile >> intrinsics.at<float>(0,0);
+    depthFile >> intrinsics.at<float>(0,1);
+    depthFile >> intrinsics.at<float>(0,2);
+    depthFile >> intrinsics.at<float>(1,0);
+    depthFile >> intrinsics.at<float>(1,1);
+    depthFile >> intrinsics.at<float>(1,2);
+    depthFile >> intrinsics.at<float>(2,0);
+    depthFile >> intrinsics.at<float>(2,1);
+    depthFile >> intrinsics.at<float>(2,2);
+
+    for (auto i = 0; i < 22; ++i) {
+        float useless;
+        rgbFile >> useless;
+
+        //std::cout << i << ": " << useless << std::endl;
+    }
+
+    rgbFile >> outTraslVec[0];
+    rgbFile >> outTraslVec[1];
+    rgbFile >> outTraslVec[2];
+
+    return intrinsics;
+}
+
+
+
+// ---------------------------------------------------
+// ---------------- Image4DLoader --------------------
+// ---------------------------------------------------
+
 const string Image4DLoader::MATCH_ALL = ".*";
+//const string Image4DLoader::NO_MATCH  = "\+";
 
 Image4DLoader::Image4DLoader()
-    : Image4DLoader(fs::current_path().string(), ".*(png|jpg|bmp)")
+    : Image4DLoader(fs::current_path().string())
 {
 }
 
 Image4DLoader::Image4DLoader(const string& dirPath, const string& fileNameRegEx)
-    : currentPath(dirPath)
-    , fileTemplate(fileNameRegEx)
+    : currentPath(dirPath), fileTemplate(fileNameRegEx)
 {
-    //    if (!loadFileNames(currentPath))
-    //        cout << "Failed!" << endl;
+    if (!loadFileNames(currentPath))
+        cout << "Failed!" << endl;
 }
 
 bool Image4DLoader::hasNext() const
@@ -49,40 +128,34 @@ bool Image4DLoader::hasNext() const
     return !imageFileNames.empty() && !cloudFileNames.empty();
 }
 
-bool Image4DLoader::get(Image4DComponent& image4d)
+bool Image4DLoader::get(Image4D& image4d)
 {
     if (!hasNext())
         return false;
 
-    const string& imageFile = imageFileNames.back();
-    const string& cloudFile = cloudFileNames.back();
+    const string &imageFile = imageFileNames.back();
+    const string &cloudFile = cloudFileNames.back();
 
-    Mat image = cv::imread(imageFile, CV_LOAD_IMAGE_GRAYSCALE);
+    auto image = cv::imread(imageFile, CV_LOAD_IMAGE_GRAYSCALE);
     if (image.empty()) {
-        cout << "Unable to load file " << imageFile << endl;
+        std::cerr << "Unable to load file " << imageFile << std::endl;
         return false;
     }
 
-    PointCloud<PointXYZ> cloud;
-    int result = pcl::io::loadPCDFile<PointXYZ>(cloudFile, cloud);
-    if (result == -1) {
-        cout << "Unable to load file " << cloudFile << endl;
+    auto depthMap = loadDepthImageCompressed(cloudFile);
+    if (depthMap.empty()) {
+        std::cerr << "Unable to load file " << cloudFile << std::endl;
         return false;
     }
 
-    if (!cloud.isOrganized()) {
-        std::cerr << "ERROR: loading unorganized point cloud!" << endl;
+    cv::Vec3f traslVector;
+    auto intrinsics = loadCalibrationData(currentPath, traslVector);
+    if (intrinsics.empty()) {
+        std::cerr << "Unable to load calibration file from " << currentPath << std::endl;
         return false;
     }
 
-    Mat depthMap(cloud.height, cloud.width, CV_16SC1);
-    for (uint x = 0; x < cloud.height; ++x) {
-        for (uint y = 0; y < cloud.width; ++y) {
-            depthMap.at<uint16_t>(x, y) = cloud.at(y, x).z * 10E2;
-        }
-    }
-
-    image4d = Image4DLeaf(image, depthMap, Settings::getInstance().getK());
+    image4d = Image4D(image, depthMap, intrinsics);
 
     imageFileNames.pop_back();
     cloudFileNames.pop_back();
@@ -90,52 +163,49 @@ bool Image4DLoader::get(Image4DComponent& image4d)
     return true;
 }
 
-void Image4DLoader::getMultiThr(std::vector<Image4DComponent*>& image4DSequence, int begin, int end, std::mutex& mutex) const
+void Image4DLoader::getMultiThr(vector<Image4D>& image4DSequence, int begin, int end, std::mutex& mutex) const
 {
-    Mat K = Settings::getInstance().getK();
-
     for (int i = begin; i < end; ++i) {
 
         // no locks required since reading a const reference
-        const string& imageFile = imageFileNames[i];
-        const string& cloudFile = cloudFileNames[i];
+        const string &imageFile = imageFileNames[i];
+        const string &cloudFile = cloudFileNames[i];
 
         Mat image = cv::imread(imageFile, CV_LOAD_IMAGE_GRAYSCALE);
         if (image.empty()) {
-            cout << "Unable to load file " << imageFile << endl;
+            std::cerr << "Unable to load file " << imageFile << std::endl;
             return;
         }
 
-        PointCloud<PointXYZ> cloud;
-        int result = pcl::io::loadPCDFile<PointXYZ>(cloudFile, cloud);
-        if (result == -1) {
-            cout << "Unable to load file " << cloudFile << endl;
+        auto depthMap = loadDepthImageCompressed(cloudFile);
+        if (depthMap.empty()) {
+            std::cerr << "Unable to load file " << cloudFile << std::endl;
             return;
         }
 
-        if (!cloud.isOrganized()) {
-            std::cerr << "ERROR: loading unorganized point cloud!" << endl;
+        cv::Vec3f translationVector;
+        auto intrinsics = loadCalibrationData(currentPath, translationVector);
+        if (intrinsics.empty()) {
+            std::cerr << "Unable to load calibration file from " << currentPath << std::endl;
             return;
         }
 
-        Mat depthMap(cloud.height, cloud.width, CV_16SC1);
-        for (uint x = 0; x < cloud.height; ++x) {
-            for (uint y = 0; y < cloud.width; ++y) {
-                depthMap.at<uint16_t>(x, y) = cloud.at(y, x).z * 10E2;
-            }
-        }
+        Mat M = (cv::Mat_<float>(2, 3) << 1, 0, translationVector[1],
+                                          0, 1, translationVector[0]);
+
+        cv::warpAffine(image, image, M, cv::Size(image.cols, image.rows));
 
         // lock needed to prevent concurrent writing
         std::lock_guard<std::mutex> lock(mutex);
-        image4DSequence[i] = new Image4DLeaf(image, depthMap, K);
-        image4DSequence[i]->setName(imageFile.substr(0, imageFile.length() - 4));
+        image4DSequence[i] = Image4D(image, depthMap, intrinsics);
+        image4DSequence[i].name = imageFile.substr(0, imageFile.length() - 4);
     }
 }
 
-Image4DComponent* Image4DLoader::get()
+vector<Image4D> Image4DLoader::get()
 {
     const auto SIZE = imageFileNames.size();
-    vector<Image4DComponent*> image4DSequence(SIZE);
+    vector<Image4D> image4DSequence(SIZE);
 
     // get number of concurrently executable threads
     const int numOfThreads = std::thread::hardware_concurrency();
@@ -169,13 +239,13 @@ Image4DComponent* Image4DLoader::get()
     imageFileNames.clear();
     cloudFileNames.clear();
 
-    Image4DVectorComposite* returned = new Image4DVectorComposite();
-    returned->setVec(image4DSequence);
-    return returned;
+    return image4DSequence;
 }
 
 void Image4DLoader::setFileNameRegEx(const string& fileNameRegEx)
 {
+    imageFileNames.clear();
+    cloudFileNames.clear();
     fileTemplate = std::regex(fileNameRegEx);
     loadFileNames(currentPath);
 }
@@ -204,14 +274,14 @@ bool Image4DLoader::loadFileNames(const string& dirPath)
 
     // check if exsists
     if (!fs::exists(full_path)) {
-        std::cerr << "\nNot found: " << full_path.filename() << endl;
+        std::cerr << "\nNot found: " << full_path.filename() << std::endl;
         return false;
     }
 
     // check if directory
     if (!fs::is_directory(full_path)) {
         std::cerr << "\n"
-                  << full_path.filename() << " is not a directory" << endl;
+                  << full_path.filename() << " is not a directory" << std::endl;
         return false;
     }
 
@@ -224,7 +294,7 @@ bool Image4DLoader::loadFileNames(const string& dirPath)
                 if (matchTemplate(path.stem().string())) {
                     if (path.extension().string().compare(".png") == 0)
                         imageFileNames.push_back(path.string());
-                    else if (path.extension().string().compare(".pcd") == 0)
+                    else if (path.extension().string().compare(".bin") == 0)
                         cloudFileNames.push_back(path.string());
                 }
             }
@@ -245,4 +315,4 @@ bool Image4DLoader::matchTemplate(const string& fileName)
     return std::regex_match(fileName, fileTemplate, std::regex_constants::match_any);
 }
 
-} // face
+} // namespace face
