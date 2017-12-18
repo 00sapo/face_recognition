@@ -76,6 +76,9 @@ int main(int argc, char* argv[])
 
     // prediction
 
+
+    //testFunctions();
+
     return 0;
 }
 
@@ -116,7 +119,7 @@ void testFunctions()
     //
     //test::testKmeans();
     //
-    //face::test::testPreprocessing();
+    face::test::testPreprocessing();
     //
     //test::testLoadSpeed();
     //
@@ -128,7 +131,7 @@ void testFunctions()
     //
     //face::test::covarianceTest();
     //
-    face::test::testSVM();
+    //face::test::testSVM();
     //
     //face::test::testSVMLoad();
     //

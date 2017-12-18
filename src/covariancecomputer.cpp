@@ -46,19 +46,6 @@ namespace covariance {
         cout << "Assigning faces to clusters..." << endl;
         auto clusters = assignFacesToClusters(faces, centers);
 
-        /*
-    for (auto i = 0; i < clusters.size(); ++i) {
-        cout << "Showing identity " << faces[0].name << ", subset " << i << endl;
-        std::stringstream winName;
-        winName << "Identity " << faces[0].name << " subset " << i;
-        for (auto face : clusters[i]) {
-            cout << "Face rotation: " << face->getEulerAngles() << endl;
-            cv::imshow(winName.str(), face->image);
-            cv::waitKey(0);
-        }
-    }
-    */
-
         vector<std::pair<Mat, Mat>> covariances;
         for (const auto& cluster : clusters) {
             Mat imgCovariance, depthCovariance;

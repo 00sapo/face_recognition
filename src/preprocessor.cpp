@@ -104,26 +104,15 @@ void Preprocessor::cropFaceThread(vector<Face>& croppedFaces, Image4D& face)
 {
     Vec3f position, eulerAngles;
     auto area = face.getArea();
-    //std::lock_guard<std::mutex> lock(cropMutex);
-
-    //cv::imshow("Pre-crop", face.image);
-    //cv::waitKey();
 
     bool cropped = cropFace(face, position, eulerAngles);
-
-    //cv::imshow("Post-crop", face.image);
 
     if (cropped && face.getArea() != area) { // keep only images where a face has been detected and cropped
         std::lock_guard<std::mutex> lock(cropMutex);
         croppedFaces.emplace_back(face, position, eulerAngles);
     }
-    //lock.~lock_guard();
 }
 
-//vector<Face> Preprocessor::cropFaces(vector<Image4D>& images)
-//{
-//    return croppedFaces;
-//}
 
 bool Preprocessor::cropFace(Image4D& image4d, Vec3f& position, Vec3f& eulerAngles)
 {
@@ -131,14 +120,12 @@ bool Preprocessor::cropFace(Image4D& image4d, Vec3f& position, Vec3f& eulerAngle
 
     if (!estimateFacePose(image4d, position, eulerAngles))
         return false;
-
-    /*
-    cv::Mat normalized;
+/*
     cv::normalize(image4d.depthMap, normalized, 0, 255, CV_MINMAX, CV_8U);
     cv::imshow("Depth map", normalized);
     std::cout << eulerAngles << std::endl;
     cv::waitKey(0);
-    */
+*/
 
     const int NONZERO_PXL = 5;
 
@@ -158,7 +145,7 @@ bool Preprocessor::cropFace(Image4D& image4d, Vec3f& position, Vec3f& eulerAngle
         yTop = 0;
 
     int rotationFactor = DELTA * std::abs(eulerAngles[0]);
-    int distanceFactor = 130 / (position[2] / 1000.f);
+    int distanceFactor = 100 / (position[2] / 1000.f);
     int yBase = yTop + distanceFactor - rotationFactor;
     if (yBase > image4d.getHeight())
         yBase = image4d.getHeight();

@@ -67,6 +67,25 @@ Mat loadDepthImageCompressed( const string& fname ){
     return Mat();
 }
 
+Mat loadCalibrationData(const std::string& path) {
+    std::ifstream file(path);
+    if (!file.is_open())
+        return Mat();
+
+    Mat intrinsics = Mat::zeros(3,3,CV_32FC1);
+    file >> intrinsics.at<float>(0,0);
+    file >> intrinsics.at<float>(0,1);
+    file >> intrinsics.at<float>(0,2);
+    file >> intrinsics.at<float>(1,0);
+    file >> intrinsics.at<float>(1,1);
+    file >> intrinsics.at<float>(1,2);
+    file >> intrinsics.at<float>(2,0);
+    file >> intrinsics.at<float>(2,1);
+    file >> intrinsics.at<float>(2,2);
+
+    return intrinsics;
+}
+
 
 
 // ---------------------------------------------------
@@ -113,7 +132,14 @@ bool Image4DLoader::get(Image4D& image4d)
         return false;
     }
 
-    image4d = Image4D(image, depthMap, Settings::getInstance().getK());
+    auto calibFile = currentPath + "/" + "depth.cal";
+    auto intrinsics = loadCalibrationData(calibFile);
+    if (intrinsics.empty()) {
+        std::cerr << "Unable to load file " << calibFile << std::endl;
+        return false;
+    }
+
+    image4d = Image4D(image, depthMap, intrinsics);
 
     imageFileNames.pop_back();
     cloudFileNames.pop_back();
@@ -123,7 +149,7 @@ bool Image4DLoader::get(Image4D& image4d)
 
 void Image4DLoader::getMultiThr(vector<Image4D>& image4DSequence, int begin, int end, std::mutex& mutex) const
 {
-    Mat K = Settings::getInstance().getK();
+    //Mat K = Settings::getInstance().getK();
 
     for (int i = begin; i < end; ++i) {
 
@@ -142,10 +168,16 @@ void Image4DLoader::getMultiThr(vector<Image4D>& image4DSequence, int begin, int
             std::cerr << "Unable to load file " << cloudFile << std::endl;
             return;
         }
+        auto calibFile = currentPath + "/" + "depth.cal";
+        auto intrinsics = loadCalibrationData(calibFile);
+        if (intrinsics.empty()) {
+            std::cerr << "Unable to load file " << calibFile << std::endl;
+            return;
+        }
 
         // lock needed to prevent concurrent writing
         std::lock_guard<std::mutex> lock(mutex);
-        image4DSequence[i] = Image4D(image, depthMap, K);
+        image4DSequence[i] = Image4D(image, depthMap, intrinsics);
         image4DSequence[i].name = imageFile.substr(0, imageFile.length() - 4);
     }
 }

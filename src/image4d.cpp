@@ -48,10 +48,10 @@ Mat    Image4D::getIntrinsicMatrix() const
 
 Mat Image4D::get3DImage() const
 {
-    float fx = float(intrinsicMatrix.at<double>(0,0));
-    float fy = float(intrinsicMatrix.at<double>(1,1));
-    float cx = float(intrinsicMatrix.at<double>(0,2));
-    float cy = float(intrinsicMatrix.at<double>(1,2));
+    auto fx = intrinsicMatrix.at<float>(0,0);
+    auto fy = intrinsicMatrix.at<float>(1,1);
+    auto cx = intrinsicMatrix.at<float>(0,2);
+    auto cy = intrinsicMatrix.at<float>(1,2);
 
     Mat image3D(HEIGHT, WIDTH, CV_32FC3);
 
