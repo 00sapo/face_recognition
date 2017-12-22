@@ -30,7 +30,7 @@ bool savePreprocessedDataset(const string& path, const vector<vector<Mat>>& gray
     const vector<vector<Mat>>& depthmap);
 
 int main(int argc, char* argv[])
-{
+{/*
     cv::CommandLineParser parser(argc, argv, KEYS); // opencv parser for command line arguments
 
     // if wrong arguments, print usage
@@ -75,9 +75,8 @@ int main(int argc, char* argv[])
     }
 
     // prediction
-
-
-    //testFunctions();
+*/
+    testFunctions();
 
     return 0;
 }

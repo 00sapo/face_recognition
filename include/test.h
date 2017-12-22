@@ -151,7 +151,7 @@ namespace test {
     void testPreprocessing()
     {
         cout << "\n\nDetect face pose..." << endl;
-        Image4DLoader loader("../RGBD_Face_dataset_training/", "016_.*");
+        Image4DLoader loader("/home/alberto/Downloads/hpdb/20", "frame_[0-9]*_(rgb|depth).*");
         auto image4d = loader.get();
 
         Preprocessor prep;

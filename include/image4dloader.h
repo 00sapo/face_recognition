@@ -3,10 +3,16 @@
 
 #include <mutex>
 #include <regex>
+#include <experimental/filesystem>
+
+#include <opencv2/core.hpp>
+
+namespace fs = std::experimental::filesystem;
 
 namespace face {
 
 class Image4D;
+
 
 /**
  * @brief The ImageLoader class loads a single image or
@@ -17,7 +23,6 @@ class Image4D;
 class Image4DLoader {
 public:
     static const std::string MATCH_ALL;
-    //static const std::string NO_MATCH;
 
     /**
      * @brief ImageLoader, basic constructor.
@@ -44,7 +49,7 @@ public:
      * @param image4d: output image4d
      * @return true if successfully loaded, false otherwise
      */
-    virtual bool get(Image4D& image4d);
+    virtual bool get(Image4D& image4D);
 
     /**
      * @brief get: multithreaded version of get(Image4D& image4d).
@@ -62,9 +67,6 @@ public:
      */
     void setFileNameRegEx(const std::string& fileNameRegEx);
 
-
-    //void clearFileNameRegEx();
-
     /**
      * @brief setCurrentPath
      * @param dirPath: path to a new directory
@@ -73,30 +75,33 @@ public:
      */
     void setCurrentPath(const std::string& dirPath);
 
-    float getLeafSize() const;
-    void setLeafSize(float value);
-
-protected:
-    std::vector<std::string> imageFileNames;
-    std::vector<std::string> cloudFileNames;
-
 private:
-    /**
-     * @brief leafSize: not working for now. If it is setted, the images will be filtered with a Voxel Grid filter of this leaf size.
-     *
-     */
-    float leafSize = 0.0f;
 
-    std::string currentPath;
+    struct CalibParams {
+        cv::Mat depthCameraMatrix;
+        cv::Mat rgbCameraMatrix;
+        cv::Vec3f rgbTranslationVector;
+
+        CalibParams();
+
+        bool load(const fs::path &dir);
+    };
+
+    std::vector<fs::path> imageFileNames;
+    std::vector<fs::path> depthFileNames;
+
+    fs::path currentPath;
     std::regex fileTemplate;
+    CalibParams calibParams;
 
-    bool loadFileNames(const std::string& dirPath);
+    bool loadMetadata(const fs::path& dirPath);
 
     bool matchTemplate(const std::string& fileName);
 
-    void getMultiThr(std::vector<Image4D>& image4DSequence, int begin, int end, std::mutex& mutex) const;
+    void threadGet(std::vector<Image4D>& image4DSequence, int begin, int end, std::mutex& mutex) const;
+    bool get(const fs::path &imageFile, const fs::path &depthFile, Image4D &image4D) const;
 };
 
 } // namespace face
 
-#endif FACE_IMAGE4DLOADER_H
+#endif // FACE_IMAGE4DLOADER_H

@@ -104,8 +104,8 @@ void Preprocessor::cropFaceThread(vector<Face>& croppedFaces, Image4D& face)
 
     bool cropped = cropFace(face, position, eulerAngles);
 
-    //cv::imshow("Cropped", face.image);
-    //cv::waitKey();
+    cv::imshow("Cropped", face.image);
+    cv::waitKey();
 
     if (cropped && face.getArea() != area) { // keep only images where a face has been detected and cropped
         std::lock_guard<std::mutex> lock(cropMutex);
@@ -121,18 +121,18 @@ bool Preprocessor::cropFace(Image4D& image4d, Vec3f& position, Vec3f& eulerAngle
     if (!estimateFacePose(image4d, position, eulerAngles))
         return false;
 
+    std::cout << eulerAngles << std::endl;
+
     const int NONZERO_PXL = 5;
-
-    auto yTop = getFirstNonempty<uint16_t>(image4d.depthMap, NONZERO_PXL, ScanOrder::top_down);
-
-    //if (std::abs(eulerAngles[0]) > 35)  // TODO: is this if really necessary?
-    //    eulerAngles[0] = 0;
 
     // necessary corrections to take into account head rotations
     const float BETA = (eulerAngles[0] > 0) ? 15 / 8.f : 0.f;
     const float GAMMA = 5 / 8.f;
     const float DELTA = 1.1f;
-    const float PHI = 1.f;
+    const float PHI = 1.5f;
+
+
+    auto yTop = getFirstNonempty<uint16_t>(image4d.depthMap, NONZERO_PXL, ScanOrder::top_down);
 
     yTop += BETA * eulerAngles[0] + GAMMA * eulerAngles[2];
     if (yTop < 0)
@@ -144,17 +144,29 @@ bool Preprocessor::cropFace(Image4D& image4d, Vec3f& position, Vec3f& eulerAngle
     if (yBase > image4d.getHeight())
         yBase = image4d.getHeight();
 
-    cv::Rect scanROI(0, yTop, image4d.getWidth(), (yBase - yTop) / 2);
+    // scan only the upper part of the image to avoid shoulders
+    cv::Rect scanROI(0, yTop, image4d.getWidth(), (yBase - yTop) / 2 );
+
+    // if looking downwards scan only the lower part of the image
+    if (eulerAngles[0] < 0) {
+        scanROI.y = yTop + (yBase - yTop) / 2;
+        scanROI.height = (yBase - yTop) / 2;
+    }
+
     auto roiMat = image4d.depthMap(scanROI);
-    auto xTop = getFirstNonempty<uint16_t>(roiMat, NONZERO_PXL, ScanOrder::left_to_right);
+    auto xTop  = getFirstNonempty<uint16_t>(roiMat, NONZERO_PXL, ScanOrder::left_to_right);
     auto xBase = getFirstNonempty<uint16_t>(roiMat, NONZERO_PXL, ScanOrder::right_to_left);
+
+    cv::line(image4d.depthMap, cv::Point(xTop, 0), cv::Point(xTop, image4d.getHeight()-1), cv::Scalar::all(0xFFFF));
+    cv::imshow("xTop", image4d.depthMap);
+    cv::waitKey();
 
     // TODO: use a sigmoidal function to minimize lateral cropping for small
     //       values of eulerAngles[1] (but where should it be centered?, in 15?)
     if (eulerAngles[1] > 0)
-        xBase -= PHI * std::abs(eulerAngles[1]);// - 10;
+        xBase -= PHI * std::abs(eulerAngles[1]) - 10;
     else
-        xTop += PHI * std::abs(eulerAngles[1]); // aumentare xTop
+        xTop += PHI * std::abs(eulerAngles[1]) - 10; // aumentare xTop
 
     cv::Rect faceROI(xTop, yTop, xBase - xTop, yBase - yTop);
     image4d.crop(faceROI);

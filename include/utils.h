@@ -152,7 +152,7 @@ template <class Fn, class... Args>
  */
 void multiThreadVectorProcessing(std::vector<Image4D> images, Fn function, Args... args)
 {
-    int n_proc = std::thread::hardware_concurrency();
+    int n_proc = 1;//std::thread::hardware_concurrency();
     std::thread threads[n_proc];
     int i = 0;
 
