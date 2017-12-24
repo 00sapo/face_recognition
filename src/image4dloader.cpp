@@ -21,6 +21,7 @@ using std::vector;
 namespace face {
 
 Mat loadDepthImageCompressed( const string &fname );
+Mat loadDepthImageCompressedAt( const string &fname );
 
 
 //----------------------------------------------
@@ -34,8 +35,8 @@ bool Image4DLoader::CalibParams::load(const fs::path &dir)
     auto depthCalibFile = dir / "depth.cal";
     auto rgbCalibFile   = dir / "rgb.cal";
 
-    std::ifstream depthFile(depthCalibFile.c_str());
-    std::ifstream rgbFile(rgbCalibFile.c_str());
+    std::ifstream depthFile(depthCalibFile);
+    std::ifstream rgbFile(rgbCalibFile);
     if (!depthFile.is_open() || !rgbFile.is_open())
         return false;
 
@@ -84,8 +85,7 @@ Image4DLoader::Image4DLoader() : Image4DLoader(fs::current_path().string()) { }
 Image4DLoader::Image4DLoader(const string& dirPath, const string& fileNameRegEx)
     : currentPath(dirPath), fileTemplate(fileNameRegEx)
 {
-    if (!loadMetadata(currentPath))
-        cout << "Failed!" << endl;
+    loadMetadata(currentPath);
 }
 
 bool Image4DLoader::hasNext() const
@@ -136,8 +136,9 @@ vector<Image4D> Image4DLoader::get()
     }
 
     // wait for threads to end (syncronization)
-    for (auto& thread : threads)
+    for (auto& thread : threads) {
         thread.join();
+    }
 
     imageFileNames.clear();
     depthFileNames.clear();
@@ -254,10 +255,8 @@ bool Image4DLoader::loadMetadata(const fs::path& dirPath)
     std::sort(imageFileNames.begin(), imageFileNames.end());
     std::sort(depthFileNames.begin(), depthFileNames.end());
 
-    if (!calibParams.load(full_path)) {
-        std::cerr << "Unable to load calibration files depth.cal and/or rgb.cal" << std::endl;
+    if (!calibParams.load(full_path))
         return false;
-    }
 
     return true;
 }
@@ -314,5 +313,6 @@ Mat loadDepthImageCompressed( const string& fname )
 
     return Mat();
 }
+
 
 } // namespace face

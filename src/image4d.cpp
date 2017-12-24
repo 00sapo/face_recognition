@@ -72,16 +72,18 @@ Mat Image4D::get3DImage() const
 }
 
 
-void Image4D::crop(const cv::Rect &cropRegion) {
+void Image4D::crop(const cv::Rect &cropRegion, Image4D &destination) const {
 
-    image    = image(cropRegion);    // crop image
-    depthMap = depthMap(cropRegion); // crop depthMap
+    Mat croppedImage, croppedDepthMap;
+    croppedImage    = image(cropRegion);    // crop image
+    croppedDepthMap = depthMap(cropRegion); // crop depthMap
 
-    WIDTH  = cropRegion.width;
-    HEIGHT = cropRegion.height;
+    Mat croppedIntrinsicMatrix;
+    intrinsicMatrix.copyTo(croppedIntrinsicMatrix);
+    croppedIntrinsicMatrix.at<float>(0,2) -= cropRegion.x;
+    croppedIntrinsicMatrix.at<float>(1,2) -= cropRegion.y;
 
-    intrinsicMatrix.at<float>(0,2) -= cropRegion.x;
-    intrinsicMatrix.at<float>(1,2) -= cropRegion.y;
+    destination = Image4D(croppedImage, croppedDepthMap, croppedIntrinsicMatrix);
 }
 
 

@@ -30,7 +30,7 @@ bool savePreprocessedDataset(const string& path, const vector<vector<Mat>>& gray
     const vector<vector<Mat>>& depthmap);
 
 int main(int argc, char* argv[])
-{/*
+{
     cv::CommandLineParser parser(argc, argv, KEYS); // opencv parser for command line arguments
 
     // if wrong arguments, print usage
@@ -75,16 +75,15 @@ int main(int argc, char* argv[])
     }
 
     // prediction
-*/
-    testFunctions();
+
+    //testFunctions();
 
     return 0;
 }
 
 DatasetCov loadAndPreprocess(const string& datasetPath, std::size_t covarianceSubsets)
 {
-    Image4DLoader loader(datasetPath);
-    loader.setFileNameRegEx("frame_[0-9]*_(rgb|depth).*");
+    Image4DLoader loader(datasetPath, "frame_[0-9]*_(rgb|depth).*");
 
     Preprocessor preproc;
     vector<vector<Mat>> grayscale, depthmap;
@@ -94,8 +93,12 @@ DatasetCov loadAndPreprocess(const string& datasetPath, std::size_t covarianceSu
         loader.setCurrentPath(path);
 
         std::cout << "Loading and preprocessing images..." << std::endl;
-        auto preprocessedFaces = preproc.preprocess(loader.get());
-
+        auto faces = loader.get();
+        //for (const auto &face : faces) {
+        //    cv::imshow("face",face.image);
+        //    cv::waitKey();
+        //}
+        auto preprocessedFaces = preproc.preprocess(faces);
         std::cout << "Computing covariance representation..." << std::endl;
         vector<Mat> grayscaleCovar, depthmapCovar;
         covariance::getNormalizedCovariances(preprocessedFaces, covarianceSubsets, grayscaleCovar, depthmapCovar);

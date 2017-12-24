@@ -46,7 +46,7 @@ public:
      * @param face: image containing face to crop
      * @return false if no face was detected
      */
-    bool cropFace(face::Image4D& image4d, cv::Vec3f& position, cv::Vec3f& eulerAngles);
+    bool cropFace(const Image4D& image4d, Face& croppedFace);
 
     /**
      * @brief estimateFacePose
@@ -67,7 +67,7 @@ private:
     cv::CascadeClassifier classifier;
     CRForestEstimator estimator;
 
-    std::mutex cropMutex;
+    //std::mutex cropMutex;
 
     /**
      * @brief detectForegroundFace detects the nearest face in the image
@@ -94,7 +94,7 @@ private:
      * @param threshold: max allowed distance
      */
     void removeOutliers(Image4D& image4d);
-    void cropFaceThread(std::vector<Face>& croppedFaces, Image4D& face);
+    void cropFaceThread(const std::vector<Image4D> &inputFaces, std::vector<Face>& croppedFaces, int begin, int end, std::mutex &cropMutex);
     void maskRGBToDepth(Image4D& image);
 };
 

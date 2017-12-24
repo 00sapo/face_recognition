@@ -70,10 +70,33 @@ void Preprocessor::maskRGBToDepth(Image4D& image)
 
 vector<Face> Preprocessor::preprocess(vector<Image4D> images)
 {
-    vector<Face> croppedFaces;
-    croppedFaces.reserve(images.size());
+    const auto SIZE = images.size();
+    vector<Face> croppedFaces(SIZE);
 
-    face::multiThreadVectorProcessing(images, &Preprocessor::cropFaceThread, this, std::ref(croppedFaces));
+    // get number of concurrently executable threads
+    const auto numOfThreads = std::thread::hardware_concurrency();
+    vector<std::thread> threads(numOfThreads);
+
+    // equally split number of images to process
+    int blockSize = SIZE / numOfThreads;
+    if (blockSize < 1)
+        blockSize = 1;
+
+    std::mutex cropMutex;
+    for (int i = 0; i < numOfThreads && i < SIZE; ++i) {
+        int begin = i * blockSize;
+        int end = begin + blockSize;
+        if (i == numOfThreads - 1)
+            end += SIZE % numOfThreads;
+
+        // start a thread executing threadGet function
+        threads[i] = std::thread(&Preprocessor::cropFaceThread, this, std::ref(images),
+                       std::ref(croppedFaces), begin, end, std::ref(cropMutex));
+    }
+
+    // wait for threads to end (syncronization)
+    for (auto& thread : threads)
+        thread.join();
 
     return croppedFaces;
 }
@@ -97,31 +120,30 @@ vector<Face> Preprocessor::preprocess(vector<Image4D> images)
 //    return;
 //}
 
-void Preprocessor::cropFaceThread(vector<Face>& croppedFaces, Image4D& face)
+void Preprocessor::cropFaceThread(const vector<Image4D> &inputFaces, vector<Face>& croppedFaces,
+                                  int begin, int end, std::mutex& cropMutex)
 {
-    Vec3f position, eulerAngles;
-    auto area = face.getArea();
+    for (auto i = begin; i < end; ++i) {
+        const auto &image4D = inputFaces[i];
 
-    bool cropped = cropFace(face, position, eulerAngles);
+        auto area = image4D.getArea();
+        Face croppedFace;
+        auto cropped = cropFace(image4D, croppedFace);
 
-    cv::imshow("Cropped", face.image);
-    cv::waitKey();
-
-    if (cropped && face.getArea() != area) { // keep only images where a face has been detected and cropped
-        std::lock_guard<std::mutex> lock(cropMutex);
-        croppedFaces.emplace_back(face, position, eulerAngles);
+        if (cropped && croppedFace.getArea() != area) { // keep only images where a face has been detected and cropped
+            std::lock_guard<std::mutex> lock(cropMutex);
+            croppedFaces[i] = croppedFace;
+        }
     }
 }
 
 
-bool Preprocessor::cropFace(Image4D& image4d, Vec3f& position, Vec3f& eulerAngles)
+bool Preprocessor::cropFace(const Image4D& image4d, Face& croppedFace)
 {
     //removeOutliers(image4d);
-
+    Vec3f position, eulerAngles;
     if (!estimateFacePose(image4d, position, eulerAngles))
         return false;
-
-    std::cout << eulerAngles << std::endl;
 
     const int NONZERO_PXL = 5;
 
@@ -157,10 +179,6 @@ bool Preprocessor::cropFace(Image4D& image4d, Vec3f& position, Vec3f& eulerAngle
     auto xTop  = getFirstNonempty<uint16_t>(roiMat, NONZERO_PXL, ScanOrder::left_to_right);
     auto xBase = getFirstNonempty<uint16_t>(roiMat, NONZERO_PXL, ScanOrder::right_to_left);
 
-    cv::line(image4d.depthMap, cv::Point(xTop, 0), cv::Point(xTop, image4d.getHeight()-1), cv::Scalar::all(0xFFFF));
-    cv::imshow("xTop", image4d.depthMap);
-    cv::waitKey();
-
     // TODO: use a sigmoidal function to minimize lateral cropping for small
     //       values of eulerAngles[1] (but where should it be centered?, in 15?)
     if (eulerAngles[1] > 0)
@@ -169,7 +187,10 @@ bool Preprocessor::cropFace(Image4D& image4d, Vec3f& position, Vec3f& eulerAngle
         xTop += PHI * std::abs(eulerAngles[1]) - 10; // aumentare xTop
 
     cv::Rect faceROI(xTop, yTop, xBase - xTop, yBase - yTop);
-    image4d.crop(faceROI);
+    Image4D cropped;
+    image4d.crop(faceROI, cropped);
+
+    croppedFace = Face(cropped, position, eulerAngles);
 
     return true;
 }

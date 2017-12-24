@@ -71,12 +71,12 @@ public:
         return name;
     }
     /**
-         * @brief This function crops both the image and the cloud removing
-         *        every point outside the cropping region and adjusting
-         *        the intrinsicMatrix accordingly to take into account the resolution change
-         * @param cropRegion region of interest
-         */
-    void crop(const cv::Rect& cropRegion);
+     * @brief This function crops both the image and the cloud removing
+     *        every point outside the cropping region and adjusting
+     *        the intrinsicMatrix accordingly to take into account the resolution change
+     * @param cropRegion region of interest
+     */
+    void crop(const cv::Rect& cropRegion, Image4D& destination) const;
 
     /**
          * @brief depthForEach applies a function to every pixel
