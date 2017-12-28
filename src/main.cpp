@@ -87,7 +87,7 @@ DatasetCov loadAndPreprocess(const string& datasetPath, std::size_t covarianceSu
 
     Preprocessor preproc;
     vector<vector<Mat>> grayscale, depthmap;
-    for (int i = 1; i < 25; ++i) {  // TODO: load each folder using std::experimental::file_system
+    for (int i = 1; i < 25; ++i) { // TODO: load each folder using std::experimental::file_system
         std::cout << "Identity " << i << std::endl;
         auto path = datasetPath + "/" + (i < 10 ? "0" : "") + std::to_string(i);
         loader.setCurrentPath(path);

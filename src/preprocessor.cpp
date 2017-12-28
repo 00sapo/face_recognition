@@ -71,7 +71,7 @@ void Preprocessor::maskRGBToDepth(Image4D& image)
 vector<Face> Preprocessor::preprocess(vector<Image4D> images)
 {
     const auto SIZE = images.size();
-    vector<Face> croppedFaces(SIZE);
+    vector<Face> croppedFaces;
 
     // get number of concurrently executable threads
     const auto numOfThreads = std::thread::hardware_concurrency();
@@ -91,7 +91,7 @@ vector<Face> Preprocessor::preprocess(vector<Image4D> images)
 
         // start a thread executing threadGet function
         threads[i] = std::thread(&Preprocessor::cropFaceThread, this, std::ref(images),
-                       std::ref(croppedFaces), begin, end, std::ref(cropMutex));
+            std::ref(croppedFaces), begin, end, std::ref(cropMutex));
     }
 
     // wait for threads to end (syncronization)
@@ -120,11 +120,11 @@ vector<Face> Preprocessor::preprocess(vector<Image4D> images)
 //    return;
 //}
 
-void Preprocessor::cropFaceThread(const vector<Image4D> &inputFaces, vector<Face>& croppedFaces,
-                                  int begin, int end, std::mutex& cropMutex)
+void Preprocessor::cropFaceThread(const vector<Image4D>& inputFaces, vector<Face>& croppedFaces,
+    int begin, int end, std::mutex& cropMutex)
 {
     for (auto i = begin; i < end; ++i) {
-        const auto &image4D = inputFaces[i];
+        const auto& image4D = inputFaces[i];
 
         auto area = image4D.getArea();
         Face croppedFace;
@@ -132,11 +132,10 @@ void Preprocessor::cropFaceThread(const vector<Image4D> &inputFaces, vector<Face
 
         if (cropped && croppedFace.getArea() != area) { // keep only images where a face has been detected and cropped
             std::lock_guard<std::mutex> lock(cropMutex);
-            croppedFaces[i] = croppedFace;
+            croppedFaces.push_back(croppedFace);
         }
     }
 }
-
 
 bool Preprocessor::cropFace(const Image4D& image4d, Face& croppedFace)
 {
@@ -153,7 +152,6 @@ bool Preprocessor::cropFace(const Image4D& image4d, Face& croppedFace)
     const float DELTA = 1.1f;
     const float PHI = 1.5f;
 
-
     auto yTop = getFirstNonempty<uint16_t>(image4d.depthMap, NONZERO_PXL, ScanOrder::top_down);
 
     yTop += BETA * eulerAngles[0] + GAMMA * eulerAngles[2];
@@ -167,7 +165,7 @@ bool Preprocessor::cropFace(const Image4D& image4d, Face& croppedFace)
         yBase = image4d.getHeight();
 
     // scan only the upper part of the image to avoid shoulders
-    cv::Rect scanROI(0, yTop, image4d.getWidth(), (yBase - yTop) / 2 );
+    cv::Rect scanROI(0, yTop, image4d.getWidth(), (yBase - yTop) / 2);
 
     // if looking downwards scan only the lower part of the image
     if (eulerAngles[0] < 0) {
@@ -176,7 +174,7 @@ bool Preprocessor::cropFace(const Image4D& image4d, Face& croppedFace)
     }
 
     auto roiMat = image4d.depthMap(scanROI);
-    auto xTop  = getFirstNonempty<uint16_t>(roiMat, NONZERO_PXL, ScanOrder::left_to_right);
+    auto xTop = getFirstNonempty<uint16_t>(roiMat, NONZERO_PXL, ScanOrder::left_to_right);
     auto xBase = getFirstNonempty<uint16_t>(roiMat, NONZERO_PXL, ScanOrder::right_to_left);
 
     // TODO: use a sigmoidal function to minimize lateral cropping for small
