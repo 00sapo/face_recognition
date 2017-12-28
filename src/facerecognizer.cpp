@@ -50,10 +50,10 @@ void FaceRecognizer::train(const MatMatrix& grayscaleCovar, const MatMatrix& dep
 
     grayscaleSVMs.resize(N);
     depthmapSVMs.resize(N);
-    //for (auto& svmVector : grayscaleSVMs)
-    //    svmVector.resize(c);
-    //for (auto& svmVector : depthmapSVMs)
-    //    svmVector.resize(c);
+    for (auto& svmVector : grayscaleSVMs)
+        svmVector.resize(c);
+    for (auto& svmVector : depthmapSVMs)
+        svmVector.resize(c);
 
     // convert data format to be ready for SVMs, i.e. from Mat vector to Mat
     auto grayscaleMat = formatDataForTraining(grayscaleCovar);
@@ -205,20 +205,20 @@ void FaceRecognizer::trainSVMs(const Mat& data, ImgType svmToTrain)
     assert(data.rows == N * c && "data must be an Nxc matrix!");
 
     auto& svms = (svmToTrain == ImgType::grayscale) ? grayscaleSVMs : depthmapSVMs;
-    vector<Mat> trainingData;
-    for (auto i = 0; i < c; ++i)
-        trainingData.push_back(extractSubset(data, i, c));
+    //vector<Mat> trainingData;
+    //for (auto i = 0; i < c; ++i)
+    //    trainingData.push_back(extractSubset(data, i, c));
     vector<int> labels(N * c, -1);
 
     for (auto id = 0; id < N; ++id) {
         for (auto i = 0; i < c; ++i) {
             std::cout << "id: " << id << ", subset: " << 0 << std::endl;
-            for (auto i = 0; i < c; ++i)
-                labels[id * c + i] = 1;
+            //for (auto i = 0; i < c; ++i)
+            labels[id * c + i] = 1;
             // svms[id].trainAuto(data, labels);
-            svms[id][i].trainAuto(trainingData[i], labels);
-            for (auto i = 0; i < c; ++i)
-                labels[id * c + i] = -1;
+            svms[id][i].trainAuto(data, labels);
+            //for (auto i = 0; i < c; ++i)
+            labels[id * c + i] = -1;
         }
     }
 }
