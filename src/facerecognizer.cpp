@@ -30,7 +30,10 @@ Mat extractSubset(const Mat& data, int subsetIndex, int totalSubsets);
 
 const string FaceRecognizer::unknownIdentity = "unknown_ID";
 
-FaceRecognizer::FaceRecognizer(int c) : c(c) { }
+FaceRecognizer::FaceRecognizer(int c)
+    : c(c)
+{
+}
 
 FaceRecognizer::FaceRecognizer(const string& fileName)
 {
@@ -54,10 +57,10 @@ void FaceRecognizer::train(const MatMatrix& grayscaleCovar, const MatMatrix& dep
 
     // convert data format to be ready for SVMs, i.e. from Mat vector to Mat
     auto grayscaleMat = formatDataForTraining(grayscaleCovar);
-    auto depthmapMat  = formatDataForTraining(depthmapCovar);
+    auto depthmapMat = formatDataForTraining(depthmapCovar);
 
     trainSVMs(grayscaleMat, ImgType::grayscale); // grayscale images training
-    trainSVMs(depthmapMat,  ImgType::depthmap);  // depthmap  images training
+    trainSVMs(depthmapMat, ImgType::depthmap); // depthmap  images training
 }
 
 string FaceRecognizer::predict(const vector<Mat>& grayscaleCovar, const vector<Mat>& depthmapCovar) const
@@ -65,21 +68,23 @@ string FaceRecognizer::predict(const vector<Mat>& grayscaleCovar, const vector<M
     //vector<Mat> grayscaleCovar, depthmapCovar;
     //getNormalizedCovariances(identity, 1 /*c*/, grayscaleCovar, depthmapCovar);
     auto grayscaleData = formatDataForPrediction(grayscaleCovar);
-    auto depthmapData  = formatDataForPrediction(depthmapCovar);
+    auto depthmapData = formatDataForPrediction(depthmapCovar);
 
     // count votes for each identity
     vector<int> votes(N);
     int maxVotes = -1;
     for (auto i = 0; i < N; ++i) {
         int vote = 0;
-        //for (auto j = 0; j < c; ++j) {
-            auto row = grayscaleData.row(0/*j*/);
-            auto prediction = grayscaleSVMs[i]/*[j]*/.predict(row);
-            if (prediction == 1) ++vote;
-            row = depthmapData.row(0 /*j*/);
-            prediction = depthmapSVMs[i]/*[j]*/.predict(row);
-            if (prediction == 1) ++vote;
-        //}
+        for (auto j = 0; j < c; ++j) {
+            auto row = grayscaleData.row(j);
+            auto prediction = grayscaleSVMs[i][j].predict(row);
+            if (prediction == 1)
+                ++vote;
+            row = depthmapData.row(j);
+            prediction = depthmapSVMs[i][j].predict(row);
+            if (prediction == 1)
+                ++vote;
+        }
         if (vote > maxVotes)
             maxVotes = vote;
 
@@ -98,14 +103,14 @@ string FaceRecognizer::predict(const vector<Mat>& grayscaleCovar, const vector<M
     int bestIndex = -1;
     for (auto i : ties) {
         float distance = 0;
-        //for (auto j = 0; j < c; ++j) {
-            auto dist = grayscaleSVMs[i]/*[j]*/.getDistanceFromHyperplane(grayscaleData.row(0));
+        for (auto j = 0; j < c; ++j) {
+            auto dist = grayscaleSVMs[i][j].getDistanceFromHyperplane(grayscaleData.row(0));
             if (std::isnormal(dist))
                 distance += dist;
-            dist = depthmapSVMs[i]/*[j]*/.getDistanceFromHyperplane(depthmapData.row(0));
+            dist = depthmapSVMs[i][j].getDistanceFromHyperplane(depthmapData.row(0));
             if (std::isnormal(dist))
                 distance += dist;
-        //}
+        }
         if (distance > maxDistance) {
             maxDistance = distance;
             bestIndex = i;
@@ -197,26 +202,26 @@ bool FaceRecognizer::save(const string& directoryName)
 
 void FaceRecognizer::trainSVMs(const Mat& data, ImgType svmToTrain)
 {
-    assert(data.rows == N*c && "data must be an Nxc matrix!");
+    assert(data.rows == N * c && "data must be an Nxc matrix!");
 
     auto& svms = (svmToTrain == ImgType::grayscale) ? grayscaleSVMs : depthmapSVMs;
-    //vector<Mat> trainingData;
-    //for (auto i = 0; i < c; ++i)
-    //    trainingData.push_back(extractSubset(data,i,c));
-    vector<int> labels(N*c, -1);
+    vector<Mat> trainingData;
+    for (auto i = 0; i < c; ++i)
+        trainingData.push_back(extractSubset(data, i, c));
+    vector<int> labels(N * c, -1);
 
     for (auto id = 0; id < N; ++id) {
-        //for (auto i = 0; i < c; ++i) {
+        for (auto i = 0; i < c; ++i) {
             std::cout << "id: " << id << ", subset: " << 0 << std::endl;
             for (auto i = 0; i < c; ++i)
-                labels[id*c + i] = 1;
-            svms[id].trainAuto(data, labels);//svms[id][i].trainAuto(trainingData[i], labels);
+                labels[id * c + i] = 1;
+            // svms[id].trainAuto(data, labels);
+            svms[id][i].trainAuto(trainingData[i], labels);
             for (auto i = 0; i < c; ++i)
-                labels[id*c + i] = -1;
-        //}
+                labels[id * c + i] = -1;
+        }
     }
 }
-
 
 Mat FaceRecognizer::formatDataForTraining(const MatMatrix& data) const
 {
@@ -234,14 +239,13 @@ Mat FaceRecognizer::formatDataForTraining(const MatMatrix& data) const
             // convert the Mat in a row of DataOut
             auto iter = identity[j].begin<float>();
             for (auto k = 0; k < width; ++k, ++iter) {
-                dataOut.at<float>(i*c + j, k) = *iter;
+                dataOut.at<float>(i * c + j, k) = *iter;
             }
         }
     }
 
     return dataOut;
 }
-
 
 Mat FaceRecognizer::formatDataForPrediction(const vector<Mat>& data) const
 {
@@ -260,7 +264,6 @@ Mat FaceRecognizer::formatDataForPrediction(const vector<Mat>& data) const
 
     return dataOut;
 }
-
 
 // ---------------------------------------
 // ---------- Utility functions ----------
@@ -322,14 +325,13 @@ Mat extractSubset(const Mat& data, int subsetIndex, int totalSubsets)
     Mat out(HEIGHT, data.cols, data.type());
 
     for (auto i = 0; i < HEIGHT; ++i) {
-        auto identityIndex = totalSubsets*i;
+        auto identityIndex = totalSubsets * i;
         for (auto j = 0; j < data.cols; ++j) {
-            out.at<float>(i,j) = data.at<float>(identityIndex + subsetIndex,j);
+            out.at<float>(i, j) = data.at<float>(identityIndex + subsetIndex, j);
         }
     }
 
     return out;
 }
-
 
 } // namespace face
