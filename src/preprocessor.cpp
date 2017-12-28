@@ -184,6 +184,9 @@ bool Preprocessor::cropFace(const Image4D& image4d, Face& croppedFace)
     else
         xTop += PHI * std::abs(eulerAngles[1]) - 10; // aumentare xTop
 
+    if (xTop < 0 || yTop < 0 || xBase - xTop < 0 || yBase - yTop < 0)
+        return false;
+
     cv::Rect faceROI(xTop, yTop, xBase - xTop, yBase - yTop);
     if (faceROI.height <= 2 && faceROI.width <= 2)
         return false;
