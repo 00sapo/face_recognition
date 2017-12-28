@@ -120,7 +120,7 @@ namespace covariance {
 
     void setToCovariance(const vector<const Face*>& set, Mat& imageCovariance, Mat& depthCovariance)
     {
-        const int SET_SIZE = set.size();
+        int SET_SIZE = set.size();
         if (SET_SIZE == 0) {
             imageCovariance = Mat::zeros(16, 16, CV_32FC1);
             depthCovariance = Mat::zeros(16, 16, CV_32FC1);
@@ -129,10 +129,10 @@ namespace covariance {
 
         MatMatrix imageBlocks(16);
         MatMatrix depthBlocks(16);
-        for (int i = 0; i < 16; ++i) {
-            imageBlocks[i].resize(SET_SIZE);
-            depthBlocks[i].resize(SET_SIZE);
-        }
+        //for (int i = 0; i < 16; ++i) {
+        //    imageBlocks[i].resize(SET_SIZE);
+        //    depthBlocks[i].resize(SET_SIZE);
+        //}
 
         Mat imageMean(16, SET_SIZE, CV_32FC1);
         Mat depthMean(16, SET_SIZE, CV_32FC1);
@@ -150,6 +150,9 @@ namespace covariance {
             const auto BLOCK_H = HEIGHT / 4;
             const auto BLOCK_W = WIDTH / 4;
 
+            if (BLOCK_H <= 2 || BLOCK_W <= 2)
+                continue;
+
             // for each of the 16 blocks of the face...
             for (size_t y = 0, q = 0; q < 4; y += BLOCK_H, ++q) {
                 for (size_t x = 0, p = 0; p < 4; x += BLOCK_W, ++p) {
@@ -163,8 +166,8 @@ namespace covariance {
                     auto imageHist = OLBPHist(image);
                     auto depthHist = OLBPHist(depth);
 
-                    imageBlocks[p + 4 * q][i] = imageHist;
-                    depthBlocks[p + 4 * q][i] = depthHist;
+                    imageBlocks[p + 4 * q].push_back(imageHist);
+                    depthBlocks[p + 4 * q].push_back(depthHist);
 
                     imageMean.at<float>(p + 4 * q, i) = mean(imageHist)[0];
                     depthMean.at<float>(p + 4 * q, i) = mean(depthHist)[0];
@@ -172,6 +175,9 @@ namespace covariance {
             }
             ++i;
         }
+        SET_SIZE = i;
+        depthMean.resize(SET_SIZE);
+        imageMean.resize(SET_SIZE);
 
         imageCovariance = Mat(16, 16, CV_32FC1);
         depthCovariance = Mat(16, 16, CV_32FC1);
