@@ -16,19 +16,58 @@ using namespace face;
 
 const int SUBSETS = 3;
 
-const cv::String KEYS = "{ help h usage ?      | | print this message }"
-                        "{ dataset             | | load images from dataset    }"
-                        "{ preprocessedDataset | | load images from preprocessed dataset }"
-                        "{ savePreprocessed    | | if set saves preprocessed images }"
-                        "{ query               | | path to query identity }"
-                        "{ saveTrained         | | path to store trained svms }"
-                        "{ loadTrained         | | path to trained svms }";
+const cv::String KEYS = "{ help h usage ?           | | print this message }"
+                        "{ training                 | | load images from dataset    }"
+                        "{ preprocessedTrainingset  | | load images from preprocessed dataset }"
+                        "{ saveTrainingset          | | if set saves preprocessed images }"
+                        "{ query                    | | path to query identity }"
+                        "{ saveTrained              | | path to store trained svms }"
+                        "{ loadTrained              | | path to trained svms }"
+                        "{ testingset               | | path to testing set }"
+                        "{ saveTestingset           | | if set saves preprocessed testing set }"
+                        "{ preprocessedTestingset   | | path to preprocessed testing set }";
 
 void testFunctions();
 DatasetCov loadAndPreprocess(const string& datasetPath, std::size_t covarianceSubsets);
 bool savePreprocessedDataset(const string& path, const vector<vector<Mat>>& grayscale,
     const vector<vector<Mat>>& depthmap);
 
+int proxyDatasetLoader(string type, cv::CommandLineParser parser, DatasetCov dataset)
+{
+    string optionPreprocessed, optionDataset, optionSave;
+    if (type == "training") {
+        optionPreprocessed = "preprocessedTrainingset";
+        optionDataset = "trainingset";
+        optionSave = "saveTrainingset";
+    } else if (type == "testing") {
+        optionPreprocessed = "preprocessedTestingset";
+        optionDataset = "testingset";
+        optionSave = "saveTestingset";
+    }
+
+    if (parser.has(optionPreprocessed)) {
+        auto path = parser.get<string>(optionPreprocessed);
+
+        dataset = DatasetCov::load(path);
+
+        if (!dataset.isConsistent())
+            std::cout << "Warning! Loaded inconsistent dataset!" << std::endl;
+        if (dataset.empty()) {
+            std::cout << "Error! Loaded empty dataset!" << std::endl;
+            return 0;
+        }
+    } else if (parser.has(optionDataset)) {
+
+        dataset = loadAndPreprocess(parser.get<string>(optionDataset), SUBSETS);
+
+        if (parser.has(optionSave)) {
+            auto path = parser.get<string>(optionSave);
+            auto success = dataset.save(path);
+            if (!success)
+                std::cerr << "Error saving preprocessed dataset to " << path << std::endl;
+        }
+    }
+}
 int main(int argc, char* argv[])
 {
     cv::CommandLineParser parser(argc, argv, KEYS); // opencv parser for command line arguments
@@ -39,33 +78,13 @@ int main(int argc, char* argv[])
         return 0;
     }
 
-    DatasetCov dataset;
-    if (parser.has("preprocessedDataset")) {
-        auto path = parser.get<string>("preprocessedDataset");
-
-        dataset = DatasetCov::load(path);
-
-        if (!dataset.isConsistent())
-            std::cout << "Warning! Loaded inconsistent dataset!" << std::endl;
-        if (dataset.empty()) {
-            std::cout << "Error! Loaded empty dataset!" << std::endl;
-            return 0;
-        }
-    } else if (parser.has("dataset")) {
-
-        dataset = loadAndPreprocess(parser.get<string>("dataset"), SUBSETS);
-
-        if (parser.has("savePreprocessed")) {
-            auto path = parser.get<string>("savePreprocessed");
-            auto success = dataset.save(path);
-            if (!success)
-                std::cerr << "Error saving preprocessed dataset to " << path << std::endl;
-        }
-    }
+    DatasetCov trainingset, testingset;
+    proxyDatasetLoader("training", parser, trainingset);
+    proxyDatasetLoader("testing", parser, testingset);
 
     FaceRecognizer faceRec(SUBSETS);
     if (!parser.has("loadTrained")) {
-        faceRec.train(dataset.grayscale, dataset.depthmap);
+        faceRec.train(trainingset.grayscale, trainingset.depthmap);
     } else {
         faceRec.load(parser.get<string>("loadTrained"));
     }
