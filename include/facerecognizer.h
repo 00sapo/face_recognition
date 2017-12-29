@@ -75,7 +75,7 @@ private:
     std::vector<std::vector<SVMStein>> depthmapSVMs; // thus resulting in a Nxc matrix where N is the number of identities
         // and c the number of head rotation subsets
 
-    void trainSVMs(const cv::Mat& data, ImgType svmToTrain);
+    void trainSVMs(cv::Mat& data, ImgType svmToTrain);
 
     /**
      * @brief formatDataForTraining transforms the input dataset in a suitable format to be used by
@@ -90,6 +90,8 @@ private:
     cv::Mat formatDataForTraining(const MatMatrix& data) const;
 
     cv::Mat formatDataForPrediction(const std::vector<cv::Mat>& data) const;
+    cv::Mat removeRows(cv::Mat& data, cv::Mat& removed, int rowToKeep) const;
+    void restoreRows(cv::Mat& data, cv::Mat& removed, int rowToKeep) const;
 };
 
 } // namespace face

@@ -104,10 +104,10 @@ string FaceRecognizer::predict(const vector<Mat>& grayscaleCovar, const vector<M
     for (auto i : ties) {
         float distance = 0;
         for (auto j = 0; j < c; ++j) {
-            auto dist = grayscaleSVMs[i][j].getDistanceFromHyperplane(grayscaleData.row(0));
+            auto dist = grayscaleSVMs[i][j].getDistanceFromHyperplane(grayscaleData.row(j));
             if (std::isnormal(dist))
                 distance += dist;
-            dist = depthmapSVMs[i][j].getDistanceFromHyperplane(depthmapData.row(0));
+            dist = depthmapSVMs[i][j].getDistanceFromHyperplane(depthmapData.row(j));
             if (std::isnormal(dist))
                 distance += dist;
         }
@@ -200,7 +200,7 @@ bool FaceRecognizer::save(const string& directoryName)
     return true;
 }
 
-void FaceRecognizer::trainSVMs(const Mat& data, ImgType svmToTrain)
+void FaceRecognizer::trainSVMs(Mat& data, ImgType svmToTrain)
 {
     assert(data.rows == N * c && "data must be an Nxc matrix!");
 
@@ -208,19 +208,50 @@ void FaceRecognizer::trainSVMs(const Mat& data, ImgType svmToTrain)
     //vector<Mat> trainingData;
     //for (auto i = 0; i < c; ++i)
     //    trainingData.push_back(extractSubset(data, i, c));
-    vector<int> labels(N * c, -1);
+    vector<int> labels(N * c - 1, -1);
 
     for (auto id = 0; id < N; ++id) {
         for (auto i = 0; i < c; ++i) {
             std::cout << "id: " << id << ", subset: " << 0 << std::endl;
-            //for (auto i = 0; i < c; ++i)
-            labels[id * c + i] = 1;
-            // svms[id].trainAuto(data, labels);
-            svms[id][i].trainAuto(data, labels);
-            //for (auto i = 0; i < c; ++i)
-            labels[id * c + i] = -1;
+
+            for (int leaveOut = 0; leaveOut < data.rows; leaveOut++) {
+                int targetIndex = id * c + i;
+                if (leaveOut == targetIndex)
+                    continue;
+
+                if (targetIndex > data.cols / 2) //first row will be deleted, sync with label index
+                    targetIndex--;
+                labels[targetIndex] = 1;
+                Mat removed;
+                auto trainingData = removeRows(data, removed, leaveOut);
+                svms[id][i].trainAuto(trainingData, labels);
+                restoreRows(data, removed, leaveOut);
+                labels[targetIndex] = -1;
+            }
         }
     }
+}
+
+Mat FaceRecognizer::removeRows(Mat& data, Mat& removed, int rowToKeep) const
+{
+
+    int swapIndex = data.rows - 1; // if rowToKeep is in the top half of data matrix
+    cv::Rect roi(0, 0, data.cols, data.rows - 1);
+    if (rowToKeep > data.rows / 2) { // if rowToKeep is in the bottom half of data matrix
+        swapIndex = 0;
+        roi.y = 1;
+    }
+
+    removed = Mat(1, data.cols, data.type());
+    data.row(rowToKeep).copyTo(removed.row(0));
+    data.row(swapIndex).copyTo(data.row(rowToKeep));
+
+    return data(roi);
+}
+
+void FaceRecognizer::restoreRows(Mat& data, Mat& removed, int rowIndex) const
+{
+    removed.row(0).copyTo(data.row(rowIndex));
 }
 
 Mat FaceRecognizer::formatDataForTraining(const MatMatrix& data) const
