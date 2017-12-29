@@ -136,7 +136,6 @@ DatasetCov DatasetCov::load(const std::string& path, vector<string> idMap)
     std::regex grayscaleTemplate("grayscale_.*png");
     std::regex depthmapTemplate("depthmap_.*png");
     vector<vector<Mat>> grayscale, depthmap;
-    int id = 0;
     for (const auto& subdir : fs::directory_iterator(datasetPath)) {
         vector<Mat> grayscaleID, depthmapID;
         for (const auto& dirEntry : fs::directory_iterator(subdir)) {
@@ -153,8 +152,7 @@ DatasetCov DatasetCov::load(const std::string& path, vector<string> idMap)
             }
         }
         string path = subdir.path().string();
-        idMap[id] = path.substr(path.length() - 2);
-        id++;
+        idMap.push_back(path.substr(path.length() - 2));
 
         grayscale.push_back(std::move(grayscaleID));
         depthmap.push_back(std::move(depthmapID));
