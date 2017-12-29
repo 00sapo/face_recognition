@@ -35,7 +35,6 @@ void testFunctions();
 DatasetCov loadAndPreprocess(const string& datasetPath, std::size_t covarianceSubsets, vector<string> idMap);
 bool savePreprocessedDataset(const string& path, const vector<vector<Mat>>& grayscale,
     const vector<vector<Mat>>& depthmap);
-
 int proxyDatasetLoader(string type, cv::CommandLineParser parser, DatasetCov dataset, vector<string> idMap)
 {
     string optionPreprocessed, optionDataset, optionSave;
@@ -73,6 +72,14 @@ int proxyDatasetLoader(string type, cv::CommandLineParser parser, DatasetCov dat
     }
     return 0;
 }
+void testing(FaceRecognizer faceRec, DatasetCov testingset, vector<string> idTestingMap, vector<string> idTrainingMap)
+{
+    for (int id = 0; id < testingset.depthmap.size(); id++) {
+        string predicted = faceRec.predict(testingset.grayscale[id], testingset.depthmap[id]);
+        cout << "testing id: name = " << idTestingMap[id] << " prediction " << predicted << endl;
+    }
+}
+
 int main(int argc, char* argv[])
 {
     cv::CommandLineParser parser(argc, argv, KEYS); // opencv parser for command line arguments
@@ -100,6 +107,7 @@ int main(int argc, char* argv[])
     }
 
     // prediction
+    testing(faceRec, testingset, idTestingMap, idTrainingMap);
 
     //testFunctions();
 

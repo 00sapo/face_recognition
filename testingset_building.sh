@@ -47,9 +47,10 @@ echo "creating testing set..."
 for dir in `ls -d ??/`
 do
 	mkdir $testingpath/$dir
-	for f in `ls ${dir}frame_*.[pb]?? | shuf -n $NUMBER_OF_FILES_PER_ID`
+	for f in `ls ${dir}frame_*.bin | shuf -n $NUMBER_OF_FILES_PER_ID`
 	do
 		mv $f $testingpath/$dir
+		mv ${f/depth.bin/rgb.png} $testingpath/$dir
 	done
 done
 
