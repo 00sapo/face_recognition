@@ -33,7 +33,7 @@ then
 	exit 1
 fi
 
-testingpath=$(dirname testingset)/testingset
+testingpath=$(realpath testingset)
 
 cd $dataset_path
 ls ??/frame_*.png > /dev/null
@@ -44,11 +44,12 @@ then
 fi
 
 echo "creating testing set..."
-for dir in `ls -d */`
+for dir in `ls -d ??/`
 do
+	mkdir $testingpath/$dir
 	for f in `ls ${dir}frame_*.[pb]?? | shuf -n $NUMBER_OF_FILES_PER_ID`
 	do
-		mv $f testingpath
+		mv $f $testingpath/$dir
 	done
 done
 
