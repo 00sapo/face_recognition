@@ -104,10 +104,10 @@ string FaceRecognizer::predict(const vector<Mat>& grayscaleCovar, const vector<M
     for (auto i : ties) {
         float distance = 0;
         for (auto j = 0; j < c; ++j) {
-            auto dist = grayscaleSVMs[i][j].getDistanceFromHyperplane(grayscaleData.row(0));
+            auto dist = grayscaleSVMs[i][j].getDistanceFromHyperplane(grayscaleData.row(j));
             if (std::isnormal(dist))
                 distance += dist;
-            dist = depthmapSVMs[i][j].getDistanceFromHyperplane(depthmapData.row(0));
+            dist = depthmapSVMs[i][j].getDistanceFromHyperplane(depthmapData.row(j));
             if (std::isnormal(dist))
                 distance += dist;
         }
@@ -212,7 +212,7 @@ void FaceRecognizer::trainSVMs(const Mat& data, ImgType svmToTrain)
 
     for (auto id = 0; id < N; ++id) {
         for (auto i = 0; i < c; ++i) {
-            std::cout << "id: " << id << ", subset: " << 0 << std::endl;
+            std::cout << "id: " << id << ", subset: " << i << std::endl;
             //for (auto i = 0; i < c; ++i)
             labels[id * c + i] = 1;
             // svms[id].trainAuto(data, labels);
