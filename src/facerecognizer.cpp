@@ -212,7 +212,7 @@ void FaceRecognizer::trainSVMs(Mat& data, ImgType svmToTrain)
 
     for (auto id = 0; id < N; ++id) {
         for (auto i = 0; i < c; ++i) {
-            std::cout << "id: " << id << ", subset: " << 0 << std::endl;
+            std::cout << "id: " << id << ", subset: " << j << std::endl;
 
             for (int leaveOut = 0; leaveOut < data.rows; leaveOut++) {
                 int targetIndex = id * c + i;
