@@ -1,8 +1,8 @@
 #ifndef FACE_COVARIANCEDATASET_H
 #define FACE_COVARIANCEDATASET_H
 
-#include <vector>
 #include <experimental/filesystem>
+#include <vector>
 
 #include <opencv2/core.hpp>
 
@@ -17,9 +17,8 @@ class DatasetCov {
     bool save(const fs::path& path);
 
 public:
-
     std::vector<std::vector<cv::Mat>> grayscale; // stores a vector of grayscale covariance matrixes for each identity
-    std::vector<std::vector<cv::Mat>> depthmap;  // stores a vector of depthmap  covariance matrixes for each identity
+    std::vector<std::vector<cv::Mat>> depthmap; // stores a vector of depthmap  covariance matrixes for each identity
 
     DatasetCov();
     DatasetCov(std::vector<std::vector<cv::Mat>> grayscale, std::vector<std::vector<cv::Mat>> depthmap);
@@ -41,10 +40,8 @@ public:
 
     bool save(const std::string& path);
 
-    static DatasetCov load(const std::string& path);
-
+    static DatasetCov load(const std::string& path, std::vector<std::string> idMap);
 };
-
 }
 
 #endif // FACE_COVARIANCEDATASET_H

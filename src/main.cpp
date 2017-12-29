@@ -32,11 +32,11 @@ const cv::String KEYS = "{ help h usage ?           | | print this message }"
                         "{ preprocessedTestingset   | | load images from preprocessed testing set }";
 
 void testFunctions();
-DatasetCov loadAndPreprocess(const string& datasetPath, std::size_t covarianceSubsets);
+DatasetCov loadAndPreprocess(const string& datasetPath, std::size_t covarianceSubsets, vector<string> idMap);
 bool savePreprocessedDataset(const string& path, const vector<vector<Mat>>& grayscale,
     const vector<vector<Mat>>& depthmap);
 
-int proxyDatasetLoader(string type, cv::CommandLineParser parser, DatasetCov dataset)
+int proxyDatasetLoader(string type, cv::CommandLineParser parser, DatasetCov dataset, vector<string> idMap)
 {
     string optionPreprocessed, optionDataset, optionSave;
     if (type == "training") {
@@ -52,7 +52,7 @@ int proxyDatasetLoader(string type, cv::CommandLineParser parser, DatasetCov dat
     if (parser.has(optionPreprocessed)) {
         auto path = parser.get<string>(optionPreprocessed);
 
-        dataset = DatasetCov::load(path);
+        dataset = DatasetCov::load(path, idMap);
 
         if (!dataset.isConsistent())
             std::cout << "Warning! Loaded inconsistent dataset!" << std::endl;
@@ -62,7 +62,7 @@ int proxyDatasetLoader(string type, cv::CommandLineParser parser, DatasetCov dat
         }
     } else if (parser.has(optionDataset)) {
 
-        dataset = loadAndPreprocess(parser.get<string>(optionDataset), SUBSETS);
+        dataset = loadAndPreprocess(parser.get<string>(optionDataset), SUBSETS, idMap);
 
         if (parser.has(optionSave)) {
             auto path = parser.get<string>(optionSave);
@@ -83,9 +83,10 @@ int main(int argc, char* argv[])
         return 0;
     }
 
+    vector<string> idTestingMap, idTrainingMap;
     DatasetCov trainingset, testingset;
-    proxyDatasetLoader("training", parser, trainingset);
-    proxyDatasetLoader("testing", parser, testingset);
+    proxyDatasetLoader("training", parser, trainingset, idTrainingMap);
+    proxyDatasetLoader("testing", parser, testingset, idTestingMap);
 
     FaceRecognizer faceRec(SUBSETS);
     if (!parser.has("loadTrained")) {
@@ -105,7 +106,7 @@ int main(int argc, char* argv[])
     return 0;
 }
 
-DatasetCov loadAndPreprocess(const string& datasetPath, std::size_t covarianceSubsets)
+DatasetCov loadAndPreprocess(const string& datasetPath, std::size_t covarianceSubsets, vector<string> idMap)
 {
     Image4DLoader loader(datasetPath, "frame_[0-9]*_(rgb|depth).*");
 
@@ -133,8 +134,9 @@ DatasetCov loadAndPreprocess(const string& datasetPath, std::size_t covarianceSu
                 covariance::getNormalizedCovariances(preprocessedFaces, covarianceSubsets, grayscaleCovar, depthmapCovar);
                 grayscale.push_back(std::move(grayscaleCovar));
                 depthmap.push_back(std::move(depthmapCovar));
+                idMap.push_back(path.substr(path.length() - 2));
+                id++;
             }
-            id++;
         }
     }
 
