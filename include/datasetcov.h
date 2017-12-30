@@ -14,7 +14,7 @@ class DatasetCov {
 
     bool consistent;
 
-    bool save(const fs::path& path);
+    bool save(const fs::path& path, const std::vector<std::string> &idMap);
 
 public:
     std::vector<std::vector<cv::Mat>> grayscale; // stores a vector of grayscale covariance matrixes for each identity
@@ -38,7 +38,7 @@ public:
      */
     bool checkConsistency() const;
 
-    bool save(const std::string& path);
+    bool save(const std::string& path, const std::vector<std::string> &idMap);
 
     static DatasetCov load(const std::string& path, std::vector<std::string> &idMap);
 };

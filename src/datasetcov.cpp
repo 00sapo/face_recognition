@@ -49,7 +49,7 @@ bool DatasetCov::checkConsistency() const
     return true;
 }
 
-bool DatasetCov::save(const std::string& path)
+bool DatasetCov::save(const std::string& path, const std::vector<std::string>& idMap)
 {
     bool saved = false;
     fs::path rootDir(path);
@@ -62,7 +62,7 @@ bool DatasetCov::save(const std::string& path)
             std::cin >> answer;
             if (answer == 'y') {
                 fs::remove_all(rootDir);
-                saved = save(rootDir);
+                saved = save(rootDir, idMap);
                 done = true;
             } else if (answer == 'n') {
                 std::cout << "Dataset not saved." << std::endl;
@@ -75,7 +75,7 @@ bool DatasetCov::save(const std::string& path)
     return saved;
 }
 
-bool DatasetCov::save(const fs::path& path)
+bool DatasetCov::save(const fs::path& path, const std::vector<std::string>& idMap)
 {
     assert(checkConsistency() && "Error! Inconsistent dataset!");
 
@@ -92,7 +92,7 @@ bool DatasetCov::save(const fs::path& path)
         const auto& grayscaleID = grayscale[i];
         const auto& depthmapID = depthmap[i];
 
-        auto idPath = path / std::to_string(i);
+        auto idPath = path / idMap[i];//std::to_string(i);
 
         try { // try creating identity's directory
             if (!fs::create_directory(idPath))

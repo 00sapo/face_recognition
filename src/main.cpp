@@ -33,8 +33,44 @@ const cv::String KEYS = "{ help h usage ?           | | print this message }"
 
 void testFunctions();
 DatasetCov loadAndPreprocess(const string& datasetPath, std::size_t covarianceSubsets, vector<string> idMap);
-bool savePreprocessedDataset(const string& path, const vector<vector<Mat>>& grayscale,
-    const vector<vector<Mat>>& depthmap);
+bool proxyDatasetLoader(const string& type, const cv::CommandLineParser& parser, DatasetCov& dataset, vector<string>& idMap);
+void testing(const FaceRecognizer& faceRec, const DatasetCov& testingset, const vector<string>& idTestingMap);
+
+
+int main(int argc, char* argv[])
+{
+    cv::CommandLineParser parser(argc, argv, KEYS); // opencv parser for command line arguments
+
+    // if wrong arguments, print usage
+    if (!parser.has("trainingset") && !parser.has("preprocessedTrainingset")) {
+        parser.printMessage();
+        return 0;
+    }
+
+    vector<string> idTestingMap, idTrainingMap;
+    DatasetCov trainingset, testingset;
+    proxyDatasetLoader("training", parser, trainingset, idTrainingMap);
+    proxyDatasetLoader("testing", parser, testingset, idTestingMap);
+
+    FaceRecognizer faceRec(SUBSETS);
+    if (!parser.has("loadTrained")) {
+        faceRec.train(trainingset.grayscale, trainingset.depthmap);
+    } else {
+        faceRec.load(parser.get<string>("loadTrained"));
+    }
+
+    if (parser.has("saveTrained")) {
+        faceRec.save(parser.get<string>("saveTrained"));
+    }
+
+    // prediction
+    testing(faceRec, testingset, idTestingMap);
+
+    //testFunctions();
+
+    return 0;
+}
+
 bool proxyDatasetLoader(const string& type, const cv::CommandLineParser& parser, DatasetCov& dataset, vector<string>& idMap)
 {
     string optionPreprocessed, optionDataset, optionSave;
@@ -72,46 +108,13 @@ bool proxyDatasetLoader(const string& type, const cv::CommandLineParser& parser,
     }
     return true;
 }
-void testing(const FaceRecognizer& faceRec, const DatasetCov& testingset, const vector<string>& idTestingMap)//, const vector<string>& idTrainingMap)
+
+void testing(const FaceRecognizer& faceRec, const DatasetCov& testingset, const vector<string>& idTestingMap)
 {
     for (int id = 0; id < testingset.depthmap.size(); id++) {
         string predicted = faceRec.predict(testingset.grayscale[id], testingset.depthmap[id]);
         cout << "testing id: name = " << idTestingMap[id] << " prediction " << predicted << endl;
     }
-}
-
-int main(int argc, char* argv[])
-{
-    cv::CommandLineParser parser(argc, argv, KEYS); // opencv parser for command line arguments
-
-    // if wrong arguments, print usage
-    if (!parser.has("trainingset") && !parser.has("preprocessedTrainingset")) {
-        parser.printMessage();
-        return 0;
-    }
-
-    vector<string> idTestingMap, idTrainingMap;
-    DatasetCov trainingset, testingset;
-    proxyDatasetLoader("training", parser, trainingset, idTrainingMap);
-    proxyDatasetLoader("testing", parser, testingset, idTestingMap);
-
-    FaceRecognizer faceRec(SUBSETS);
-    if (!parser.has("loadTrained")) {
-        faceRec.train(trainingset.grayscale, trainingset.depthmap);
-    } else {
-        faceRec.load(parser.get<string>("loadTrained"));
-    }
-
-    if (parser.has("saveTrained")) {
-        faceRec.save(parser.get<string>("saveTrained"));
-    }
-
-    // prediction
-    testing(faceRec, testingset, idTestingMap);//, idTrainingMap);
-
-    //testFunctions();
-
-    return 0;
 }
 
 DatasetCov loadAndPreprocess(const string& datasetPath, std::size_t covarianceSubsets, vector<string> idMap)
@@ -120,7 +123,6 @@ DatasetCov loadAndPreprocess(const string& datasetPath, std::size_t covarianceSu
 
     Preprocessor preproc;
     vector<vector<Mat>> grayscale, depthmap;
-    vector<string> files;
     regex expr{ ".*/[0-9][0-9]" };
     int id = 0;
     if (is_directory(datasetPath)) {
@@ -131,12 +133,7 @@ DatasetCov loadAndPreprocess(const string& datasetPath, std::size_t covarianceSu
                 loader.setCurrentPath(path);
 
                 std::cout << "Loading and preprocessing images..." << std::endl;
-                auto faces = loader.get();
-                //for (const auto &face : faces) {
-                //    cv::imshow("face",face.image);
-                //    cv::waitKey();
-                //}
-                auto preprocessedFaces = preproc.preprocess(faces);
+                auto preprocessedFaces = preproc.preprocess(loader.get());
                 std::cout << "Computing covariance representation..." << std::endl;
                 vector<Mat> grayscaleCovar, depthmapCovar;
                 covariance::getNormalizedCovariances(preprocessedFaces, covarianceSubsets, grayscaleCovar, depthmapCovar);
