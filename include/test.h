@@ -14,7 +14,6 @@
 #include "image4d.h"
 #include "image4dloader.h"
 #include "preprocessor.h"
-#include "settings.h"
 #include "utils.h"
 
 using cv::Mat;
@@ -85,19 +84,6 @@ namespace test {
         std::cout << faceRec.predict(grayscaleCovar, depthmapCovar) << std::endl;
     }
 
-    void testSettings()
-    {
-        cout << "Settings test..." << endl;
-        auto& settings = Settings::getInstance();
-        cout << settings.getD() << endl
-             << settings.getK() << endl
-             << settings.getP() << endl
-             << settings.getR() << endl
-             << settings.getHeight() << endl
-             << settings.getWidth() << endl;
-        system("read -p 'Press [enter] to continue'");
-    }
-
     void testImage4DLoader()
     {
         cout << "\n\nFace loader test..." << endl;
@@ -151,7 +137,7 @@ namespace test {
     void testPreprocessing()
     {
         cout << "\n\nDetect face pose..." << endl;
-        Image4DLoader loader("/home/alberto/Downloads/hpdb/20", "frame_[0-9]*_(rgb|depth).*");
+        Image4DLoader loader("/home/alberto/Downloads/hpdb/07", "frame_[0-9]*_(rgb|depth).*");
         auto image4d = loader.get();
 
         Preprocessor prep;

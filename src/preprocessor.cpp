@@ -150,7 +150,7 @@ bool Preprocessor::cropFace(const Image4D& image4d, Face& croppedFace)
     const float BETA = (eulerAngles[0] > 0) ? 15 / 8.f : 0.f;
     const float GAMMA = 5 / 8.f;
     const float DELTA = 1.1f;
-    const float PHI = 1.5f;
+    const float PHI = 1.2f;
 
     auto yTop = getFirstNonempty<uint16_t>(image4d.depthMap, NONZERO_PXL, ScanOrder::top_down);
 
@@ -159,7 +159,7 @@ bool Preprocessor::cropFace(const Image4D& image4d, Face& croppedFace)
         yTop = 0;
 
     int rotationFactor = DELTA * std::abs(eulerAngles[0]);
-    int distanceFactor = 120 / (position[2] / 1000.f);
+    int distanceFactor = 130 / (position[2] / 1000.f);
     int yBase = yTop + distanceFactor - rotationFactor;
     if (yBase > image4d.getHeight())
         yBase = image4d.getHeight();
@@ -167,7 +167,7 @@ bool Preprocessor::cropFace(const Image4D& image4d, Face& croppedFace)
     // scan only the upper part of the image to avoid shoulders
     cv::Rect scanROI(0, yTop, image4d.getWidth(), (yBase - yTop) / 2);
 
-    // if looking downwards scan only the lower part of the image
+    // if looking upwards scan only the lower part of the image
     if (eulerAngles[0] < 0) {
         scanROI.y = yTop + (yBase - yTop) / 2;
         scanROI.height = (yBase - yTop) / 2;
@@ -175,14 +175,14 @@ bool Preprocessor::cropFace(const Image4D& image4d, Face& croppedFace)
 
     auto roiMat = image4d.depthMap(scanROI);
     auto xTop = getFirstNonempty<uint16_t>(roiMat, NONZERO_PXL, ScanOrder::left_to_right);
-    auto xBase = getFirstNonempty<uint16_t>(roiMat, NONZERO_PXL, ScanOrder::right_to_left);
+    auto xBase = getFirstNonempty<uint16_t>(roiMat, NONZERO_PXL, ScanOrder::right_to_left) + 10;
 
     // TODO: use a sigmoidal function to minimize lateral cropping for small
     //       values of eulerAngles[1] (but where should it be centered?, in 15?)
     if (eulerAngles[1] > 0)
-        xBase -= PHI * std::abs(eulerAngles[1]) - 10;
+        xBase -= PHI * eulerAngles[1] - 10;
     else
-        xTop += PHI * std::abs(eulerAngles[1]) - 10; // aumentare xTop
+        xTop += PHI * std::abs(eulerAngles[1]); // aumentare xTop
 
     if (xTop < 0 || yTop < 0 || xBase - xTop < 0 || yBase - yTop < 0)
         return false;
