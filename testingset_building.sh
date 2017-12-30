@@ -47,6 +47,7 @@ echo "creating testing set..."
 for dir in `ls -d ??/`
 do
 	mkdir $testingpath/$dir
+	cp ${dir}*.cal $testingpath/$dir
 	for f in `ls ${dir}frame_*.bin | shuf -n $NUMBER_OF_FILES_PER_ID`
 	do
 		mv $f $testingpath/$dir
