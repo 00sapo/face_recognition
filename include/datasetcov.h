@@ -40,7 +40,7 @@ public:
 
     bool save(const std::string& path);
 
-    static DatasetCov load(const std::string& path, std::vector<std::string> idMap);
+    static DatasetCov load(const std::string& path, std::vector<std::string> &idMap);
 };
 }
 

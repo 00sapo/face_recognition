@@ -120,7 +120,7 @@ bool DatasetCov::save(const fs::path& path)
     return success;
 }
 
-DatasetCov DatasetCov::load(const std::string& path, vector<string> idMap)
+DatasetCov DatasetCov::load(const std::string& path, vector<string>& idMap)
 {
     fs::path datasetPath(path);
     if (!fs::exists(datasetPath)) {

@@ -35,7 +35,7 @@ void testFunctions();
 DatasetCov loadAndPreprocess(const string& datasetPath, std::size_t covarianceSubsets, vector<string> idMap);
 bool savePreprocessedDataset(const string& path, const vector<vector<Mat>>& grayscale,
     const vector<vector<Mat>>& depthmap);
-int proxyDatasetLoader(string type, cv::CommandLineParser parser, DatasetCov dataset, vector<string> idMap)
+bool proxyDatasetLoader(const string& type, const cv::CommandLineParser& parser, DatasetCov& dataset, vector<string>& idMap)
 {
     string optionPreprocessed, optionDataset, optionSave;
     if (type == "training") {
@@ -57,7 +57,7 @@ int proxyDatasetLoader(string type, cv::CommandLineParser parser, DatasetCov dat
             std::cout << "Warning! Loaded inconsistent dataset!" << std::endl;
         if (dataset.empty()) {
             std::cout << "Error! Loaded empty dataset!" << std::endl;
-            return 1;
+            return false;
         }
     } else if (parser.has(optionDataset)) {
 
@@ -70,9 +70,9 @@ int proxyDatasetLoader(string type, cv::CommandLineParser parser, DatasetCov dat
                 std::cerr << "Error saving preprocessed dataset to " << path << std::endl;
         }
     }
-    return 0;
+    return true;
 }
-void testing(FaceRecognizer faceRec, DatasetCov testingset, vector<string> idTestingMap, vector<string> idTrainingMap)
+void testing(const FaceRecognizer& faceRec, const DatasetCov& testingset, const vector<string>& idTestingMap)//, const vector<string>& idTrainingMap)
 {
     for (int id = 0; id < testingset.depthmap.size(); id++) {
         string predicted = faceRec.predict(testingset.grayscale[id], testingset.depthmap[id]);
@@ -107,7 +107,7 @@ int main(int argc, char* argv[])
     }
 
     // prediction
-    testing(faceRec, testingset, idTestingMap, idTrainingMap);
+    testing(faceRec, testingset, idTestingMap);//, idTrainingMap);
 
     //testFunctions();
 
