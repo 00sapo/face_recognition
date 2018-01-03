@@ -66,7 +66,7 @@ public:
      *        classification labels (1 or -1)
      * @return percentage of correct classifications (between 0 and 1)
      */
-    float evaluate(const cv::Mat& validationData, const cv::Mat& groundTruth);
+    float evaluate(const cv::Mat& validationData, const std::vector<int>& groundTruth);
 
     bool load(const std::string& filename);
     void save(const std::string& filename) const;

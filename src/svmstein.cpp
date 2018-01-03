@@ -126,7 +126,7 @@ SteinKernelParams SVMStein::trainAuto(const Mat& dataTr, const vector<int>& labe
     setC(C);
     setGamma(gamma);
     svm->train(trainData);
-    auto fscore = evaluateFMeasure(dataVal, labelsVector);
+    auto fscore = evaluateFMeasure(dataVal, groundTruth);
 
     std::cout << "Best score: " << bestScore << std::endl;
     std::cout << "Best C: " << C << "\nBest gamma: " << gamma << std::endl;
@@ -201,6 +201,20 @@ float SVMStein::evaluateFMeasure(const Mat& dataVal, const vector<int>& groundTr
     }
 
     return 2 * truePositives / (float)(truePositives + falseNegatives + falsePositives);
+}
+
+float SVMStein::evaluate(const cv::Mat& validationData, const vector<int>& groundTruth)
+{
+    float score = 0;
+    for (auto i = 0; i < validationData.rows; ++i) {
+        auto distance = getDistanceFromHyperplane(validationData.row(i));
+        if (distance > 0 && groundTruth[i] > 0)
+            score += distance;
+        if (distance < 0 && groundTruth[i] < 0)
+            score += std::abs(distance);
+    }
+
+    return score;
 }
 
 } // namespace face
