@@ -1,5 +1,6 @@
 #include <iostream>
 #include <vector>
+#include <random>
 
 #include <opencv2/highgui/highgui.hpp>
 
@@ -18,23 +19,34 @@ using std::string;
 using std::vector;
 using namespace face;
 
+const string OPTION_HELP             = "help h usage ?";
+const string OPTION_DATASET          = "dataset";
+const string OPTION_SAVE_DATASET_TR  = "saveTrainingset";
+const string OPTION_SAVE_DATASET_VAL = "saveValidationset";
+const string OPTION_LOAD_DATASET_TR  = "loadTrainingset";
+const string OPTION_LOAD_DATASET_VAL = "loadValidationset";
+const string OPTION_QUERY            = "query";
+const string OPTION_SAVE             = "saveTrained";
+const string OPTION_LOAD             = "loadTrained";
+
 const int SUBSETS = 3;
 
-const cv::String KEYS = "{ help h usage ?           | | print this message }"
-                        "{ trainingset              | | load images from training set    }"
-                        "{ preprocessedTrainingset  | | load images from preprocessed training set }"
-                        "{ saveTrainingset          | | if set saves preprocessed images }"
-                        "{ query                    | | path to query identity }"
-                        "{ saveTrained              | | path to store trained svms }"
-                        "{ loadTrained              | | path to trained svms }"
-                        "{ testingset               | | load images from testing set }"
-                        "{ saveTestingset           | | if set saves preprocessed testing set }"
-                        "{ preprocessedTestingset   | | load images from preprocessed testing set }";
+const cv::String KEYS = "{ " + OPTION_HELP             + " | | print this message }"
+                        "{ " + OPTION_DATASET          + " | | load dataset images }"
+                        "{ " + OPTION_LOAD_DATASET_TR  + " | | load images from preprocessed training set }"
+                        "{ " + OPTION_LOAD_DATASET_VAL + " | | load images from preprocessed validation set }"
+                        "{ " + OPTION_SAVE_DATASET_TR  + " | | if set saves preprocessed training set }"
+                        "{ " + OPTION_SAVE_DATASET_VAL + " | | if set saves preprocessed validation set }"
+                        "{ " + OPTION_QUERY            + " | | path to query identity }"
+                        "{ " + OPTION_SAVE             + " | | path to store trained svms }"
+                        "{ " + OPTION_LOAD             + " | | path to trained svms }"
+                        "{ " + OPTION_QUERY            + " | | path to query images }";
 
 void testFunctions();
-DatasetCov loadAndPreprocess(const string& datasetPath, std::size_t covarianceSubsets, vector<string> idMap);
-bool proxyDatasetLoader(const string& type, const cv::CommandLineParser& parser, DatasetCov& dataset, vector<string>& idMap);
+void loadAndPreprocess(const string& datasetPath, std::size_t covarianceSubsets, DatasetCov& trainingSet, DatasetCov& validationSet);
+bool proxyDatasetLoader(const cv::CommandLineParser& parser, DatasetCov& trainingSet, DatasetCov &validationSet);
 void testing(const FaceRecognizer& faceRec, const DatasetCov& testingset, const vector<string>& idTestingMap);
+void splitTrainValidation(const vector<Face>& dataset, vector<Face>& trainingSet, vector<Face>& validationSet);
 
 
 int main(int argc, char* argv[])
@@ -42,70 +54,78 @@ int main(int argc, char* argv[])
     cv::CommandLineParser parser(argc, argv, KEYS); // opencv parser for command line arguments
 
     // if wrong arguments, print usage
-    if (!parser.has("trainingset") && !parser.has("preprocessedTrainingset")) {
+    DatasetCov trainingSet, validationSet;
+    if (!proxyDatasetLoader(parser, trainingSet, validationSet)) {
+        std::cout << "Wrong input args!" << std::endl;
         parser.printMessage();
         return 0;
     }
 
-    vector<string> idTestingMap, idTrainingMap;
-    DatasetCov trainingset, testingset;
-    proxyDatasetLoader("training", parser, trainingset, idTrainingMap);
-    proxyDatasetLoader("testing", parser, testingset, idTestingMap);
-
     FaceRecognizer faceRec(SUBSETS);
-    if (!parser.has("loadTrained")) {
-        faceRec.train(trainingset.grayscale, trainingset.depthmap);
+    if (parser.has(OPTION_LOAD)) {
+        faceRec.load(parser.get<string>(OPTION_LOAD));
     } else {
-        faceRec.load(parser.get<string>("loadTrained"));
+        faceRec.train(trainingSet, validationSet);
     }
 
-    if (parser.has("saveTrained")) {
-        faceRec.save(parser.get<string>("saveTrained"));
+    if (parser.has(OPTION_SAVE)) {
+        faceRec.save(parser.get<string>(OPTION_SAVE));
     }
 
-    // prediction
-    testing(faceRec, testingset, idTestingMap);
+    if (parser.has(OPTION_QUERY)) {
+        auto path = parser.get<string>(OPTION_QUERY);
+        Image4DLoader loader(path, "frame_[0-9]*_(rgb|depth).*");
+        Preprocessor preproc;
+
+        auto faces = preproc.preprocess(loader.get());
+
+        vector<Mat> grayscale, depthmap;
+        covariance::getNormalizedCovariances(faces, SUBSETS, grayscale, depthmap);
+
+        std::cout << "Predicted ID: " << faceRec.predict(grayscale, depthmap) << std::endl;
+    }
 
     //testFunctions();
 
     return 0;
 }
 
-bool proxyDatasetLoader(const string& type, const cv::CommandLineParser& parser, DatasetCov& dataset, vector<string>& idMap)
+bool proxyDatasetLoader(const cv::CommandLineParser& parser, DatasetCov& trainingSet, DatasetCov& validationSet)
 {
-    string optionPreprocessed, optionDataset, optionSave;
-    if (type == "training") {
-        optionPreprocessed = "preprocessedTrainingset";
-        optionDataset = "trainingset";
-        optionSave = "saveTrainingset";
-    } else if (type == "testing") {
-        optionPreprocessed = "preprocessedTestingset";
-        optionDataset = "testingset";
-        optionSave = "saveTestingset";
-    }
+    if (parser.has(OPTION_LOAD_DATASET_TR) && parser.has(OPTION_LOAD_DATASET_VAL)) {
+        auto pathTr  = parser.get<string>(OPTION_LOAD_DATASET_TR );
+        auto pathVal = parser.get<string>(OPTION_LOAD_DATASET_VAL);
 
-    if (parser.has(optionPreprocessed)) {
-        auto path = parser.get<string>(optionPreprocessed);
+        trainingSet   = DatasetCov::load(pathTr);
+        validationSet = DatasetCov::load(pathVal);
 
-        dataset = DatasetCov::load(path, idMap);
-
-        if (!dataset.isConsistent())
+        if (!trainingSet.isConsistent() || !validationSet.isConsistent())
             std::cout << "Warning! Loaded inconsistent dataset!" << std::endl;
-        if (dataset.empty()) {
+        if (trainingSet.empty() || validationSet.empty()) {
             std::cout << "Error! Loaded empty dataset!" << std::endl;
             return false;
         }
-    } else if (parser.has(optionDataset)) {
+    } else if (parser.has(OPTION_DATASET)) {
 
-        dataset = loadAndPreprocess(parser.get<string>(optionDataset), SUBSETS, idMap);
+        auto path = parser.get<string>(OPTION_DATASET);
+        loadAndPreprocess(path, SUBSETS, trainingSet, validationSet);
 
-        if (parser.has(optionSave)) {
-            auto path = parser.get<string>(optionSave);
-            auto success = dataset.save(path);
+        if (parser.has(OPTION_SAVE_DATASET_TR)) {
+            auto path = parser.get<string>(OPTION_SAVE_DATASET_TR);
+            auto success = trainingSet.save(path);
             if (!success)
                 std::cerr << "Error saving preprocessed dataset to " << path << std::endl;
         }
+        if (parser.has(OPTION_SAVE_DATASET_VAL)) {
+            auto path = parser.get<string>(OPTION_SAVE_DATASET_VAL);
+            auto success = validationSet.save(path);
+            if (!success)
+                std::cerr << "Error saving preprocessed dataset to " << path << std::endl;
+        }
+    } else {
+        return false;
     }
+
     return true;
 }
 
@@ -117,35 +137,74 @@ void testing(const FaceRecognizer& faceRec, const DatasetCov& testingset, const 
     }
 }
 
-DatasetCov loadAndPreprocess(const string& datasetPath, std::size_t covarianceSubsets, vector<string> idMap)
+void loadAndPreprocess(const string& datasetPath, std::size_t covarianceSubsets, DatasetCov& trainingSet, DatasetCov& validationSet)
 {
     Image4DLoader loader(datasetPath, "frame_[0-9]*_(rgb|depth).*");
 
     Preprocessor preproc;
-    vector<vector<Mat>> grayscale, depthmap;
+    vector<vector<Mat>> grayscaleTr,  depthmapTr;
+    vector<vector<Mat>> grayscaleVal, depthmapVal;
     regex expr{ ".*/[0-9][0-9]" };
-    int id = 0;
     if (is_directory(datasetPath)) {
         for (auto& x : directory_iterator(datasetPath)) {
             string path = x.path().string();
             if (is_directory(path) && regex_match(path, expr)) {
-                std::cout << "Identity " << id << std::endl;
+                //std::cout << "Identity " << id << std::endl;
                 loader.setCurrentPath(path);
 
                 std::cout << "Loading and preprocessing images..." << std::endl;
                 auto preprocessedFaces = preproc.preprocess(loader.get());
+
+                vector<Face> train, validation;
+                splitTrainValidation(preprocessedFaces, train, validation);
+
                 std::cout << "Computing covariance representation..." << std::endl;
-                vector<Mat> grayscaleCovar, depthmapCovar;
-                covariance::getNormalizedCovariances(preprocessedFaces, covarianceSubsets, grayscaleCovar, depthmapCovar);
-                grayscale.push_back(std::move(grayscaleCovar));
-                depthmap.push_back(std::move(depthmapCovar));
-                idMap.push_back(path.substr(path.length() - 2));
-                id++;
+                vector<Mat> grayscaleCovarTr,  depthmapCovarTr;
+                vector<Mat> grayscaleCovarVal, depthmapCovarVal;
+
+                covariance::getNormalizedCovariances(train, covarianceSubsets, grayscaleCovarTr, depthmapCovarTr);
+                covariance::getNormalizedCovariances(validation, covarianceSubsets, grayscaleCovarVal, depthmapCovarVal);
+
+                grayscaleTr .push_back(std::move(grayscaleCovarTr ));
+                depthmapTr  .push_back(std::move(depthmapCovarTr  ));
+                grayscaleVal.push_back(std::move(grayscaleCovarVal));
+                depthmapVal .push_back(std::move(depthmapCovarVal ));
             }
         }
     }
 
-    return { std::move(grayscale), std::move(depthmap) };
+    trainingSet   = DatasetCov(std::move(grayscaleTr ), std::move(depthmapTr ));
+    validationSet = DatasetCov(std::move(grayscaleVal), std::move(depthmapVal));
+}
+
+
+/**
+ * @brief randomly splits a Face vector into two vectors
+ * @param dataset
+ * @param trainingSet: two-thirds of the dataset
+ * @param validationSet: one-third of the dataset
+ */
+void splitTrainValidation(const vector<Face>& dataset, vector<Face>& trainingSet, vector<Face>& validationSet)
+{
+    const int size = dataset.size();
+    vector<int> index(size);
+    for (auto i = 0; i < size; ++i)
+        index[i] = i;
+
+    std::random_device rd;  //Will be used to obtain a seed for the random number engine
+    std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
+
+    for (auto i = 0; i < size/3; ++i) {
+        int rndIndex = std::uniform_int_distribution<>(0, index.size()-1)(gen);
+        validationSet.push_back(dataset[index[rndIndex]]);
+
+        index[rndIndex] = index.back();
+        index.pop_back();
+    }
+
+    for (auto i : index) {
+        trainingSet.push_back(dataset[i]);
+    }
 }
 
 void testFunctions()

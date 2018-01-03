@@ -14,7 +14,6 @@
 #include "image4d.h"
 #include "image4dloader.h"
 #include "preprocessor.h"
-#include "settings.h"
 #include "utils.h"
 
 using cv::Mat;
@@ -35,7 +34,7 @@ namespace test {
     {
         FaceRecognizer rec("/home/alberto/Desktop/svms");
     }
-
+/*
     void testSVM()
     {
         string dirPath = "/home/alberto/Downloads/hpdb/";
@@ -97,7 +96,7 @@ namespace test {
              << settings.getWidth() << endl;
         system("read -p 'Press [enter] to continue'");
     }
-
+*/
     void testImage4DLoader()
     {
         cout << "\n\nFace loader test..." << endl;

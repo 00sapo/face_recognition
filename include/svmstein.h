@@ -54,7 +54,7 @@ public:
      * @param CGrid
      * @return
      */
-    SteinKernelParams trainAuto(const cv::Mat& data, const std::vector<int>& labelsVector,
+    SteinKernelParams trainAuto(const cv::Mat& dataTr, const std::vector<int>& labelsVector, const cv::Mat &dataVal, const std::vector<int> &groundTruth,
         const cv::ml::ParamGrid& gammaGrid = cv::ml::SVM::getDefaultGrid(cv::ml::SVM::GAMMA),
         const cv::ml::ParamGrid& CGrid = cv::ml::SVM::getDefaultGrid(cv::ml::SVM::C));
 
@@ -94,7 +94,7 @@ private:
      *        classification labels (1 or -1)
      * @return percentage of correct classifications (between 0 and 1)
      */
-    float evaluateFMeasure(const cv::Mat& data, const std::vector<int>& labels);
+    float evaluateFMeasure(const cv::Mat &dataVal, const std::vector<int>& groundTruth);
 };
 
 } // namespace face

@@ -7,6 +7,7 @@
 
 #include "covariancecomputer.h"
 #include "face.h"
+#include "datasetcov.h"
 
 using cv::Mat;
 using std::string;
@@ -40,13 +41,14 @@ FaceRecognizer::FaceRecognizer(const string& fileName)
     load(fileName);
 }
 
-void FaceRecognizer::train(const MatMatrix& grayscaleCovar, const MatMatrix& depthmapCovar, const vector<string>& samplIDs)
+void FaceRecognizer::train(const DatasetCov& trainingSet, const DatasetCov& validationSet) //const MatMatrix& grayscaleCovar, const MatMatrix& depthmapCovar, const vector<string>& samplIDs)
 {
-    assert(grayscaleCovar.size() == depthmapCovar.size());
-    N = grayscaleCovar.size();
+    assert(trainingSet.checkConsistency() && validationSet.checkConsistency());
 
-    // if not enough IDs automatically generate them
-    IDs = (N > samplIDs.size()) ? generateLabels(N) : samplIDs;
+    N = trainingSet.grayscale.size();
+
+    // automatically generate id labels
+    IDs = generateLabels(N);
 
     grayscaleSVMs.resize(N);
     depthmapSVMs.resize(N);
@@ -56,17 +58,19 @@ void FaceRecognizer::train(const MatMatrix& grayscaleCovar, const MatMatrix& dep
         svmVector.resize(c);
 
     // convert data format to be ready for SVMs, i.e. from Mat vector to Mat
-    auto grayscaleMat = formatDataForTraining(grayscaleCovar);
-    auto depthmapMat = formatDataForTraining(depthmapCovar);
+    auto grayscaleMatTr = formatDataForTraining(trainingSet.grayscale);
+    auto depthmapMatTr  = formatDataForTraining(trainingSet.depthmap );
 
-    trainSVMs(grayscaleMat, ImgType::grayscale); // grayscale images training
-    trainSVMs(depthmapMat, ImgType::depthmap); // depthmap  images training
+    vector<int> groundTruthGr, groundTruthDp;
+    auto grayscaleMatVal = formatDataForValidation(validationSet.grayscale, groundTruthGr);
+    auto depthmapMatVal  = formatDataForValidation(validationSet.depthmap,  groundTruthDp);
+
+    trainSVMs(grayscaleMatTr, grayscaleMatVal, groundTruthGr, ImgType::grayscale); // grayscale images training
+    trainSVMs(depthmapMatTr,  depthmapMatVal,  groundTruthDp, ImgType::depthmap); // depthmap  images training
 }
 
 string FaceRecognizer::predict(const vector<Mat>& grayscaleCovar, const vector<Mat>& depthmapCovar) const
 {
-    //vector<Mat> grayscaleCovar, depthmapCovar;
-    //getNormalizedCovariances(identity, 1 /*c*/, grayscaleCovar, depthmapCovar);
     auto grayscaleData = formatDataForPrediction(grayscaleCovar);
     auto depthmapData = formatDataForPrediction(depthmapCovar);
 
@@ -200,24 +204,18 @@ bool FaceRecognizer::save(const string& directoryName)
     return true;
 }
 
-void FaceRecognizer::trainSVMs(const Mat& data, ImgType svmToTrain)
+void FaceRecognizer::trainSVMs(const Mat& dataTr, const Mat& dataVal, const vector<int>& groundTruth, ImgType svmToTrain)
 {
-    assert(data.rows == N * c && "data must be an Nxc matrix!");
+    assert(dataTr.rows == N * c && dataVal.rows == N * c && "data must be an Nxc matrix!");
 
     auto& svms = (svmToTrain == ImgType::grayscale) ? grayscaleSVMs : depthmapSVMs;
-    //vector<Mat> trainingData;
-    //for (auto i = 0; i < c; ++i)
-    //    trainingData.push_back(extractSubset(data, i, c));
     vector<int> labels(N * c, -1);
 
-    for (auto id = 0; id < N; ++id) {
-        for (auto i = 0; i < c; ++i) {
+    for (auto id = 0; id < N; ++id) {  // iterate through identities
+        for (auto i = 0; i < c; ++i) { // iterate through subsets
             std::cout << "id: " << id << ", subset: " << i << std::endl;
-            //for (auto i = 0; i < c; ++i)
             labels[id * c + i] = 1;
-            // svms[id].trainAuto(data, labels);
-            svms[id][i].trainAuto(data, labels);
-            //for (auto i = 0; i < c; ++i)
+            svms[id][i].trainAuto(dataTr, labels, dataVal, groundTruth);
             labels[id * c + i] = -1;
         }
     }
@@ -241,6 +239,34 @@ Mat FaceRecognizer::formatDataForTraining(const MatMatrix& data) const
             for (auto k = 0; k < width; ++k, ++iter) {
                 dataOut.at<float>(i * c + j, k) = *iter;
             }
+        }
+    }
+
+    return dataOut;
+}
+
+Mat FaceRecognizer::formatDataForValidation(const MatMatrix& data, std::vector<int>& groundTruth) const
+{
+    assert(data.size() == N && data[0].size() == c && "data must be a Nxc matrix!");
+
+    // compute dataOut dimensions
+    const int height = N * c;
+    const int width  = data[0][0].rows * data[0][0].cols; // assuming all Mat in dataIn have the same dimensions
+    Mat dataOut(height, width, data[0][0].type());
+    groundTruth.clear();
+    groundTruth.resize(height);
+
+    // every Mat in dataIn is converted to a row of dataOut
+    for (size_t i = 0; i < N; ++i) { // for each vector in dataIn (i.e. for each identity)..
+        const auto& identity = data[i];
+        for (size_t j = 0; j < c; ++j) { // for each Mat belonging to this identity (i.e. for each rotation subset)...
+            // convert the Mat in a row of DataOut
+            auto iter = identity[j].begin<float>();
+            auto rowIndex = c * i + j;
+            for (auto k = 0; k < width; ++k, ++iter) {
+                dataOut.at<float>(rowIndex, k) = *iter;
+            }
+            groundTruth[rowIndex] = i;
         }
     }
 
@@ -288,37 +314,6 @@ vector<string> generateLabels(int numOfLabels)
 }
 
 /*
-void getNormalizedCovariances(const vector<Face>& identity, int subsets, vector<Mat>& grayscaleCovarOut,
-    vector<Mat>& depthmapCovarOut)
-{
-    grayscaleCovarOut.clear();
-    depthmapCovarOut.clear();
-
-    auto pairs = covariance::computeCovarianceRepresentation(identity, subsets);
-    for (const auto& pair : pairs) {
-        Mat normalizedGrayscale, normalizedDepthmap;
-        cv::normalize(pair.first, normalizedGrayscale);
-        cv::normalize(pair.second, normalizedDepthmap);
-        grayscaleCovarOut.push_back(normalizedGrayscale);
-        depthmapCovarOut.push_back(normalizedDepthmap);
-    }
-}
-
-void getNormalizedCovariances(const FaceMatrix& identities, int subsets, MatMatrix& grayscaleCovarOut,
-    MatMatrix& depthmapCovarOut)
-{
-    grayscaleCovarOut.clear();
-    depthmapCovarOut.clear();
-
-    for (const auto& identity : identities) {
-        vector<Mat> grayscaleCovar, depthmapCovar;
-        getNormalizedCovariances(identity, subsets, grayscaleCovar, depthmapCovar);
-        grayscaleCovarOut.push_back(std::move(grayscaleCovar));
-        depthmapCovarOut.push_back(std::move(depthmapCovar));
-    }
-}
-*/
-
 Mat extractSubset(const Mat& data, int subsetIndex, int totalSubsets)
 {
     const auto HEIGHT = data.rows / totalSubsets;
@@ -333,5 +328,6 @@ Mat extractSubset(const Mat& data, int subsetIndex, int totalSubsets)
 
     return out;
 }
+*/
 
 } // namespace face

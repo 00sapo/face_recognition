@@ -49,7 +49,7 @@ bool DatasetCov::checkConsistency() const
     return true;
 }
 
-bool DatasetCov::save(const std::string& path, const std::vector<std::string>& idMap)
+bool DatasetCov::save(const std::string& path)
 {
     bool saved = false;
     fs::path rootDir(path);
@@ -62,7 +62,7 @@ bool DatasetCov::save(const std::string& path, const std::vector<std::string>& i
             std::cin >> answer;
             if (answer == 'y') {
                 fs::remove_all(rootDir);
-                saved = save(rootDir, idMap);
+                saved = save(rootDir);
                 done = true;
             } else if (answer == 'n') {
                 std::cout << "Dataset not saved." << std::endl;
@@ -75,7 +75,7 @@ bool DatasetCov::save(const std::string& path, const std::vector<std::string>& i
     return saved;
 }
 
-bool DatasetCov::save(const fs::path& path, const std::vector<std::string>& idMap)
+bool DatasetCov::save(const fs::path& path)
 {
     assert(checkConsistency() && "Error! Inconsistent dataset!");
 
@@ -92,7 +92,7 @@ bool DatasetCov::save(const fs::path& path, const std::vector<std::string>& idMa
         const auto& grayscaleID = grayscale[i];
         const auto& depthmapID = depthmap[i];
 
-        auto idPath = path / idMap[i];//std::to_string(i);
+        auto idPath = path / std::to_string(i);
 
         try { // try creating identity's directory
             if (!fs::create_directory(idPath))
@@ -120,7 +120,7 @@ bool DatasetCov::save(const fs::path& path, const std::vector<std::string>& idMa
     return success;
 }
 
-DatasetCov DatasetCov::load(const std::string& path, vector<string>& idMap)
+DatasetCov DatasetCov::load(const std::string& path)//, vector<string>& idMap)
 {
     fs::path datasetPath(path);
     if (!fs::exists(datasetPath)) {
@@ -152,7 +152,7 @@ DatasetCov DatasetCov::load(const std::string& path, vector<string>& idMap)
             }
         }
         string path = subdir.path().string();
-        idMap.push_back(path.substr(path.length() - 2));
+        //idMap.push_back(path.substr(path.length() - 2));
 
         grayscale.push_back(std::move(grayscaleID));
         depthmap.push_back(std::move(depthmapID));

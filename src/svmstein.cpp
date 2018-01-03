@@ -92,10 +92,10 @@ bool SVMStein::train(const Mat& data, const vector<int>& labelsVector)
     return svm->train(trainData);
 }
 
-SteinKernelParams SVMStein::trainAuto(const Mat& data, const vector<int>& labelsVector,
-    const ml::ParamGrid& gammaGrid, const ml::ParamGrid& CGrid)
+SteinKernelParams SVMStein::trainAuto(const Mat& dataTr, const vector<int>& labelsVector, const Mat& dataVal,
+                                      const vector<int>& groundTruth, const ml::ParamGrid& gammaGrid, const ml::ParamGrid& CGrid)
 {
-    auto trainData = ml::TrainData::create(data, ml::ROW_SAMPLE, Mat(labelsVector, true));
+    auto trainData = ml::TrainData::create(dataTr, ml::ROW_SAMPLE, Mat(labelsVector, true));
 
     vector<double> bestGamma, bestC;
     float bestScore = 0;
@@ -106,7 +106,7 @@ SteinKernelParams SVMStein::trainAuto(const Mat& data, const vector<int>& labels
             setC(C);
             //std::cout << "Training..." << std::endl;
             svm->train(trainData);
-            float fscore = evaluateFMeasure(data, labelsVector);
+            float fscore = evaluateFMeasure(dataVal, groundTruth);
             //std::cout << "Score: " << fscore << std::endl;
             if (bestScore < fscore) {
                 bestGamma = { gamma };
@@ -126,7 +126,7 @@ SteinKernelParams SVMStein::trainAuto(const Mat& data, const vector<int>& labels
     setC(C);
     setGamma(gamma);
     svm->train(trainData);
-    auto fscore = evaluateFMeasure(data, labelsVector);
+    auto fscore = evaluateFMeasure(dataVal, labelsVector);
 
     std::cout << "Best score: " << bestScore << std::endl;
     std::cout << "Best C: " << C << "\nBest gamma: " << gamma << std::endl;
@@ -163,7 +163,7 @@ void SVMStein::setParams(const SteinKernelParams& params)
     setGamma(params.gamma);
 }
 
-float SVMStein::evaluateFMeasure(const Mat& data, const vector<int>& labels)
+float SVMStein::evaluateFMeasure(const Mat& dataVal, const vector<int>& groundTruth)
 {
     /*
    * 1) Recall:       true positives (0 or 1 in this case) divided by all real positives
@@ -182,19 +182,22 @@ float SVMStein::evaluateFMeasure(const Mat& data, const vector<int>& labels)
    */
 
     int truePositives = 0, falsePositives = 0, trueNegatives = 0, falseNegatives = 0;
-    for (auto i = 0; i < data.rows; ++i) {
-        float prediction = predict(data.row(i));
+    for (auto i = 0; i < dataVal.rows; ++i) {
+        float prediction = predict(dataVal.row(i));
         if (prediction == 1) {
-            if (prediction == labels[i])
+            if (prediction == groundTruth[i])
                 ++truePositives;
             else
                 ++falsePositives;
         } else if (prediction == -1) {
-            if (prediction == labels[i])
+            if (prediction == groundTruth[i])
                 ++trueNegatives;
             else
                 ++falseNegatives;
+        } else {
+            std::cerr << "Warning! SVM prediction != 1 and != -1" << std::endl;
         }
+
     }
 
     return 2 * truePositives / (float)(truePositives + falseNegatives + falsePositives);
