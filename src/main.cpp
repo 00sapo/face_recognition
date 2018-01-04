@@ -94,7 +94,9 @@ int main(int argc, char* argv[])
                     vector<Mat> grayscale, depthmap;
                     covariance::getNormalizedCovariances(faces, SUBSETS, grayscale, depthmap);
 
-                    std::cout << "Path " << x.path().filename() << " predicted ID: " << faceRec.predict(grayscale, depthmap) << std::endl;
+                    int predicted = faceRec.predict(grayscale, depthmap);
+                    string idDir = trainingSet.getDirectory(predicted);
+                    std::cout << "Path " << x.path().filename() << " predicted ID: " << idDir << std::endl;
                 }
             }
         }
@@ -111,8 +113,8 @@ bool datasetLoader(const cv::CommandLineParser& parser, DatasetCov& trainingSet,
         auto pathTr = parser.get<string>(OPTION_LOAD_DATASET_TR);
         auto pathVal = parser.get<string>(OPTION_LOAD_DATASET_VAL);
 
-        trainingSet = DatasetCov::load(pathTr);
-        validationSet = DatasetCov::load(pathVal);
+        trainingSet.load(pathTr);
+        validationSet.load(pathVal);
 
         if (!trainingSet.isConsistent() || !validationSet.isConsistent())
             std::cout << "Warning! Loaded inconsistent dataset!" << std::endl;
@@ -144,14 +146,6 @@ bool datasetLoader(const cv::CommandLineParser& parser, DatasetCov& trainingSet,
     return true;
 }
 
-void testing(const FaceRecognizer& faceRec, const DatasetCov& testingset, const vector<string>& idTestingMap)
-{
-    for (int id = 0; id < testingset.depthmap.size(); id++) {
-        string predicted = faceRec.predict(testingset.grayscale[id], testingset.depthmap[id]);
-        cout << "testing id: name = " << idTestingMap[id] << " prediction " << predicted << endl;
-    }
-}
-
 void loadAndPreprocess(const string& datasetPath, std::size_t covarianceSubsets, DatasetCov& trainingSet, DatasetCov& validationSet)
 {
     Image4DLoader loader(datasetPath, "frame_[0-9]*_(rgb|depth).*");
@@ -159,11 +153,12 @@ void loadAndPreprocess(const string& datasetPath, std::size_t covarianceSubsets,
     Preprocessor preproc;
     vector<vector<Mat>> grayscaleTr, depthmapTr;
     vector<vector<Mat>> grayscaleVal, depthmapVal;
+    vector<string> dirMap;
     regex expr{ ".*/[0-9][0-9]" };
     if (is_directory(datasetPath)) {
         for (auto& x : directory_iterator(datasetPath)) {
-            string path = x.path().string();
-            if (is_directory(path) && regex_match(path, expr)) {
+            auto path = x.path();
+            if (is_directory(path) && regex_match(path.string(), expr)) {
                 //std::cout << "Identity " << id << std::endl;
                 loader.setCurrentPath(path);
 
@@ -184,12 +179,13 @@ void loadAndPreprocess(const string& datasetPath, std::size_t covarianceSubsets,
                 depthmapTr.push_back(std::move(depthmapCovarTr));
                 grayscaleVal.push_back(std::move(grayscaleCovarVal));
                 depthmapVal.push_back(std::move(depthmapCovarVal));
+                dirMap.push_back(path.filename());
             }
         }
     }
 
-    trainingSet = DatasetCov(std::move(grayscaleTr), std::move(depthmapTr));
-    validationSet = DatasetCov(std::move(grayscaleVal), std::move(depthmapVal));
+    trainingSet = DatasetCov(std::move(grayscaleTr), std::move(depthmapTr), dirMap);
+    validationSet = DatasetCov(std::move(grayscaleVal), std::move(depthmapVal), dirMap);
 }
 
 /**
@@ -208,7 +204,7 @@ void splitTrainValidation(const vector<Face>& dataset, vector<Face>& trainingSet
     std::random_device rd; //Will be used to obtain a seed for the random number engine
     std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
 
-    for (auto i = 0; i < size / 10; ++i) {
+    for (auto i = 0; i < size / 3; ++i) {
         int rndIndex = std::uniform_int_distribution<>(0, index.size() - 1)(gen);
         validationSet.push_back(dataset[index[rndIndex]]);
 

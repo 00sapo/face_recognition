@@ -26,8 +26,6 @@ using SVMSteinMatrix = std::vector<std::vector<SVMStein>>;
 
 class FaceRecognizer {
 public:
-    static const std::string unknownIdentity; // unknown identity label
-
     FaceRecognizer(int c = 3);
 
     FaceRecognizer(const std::string& fileName);
@@ -38,7 +36,7 @@ public:
      * @param labels: labels to be assigned to each identity; these labels will be returned
      *                by FaceRecognizer::predict() when identifies a person
      */
-    void train(const DatasetCov& trainingSet, const DatasetCov& validationSet);//,
+    void train(const DatasetCov& trainingSet, const DatasetCov& validationSet); //,
         //const std::vector<std::string>& samplLabels = std::vector<std::string>());
 
     /**
@@ -47,7 +45,7 @@ public:
      * @return person label if the identity was in the training samples and is recognized,
      *         unknownIdentity otherwise
      */
-    std::string predict(const std::vector<cv::Mat>& grayscaleCovar, const std::vector<cv::Mat>& depthmapCovar) const;
+    int predict(const std::vector<cv::Mat>& grayscaleCovar, const std::vector<cv::Mat>& depthmapCovar) const;
 
     /**
      * @brief loads a pretrained model
@@ -71,12 +69,11 @@ private:
 
     int c = 3; // number of head rotation subsets for each identity
     int N = 0; // number of identities provided for training
-    std::vector<std::string> IDs; // labels associated to each identity in the same order as in grayscaleSVMs and depthmapSVMs
     std::vector<std::vector<SVMStein>> grayscaleSVMs; // a row for each identity and a column for each head rotation subset
     std::vector<std::vector<SVMStein>> depthmapSVMs; // thus resulting in a Nxc matrix where N is the number of identities
         // and c the number of head rotation subsets
 
-    void trainSVMs(const cv::Mat& dataTr, const cv::Mat &dataVal, const std::vector<int> &groundTruth, ImgType svmToTrain);
+    void trainSVMs(const cv::Mat& dataTr, const cv::Mat& dataVal, const std::vector<int>& groundTruth, ImgType svmToTrain);
 
     /**
      * @brief formatDataForTraining transforms the input dataset in a suitable format to be used by
@@ -88,7 +85,7 @@ private:
      *         and a number of columns equal to Mat::rows x Mat::columns (assuming every Mat in dataIn
      *         has the same dimensions)
      */
-    cv::Mat formatDataForTraining  (const MatMatrix& data) const;
+    cv::Mat formatDataForTraining(const MatMatrix& data) const;
     cv::Mat formatDataForValidation(const MatMatrix& data, std::vector<int>& groundTruth) const;
     cv::Mat formatDataForPrediction(const std::vector<cv::Mat>& data) const;
 };

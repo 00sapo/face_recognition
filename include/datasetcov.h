@@ -21,7 +21,9 @@ public:
     std::vector<std::vector<cv::Mat>> depthmap; // stores a vector of depthmap  covariance matrixes for each identity
 
     DatasetCov();
-    DatasetCov(std::vector<std::vector<cv::Mat>> grayscale, std::vector<std::vector<cv::Mat>> depthmap);
+    DatasetCov(std::vector<std::vector<cv::Mat>> grayscale, std::vector<std::vector<cv::Mat>> depthmap, std::vector<std::string> directoryMap);
+
+    std::string getDirectory(int id) const;
 
     bool empty() const;
 
@@ -40,7 +42,10 @@ public:
 
     bool save(const std::string& path);
 
-    static DatasetCov load(const std::string& path);//, std::vector<std::string> &idMap);
+    void load(const std::string& path); //, std::vector<std::string> &idMap);
+
+private:
+    std::vector<std::string> directoryMap;
 };
 }
 

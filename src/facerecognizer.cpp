@@ -6,8 +6,8 @@
 #include <opencv2/opencv.hpp>
 
 #include "covariancecomputer.h"
-#include "face.h"
 #include "datasetcov.h"
+#include "face.h"
 
 using cv::Mat;
 using std::string;
@@ -29,8 +29,6 @@ Mat extractSubset(const Mat& data, int subsetIndex, int totalSubsets);
 // ------------- FaceRecognizer members -------------
 // --------------------------------------------------
 
-const string FaceRecognizer::unknownIdentity = "unknown_ID";
-
 FaceRecognizer::FaceRecognizer(int c)
     : c(c)
 {
@@ -47,9 +45,6 @@ void FaceRecognizer::train(const DatasetCov& trainingSet, const DatasetCov& vali
 
     N = trainingSet.grayscale.size();
 
-    // automatically generate id labels
-    IDs = generateLabels(N);
-
     grayscaleSVMs.resize(N);
     depthmapSVMs.resize(N);
     for (auto& svmVector : grayscaleSVMs)
@@ -59,17 +54,17 @@ void FaceRecognizer::train(const DatasetCov& trainingSet, const DatasetCov& vali
 
     // convert data format to be ready for SVMs, i.e. from Mat vector to Mat
     auto grayscaleMatTr = formatDataForTraining(trainingSet.grayscale);
-    auto depthmapMatTr  = formatDataForTraining(trainingSet.depthmap );
+    auto depthmapMatTr = formatDataForTraining(trainingSet.depthmap);
 
     vector<int> groundTruthGr, groundTruthDp;
     auto grayscaleMatVal = formatDataForValidation(validationSet.grayscale, groundTruthGr);
-    auto depthmapMatVal  = formatDataForValidation(validationSet.depthmap,  groundTruthDp);
+    auto depthmapMatVal = formatDataForValidation(validationSet.depthmap, groundTruthDp);
 
     trainSVMs(grayscaleMatTr, grayscaleMatVal, groundTruthGr, ImgType::grayscale); // grayscale images training
-    trainSVMs(depthmapMatTr,  depthmapMatVal,  groundTruthDp, ImgType::depthmap); // depthmap  images training
+    trainSVMs(depthmapMatTr, depthmapMatVal, groundTruthDp, ImgType::depthmap); // depthmap  images training
 }
 
-string FaceRecognizer::predict(const vector<Mat>& grayscaleCovar, const vector<Mat>& depthmapCovar) const
+int FaceRecognizer::predict(const vector<Mat>& grayscaleCovar, const vector<Mat>& depthmapCovar) const
 {
     auto grayscaleData = formatDataForPrediction(grayscaleCovar);
     auto depthmapData = formatDataForPrediction(depthmapCovar);
@@ -121,10 +116,7 @@ string FaceRecognizer::predict(const vector<Mat>& grayscaleCovar, const vector<M
         }
     }
 
-    if (bestIndex == -1)
-        return unknownIdentity;
-
-    return IDs[bestIndex];
+    return bestIndex;
 }
 
 bool FaceRecognizer::load(const string& directoryName)
@@ -211,7 +203,7 @@ void FaceRecognizer::trainSVMs(const Mat& dataTr, const Mat& dataVal, const vect
     auto& svms = (svmToTrain == ImgType::grayscale) ? grayscaleSVMs : depthmapSVMs;
     vector<int> labels(N * c, -1);
 
-    for (auto id = 0; id < N; ++id) {  // iterate through identities
+    for (auto id = 0; id < N; ++id) { // iterate through identities
         for (auto i = 0; i < c; ++i) { // iterate through subsets
             std::cout << "id: " << id << ", subset: " << i << std::endl;
             labels[id * c + i] = 1;
@@ -251,7 +243,7 @@ Mat FaceRecognizer::formatDataForValidation(const MatMatrix& data, std::vector<i
 
     // compute dataOut dimensions
     const int height = N * c;
-    const int width  = data[0][0].rows * data[0][0].cols; // assuming all Mat in dataIn have the same dimensions
+    const int width = data[0][0].rows * data[0][0].cols; // assuming all Mat in dataIn have the same dimensions
     Mat dataOut(height, width, data[0][0].type());
     groundTruth.clear();
     groundTruth.resize(height);

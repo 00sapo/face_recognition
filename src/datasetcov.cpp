@@ -19,11 +19,17 @@ DatasetCov::DatasetCov()
 {
 }
 
-DatasetCov::DatasetCov(vector<vector<Mat>> grayscale, vector<vector<Mat>> depthmap)
+DatasetCov::DatasetCov(vector<vector<Mat>> grayscale, vector<vector<Mat>> depthmap, std::vector<std::string> directoryMap)
     : grayscale(grayscale)
     , depthmap(depthmap)
+    , directoryMap(directoryMap)
 {
     consistent = checkConsistency();
+}
+
+std::string DatasetCov::getDirectory(int id) const
+{
+    return directoryMap.at(id);
 }
 
 bool DatasetCov::empty() const
@@ -38,7 +44,7 @@ bool DatasetCov::isConsistent() const
 
 bool DatasetCov::checkConsistency() const
 {
-    if (grayscale.size() != depthmap.size())
+    if (grayscale.size() != depthmap.size() || depthmap.size() != directoryMap.size())
         return false;
 
     for (std::size_t i = 0; i < grayscale.size(); ++i) {
@@ -92,7 +98,7 @@ bool DatasetCov::save(const fs::path& path)
         const auto& grayscaleID = grayscale[i];
         const auto& depthmapID = depthmap[i];
 
-        auto idPath = path / std::to_string(i);
+        auto idPath = path / directoryMap.at(i);
 
         try { // try creating identity's directory
             if (!fs::create_directory(idPath))
@@ -120,22 +126,19 @@ bool DatasetCov::save(const fs::path& path)
     return success;
 }
 
-DatasetCov DatasetCov::load(const std::string& path)//, vector<string>& idMap)
+void DatasetCov::load(const std::string& path) //, vector<string>& idMap)
 {
     fs::path datasetPath(path);
     if (!fs::exists(datasetPath)) {
         std::cout << "Warning! " << path << " not found." << std::endl;
-        return DatasetCov();
     }
 
     if (!fs::is_directory(datasetPath)) {
         std::cout << "Warning! " << path << " is not a directory." << std::endl;
-        return DatasetCov();
     }
 
     std::regex grayscaleTemplate("grayscale_.*png");
     std::regex depthmapTemplate("depthmap_.*png");
-    vector<vector<Mat>> grayscale, depthmap;
     for (const auto& subdir : fs::directory_iterator(datasetPath)) {
         vector<Mat> grayscaleID, depthmapID;
         for (const auto& dirEntry : fs::directory_iterator(subdir)) {
@@ -151,14 +154,11 @@ DatasetCov DatasetCov::load(const std::string& path)//, vector<string>& idMap)
                 depthmapID.push_back(decoded); // TODO: check image format
             }
         }
-        string path = subdir.path().string();
-        //idMap.push_back(path.substr(path.length() - 2));
+        directoryMap.push_back(subdir.path().filename());
 
         grayscale.push_back(std::move(grayscaleID));
         depthmap.push_back(std::move(depthmapID));
     }
-
-    return { std::move(grayscale), std::move(depthmap) };
 }
 
 cv::Mat encode(const cv::Mat& image)
