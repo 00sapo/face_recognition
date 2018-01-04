@@ -1,6 +1,6 @@
 #include <iostream>
-#include <vector>
 #include <random>
+#include <vector>
 
 #include <opencv2/highgui/highgui.hpp>
 
@@ -19,35 +19,41 @@ using std::string;
 using std::vector;
 using namespace face;
 
-const string OPTION_HELP             = "help h usage ?";
-const string OPTION_DATASET          = "dataset";
-const string OPTION_SAVE_DATASET_TR  = "saveTrainingset";
+const string OPTION_HELP = "help h usage ?";
+const string OPTION_DATASET = "dataset";
+const string OPTION_SAVE_DATASET_TR = "saveTrainingset";
 const string OPTION_SAVE_DATASET_VAL = "saveValidationset";
-const string OPTION_LOAD_DATASET_TR  = "loadTrainingset";
+const string OPTION_LOAD_DATASET_TR = "loadTrainingset";
 const string OPTION_LOAD_DATASET_VAL = "loadValidationset";
-const string OPTION_QUERY            = "query";
-const string OPTION_SAVE             = "saveTrained";
-const string OPTION_LOAD             = "loadTrained";
+const string OPTION_QUERY = "query";
+const string OPTION_SAVE = "saveTrained";
+const string OPTION_LOAD = "loadTrained";
 
 const int SUBSETS = 3;
 
-const cv::String KEYS = "{ " + OPTION_HELP             + " | | print this message }"
-                        "{ " + OPTION_DATASET          + " | | load dataset images }"
-                        "{ " + OPTION_LOAD_DATASET_TR  + " | | load images from preprocessed training set }"
-                        "{ " + OPTION_LOAD_DATASET_VAL + " | | load images from preprocessed validation set }"
-                        "{ " + OPTION_SAVE_DATASET_TR  + " | | if set saves preprocessed training set }"
-                        "{ " + OPTION_SAVE_DATASET_VAL + " | | if set saves preprocessed validation set }"
-                        "{ " + OPTION_QUERY            + " | | path to query identity }"
-                        "{ " + OPTION_SAVE             + " | | path to store trained svms }"
-                        "{ " + OPTION_LOAD             + " | | path to trained svms }"
-                        "{ " + OPTION_QUERY            + " | | path to query images }";
+const cv::String KEYS = "{ " + OPTION_HELP + " | | print this message }"
+                                             "{ "
+    + OPTION_DATASET + " | | load dataset images }"
+                       "{ "
+    + OPTION_LOAD_DATASET_TR + " | | load images from preprocessed training set }"
+                               "{ "
+    + OPTION_LOAD_DATASET_VAL + " | | load images from preprocessed validation set }"
+                                "{ "
+    + OPTION_SAVE_DATASET_TR + " | | if set saves preprocessed training set }"
+                               "{ "
+    + OPTION_SAVE_DATASET_VAL + " | | if set saves preprocessed validation set }"
+                                "{ "
+    + OPTION_QUERY + " | | path to query directory }"
+                     "{ "
+    + OPTION_SAVE + " | | path to store trained svms }"
+                    "{ "
+    + OPTION_LOAD + " | | path to trained svms }";
 
 void testFunctions();
 void loadAndPreprocess(const string& datasetPath, std::size_t covarianceSubsets, DatasetCov& trainingSet, DatasetCov& validationSet);
-bool proxyDatasetLoader(const cv::CommandLineParser& parser, DatasetCov& trainingSet, DatasetCov &validationSet);
+bool datasetLoader(const cv::CommandLineParser& parser, DatasetCov& trainingSet, DatasetCov& validationSet);
 void testing(const FaceRecognizer& faceRec, const DatasetCov& testingset, const vector<string>& idTestingMap);
 void splitTrainValidation(const vector<Face>& dataset, vector<Face>& trainingSet, vector<Face>& validationSet);
-
 
 int main(int argc, char* argv[])
 {
@@ -55,7 +61,7 @@ int main(int argc, char* argv[])
 
     // if wrong arguments, print usage
     DatasetCov trainingSet, validationSet;
-    if (!proxyDatasetLoader(parser, trainingSet, validationSet)) {
+    if (!datasetLoader(parser, trainingSet, validationSet)) {
         std::cout << "Wrong input args!" << std::endl;
         parser.printMessage();
         return 0;
@@ -73,16 +79,25 @@ int main(int argc, char* argv[])
     }
 
     if (parser.has(OPTION_QUERY)) {
-        auto path = parser.get<string>(OPTION_QUERY);
-        Image4DLoader loader(path, "frame_[0-9]*_(rgb|depth).*");
+        auto queryPath = parser.get<string>(OPTION_QUERY);
+        Image4DLoader loader(queryPath, "frame_[0-9]*_(rgb|depth).*");
         Preprocessor preproc;
+        regex expr{ ".*/[0-9][0-9]" };
+        if (is_directory(queryPath)) {
+            for (auto& x : directory_iterator(queryPath)) {
+                string path = x.path().string();
+                if (is_directory(path) && regex_match(path, expr)) {
+                    //std::cout << "Identity " << id << std::endl;
+                    loader.setCurrentPath(path);
+                    auto faces = preproc.preprocess(loader.get());
 
-        auto faces = preproc.preprocess(loader.get());
+                    vector<Mat> grayscale, depthmap;
+                    covariance::getNormalizedCovariances(faces, SUBSETS, grayscale, depthmap);
 
-        vector<Mat> grayscale, depthmap;
-        covariance::getNormalizedCovariances(faces, SUBSETS, grayscale, depthmap);
-
-        std::cout << "Predicted ID: " << faceRec.predict(grayscale, depthmap) << std::endl;
+                    std::cout << "Path " << x.path().filename() << " predicted ID: " << faceRec.predict(grayscale, depthmap) << std::endl;
+                }
+            }
+        }
     }
 
     //testFunctions();
@@ -90,13 +105,13 @@ int main(int argc, char* argv[])
     return 0;
 }
 
-bool proxyDatasetLoader(const cv::CommandLineParser& parser, DatasetCov& trainingSet, DatasetCov& validationSet)
+bool datasetLoader(const cv::CommandLineParser& parser, DatasetCov& trainingSet, DatasetCov& validationSet)
 {
     if (parser.has(OPTION_LOAD_DATASET_TR) && parser.has(OPTION_LOAD_DATASET_VAL)) {
-        auto pathTr  = parser.get<string>(OPTION_LOAD_DATASET_TR );
+        auto pathTr = parser.get<string>(OPTION_LOAD_DATASET_TR);
         auto pathVal = parser.get<string>(OPTION_LOAD_DATASET_VAL);
 
-        trainingSet   = DatasetCov::load(pathTr);
+        trainingSet = DatasetCov::load(pathTr);
         validationSet = DatasetCov::load(pathVal);
 
         if (!trainingSet.isConsistent() || !validationSet.isConsistent())
@@ -142,7 +157,7 @@ void loadAndPreprocess(const string& datasetPath, std::size_t covarianceSubsets,
     Image4DLoader loader(datasetPath, "frame_[0-9]*_(rgb|depth).*");
 
     Preprocessor preproc;
-    vector<vector<Mat>> grayscaleTr,  depthmapTr;
+    vector<vector<Mat>> grayscaleTr, depthmapTr;
     vector<vector<Mat>> grayscaleVal, depthmapVal;
     regex expr{ ".*/[0-9][0-9]" };
     if (is_directory(datasetPath)) {
@@ -159,24 +174,23 @@ void loadAndPreprocess(const string& datasetPath, std::size_t covarianceSubsets,
                 splitTrainValidation(preprocessedFaces, train, validation);
 
                 std::cout << "Computing covariance representation..." << std::endl;
-                vector<Mat> grayscaleCovarTr,  depthmapCovarTr;
+                vector<Mat> grayscaleCovarTr, depthmapCovarTr;
                 vector<Mat> grayscaleCovarVal, depthmapCovarVal;
 
                 covariance::getNormalizedCovariances(train, covarianceSubsets, grayscaleCovarTr, depthmapCovarTr);
                 covariance::getNormalizedCovariances(validation, covarianceSubsets, grayscaleCovarVal, depthmapCovarVal);
 
-                grayscaleTr .push_back(std::move(grayscaleCovarTr ));
-                depthmapTr  .push_back(std::move(depthmapCovarTr  ));
+                grayscaleTr.push_back(std::move(grayscaleCovarTr));
+                depthmapTr.push_back(std::move(depthmapCovarTr));
                 grayscaleVal.push_back(std::move(grayscaleCovarVal));
-                depthmapVal .push_back(std::move(depthmapCovarVal ));
+                depthmapVal.push_back(std::move(depthmapCovarVal));
             }
         }
     }
 
-    trainingSet   = DatasetCov(std::move(grayscaleTr ), std::move(depthmapTr ));
+    trainingSet = DatasetCov(std::move(grayscaleTr), std::move(depthmapTr));
     validationSet = DatasetCov(std::move(grayscaleVal), std::move(depthmapVal));
 }
-
 
 /**
  * @brief randomly splits a Face vector into two vectors
@@ -191,11 +205,11 @@ void splitTrainValidation(const vector<Face>& dataset, vector<Face>& trainingSet
     for (auto i = 0; i < size; ++i)
         index[i] = i;
 
-    std::random_device rd;  //Will be used to obtain a seed for the random number engine
+    std::random_device rd; //Will be used to obtain a seed for the random number engine
     std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
 
-    for (auto i = 0; i < size/3; ++i) {
-        int rndIndex = std::uniform_int_distribution<>(0, index.size()-1)(gen);
+    for (auto i = 0; i < size / 3; ++i) {
+        int rndIndex = std::uniform_int_distribution<>(0, index.size() - 1)(gen);
         validationSet.push_back(dataset[index[rndIndex]]);
 
         index[rndIndex] = index.back();
