@@ -52,8 +52,6 @@ public:
     float gamma;
 };
 
-
-
 /**----------------------------------------------------------
  * ------------------------ SVMStein ------------------------
  * ----------------------------------------------------------*/
@@ -93,7 +91,7 @@ bool SVMStein::train(const Mat& data, const vector<int>& labelsVector)
 }
 
 SteinKernelParams SVMStein::trainAuto(const Mat& dataTr, const vector<int>& labelsVector, const Mat& dataVal,
-                                      const vector<int>& groundTruth, const ml::ParamGrid& gammaGrid, const ml::ParamGrid& CGrid)
+    const vector<int>& groundTruth, const ml::ParamGrid& gammaGrid, const ml::ParamGrid& CGrid)
 {
     auto trainData = ml::TrainData::create(dataTr, ml::ROW_SAMPLE, Mat(labelsVector, true));
 
@@ -106,7 +104,7 @@ SteinKernelParams SVMStein::trainAuto(const Mat& dataTr, const vector<int>& labe
             setC(C);
             //std::cout << "Training..." << std::endl;
             svm->train(trainData);
-            float fscore = evaluateFMeasure(dataVal, groundTruth);
+            float fscore = evaluateFMeasure(dataVal, labelsVector);
             //std::cout << "Score: " << fscore << std::endl;
             if (bestScore < fscore) {
                 bestGamma = { gamma };
@@ -126,7 +124,7 @@ SteinKernelParams SVMStein::trainAuto(const Mat& dataTr, const vector<int>& labe
     setC(C);
     setGamma(gamma);
     svm->train(trainData);
-    auto fscore = evaluateFMeasure(dataVal, groundTruth);
+    auto fscore = evaluateFMeasure(dataVal, labelsVector);
 
     std::cout << "Best score: " << bestScore << std::endl;
     std::cout << "Best C: " << C << "\nBest gamma: " << gamma << std::endl;
@@ -169,16 +167,7 @@ float SVMStein::evaluateFMeasure(const Mat& dataVal, const vector<int>& groundTr
    * 1) Recall:       true positives (0 or 1 in this case) divided by all real positives
    * (true positives + false negatives, exactly 1 in this case).
    * 2) Precision:    true positives divided by all detected positives (true positives + false positives).
-   * 3) F-measure:    harmonic mean between precision and recall, so 2*1/(1/p+1/r)
-   *
-   * Note: in this case recall can be only 0 or 1 and, in general,
-   * if recall is 0 then precision is 0, if recall is 1 precision is 1/(1+false positives).
-   * So in this case F-measure will be:
-   * A) true positives = 1 => (2*false positives+2)/(false positives + 2)
-   * B) true positives = 0 => 0
-   *^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-   *|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-   * NON È VERO SE SI USANO I CLUSTER DELLE POSE IN QUESTO MODO...
+   * 3) F-measure:    2*harmonic mean between precision and recall, so 2*1/(1/p+1/r)
    */
 
     int truePositives = 0, falsePositives = 0, trueNegatives = 0, falseNegatives = 0;
@@ -197,7 +186,6 @@ float SVMStein::evaluateFMeasure(const Mat& dataVal, const vector<int>& groundTr
         } else {
             std::cerr << "Warning! SVM prediction != 1 and != -1" << std::endl;
         }
-
     }
 
     return 2 * truePositives / (float)(truePositives + falseNegatives + falsePositives);

@@ -208,7 +208,7 @@ void splitTrainValidation(const vector<Face>& dataset, vector<Face>& trainingSet
     std::random_device rd; //Will be used to obtain a seed for the random number engine
     std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
 
-    for (auto i = 0; i < size / 3; ++i) {
+    for (auto i = 0; i < size / 10; ++i) {
         int rndIndex = std::uniform_int_distribution<>(0, index.size() - 1)(gen);
         validationSet.push_back(dataset[index[rndIndex]]);
 
