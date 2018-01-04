@@ -126,8 +126,8 @@ SteinKernelParams SVMStein::trainAuto(const Mat& dataTr, const vector<int>& labe
     svm->train(trainData);
     auto fscore = evaluateFMeasure(dataVal, labelsVector);
 
-    std::cout << "Best score: " << bestScore << std::endl;
-    std::cout << "Best C: " << C << "\nBest gamma: " << gamma << std::endl;
+    //    std::cout << "Best score: " << bestScore << std::endl;
+    //    std::cout << "Best C: " << C << "\nBest gamma: " << gamma << std::endl;
     std::cout << "score obtained by avaraging best parameters: " << fscore << std::endl;
     return SteinKernelParams(C, gamma);
 }

@@ -60,6 +60,7 @@ int main(int argc, char* argv[])
     cv::CommandLineParser parser(argc, argv, KEYS); // opencv parser for command line arguments
 
     // if wrong arguments, print usage
+    cout << "Loading dataset..." << endl;
     DatasetCov trainingSet, validationSet;
     if (!datasetLoader(parser, trainingSet, validationSet)) {
         std::cout << "Wrong input args!" << std::endl;
@@ -67,6 +68,7 @@ int main(int argc, char* argv[])
         return 0;
     }
 
+    cout << "Training SVMs..." << endl;
     FaceRecognizer faceRec(SUBSETS);
     if (parser.has(OPTION_LOAD)) {
         faceRec.load(parser.get<string>(OPTION_LOAD));
@@ -78,6 +80,7 @@ int main(int argc, char* argv[])
         faceRec.save(parser.get<string>(OPTION_SAVE));
     }
 
+    cout << "Querying model..." << endl;
     if (parser.has(OPTION_QUERY)) {
         auto queryPath = parser.get<string>(OPTION_QUERY);
         Image4DLoader loader(queryPath, "frame_[0-9]*_(rgb|depth).*");
@@ -162,7 +165,7 @@ void loadAndPreprocess(const string& datasetPath, std::size_t covarianceSubsets,
                 //std::cout << "Identity " << id << std::endl;
                 loader.setCurrentPath(path);
 
-                std::cout << "Loading and preprocessing images..." << std::endl;
+                std::cout << "Loading and preprocessing images from " << path << std::endl;
                 auto preprocessedFaces = preproc.preprocess(loader.get());
 
                 vector<Face> train, validation;
