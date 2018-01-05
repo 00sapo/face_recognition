@@ -161,6 +161,20 @@ void DatasetCov::load(const std::string& path) //, vector<string>& idMap)
     }
 }
 
+
+
+uint32_t bitwiseFloatToUInt32_t(float x) {
+    union { float f; uint32_t u; } converter;
+    converter.f = x;
+    return converter.u;
+}
+
+float bitwiseUInt32_tToFloat(uint32_t x) {
+    union { float f; uint32_t u; } converter;
+    converter.u = x;
+    return converter.f;
+}
+
 cv::Mat encode(const cv::Mat& image)
 {
     const auto HEIGHT = image.rows;
@@ -169,8 +183,7 @@ cv::Mat encode(const cv::Mat& image)
 
     for (auto i = 0; i < HEIGHT; ++i) {
         for (auto j = 0; j < WIDTH; ++j) {
-            float floatVal = image.at<float>(i, j);
-            uint32_t value = *(reinterpret_cast<uint32_t*>(&floatVal));
+            uint32_t value = bitwiseFloatToUInt32_t(image.at<float>(i, j));
             for (auto k = 0; k < 4; ++k) {
                 encoded.at<uint8_t>(i, 4 * j + k) = value & 0XFF;
                 value = value >> 8;
@@ -194,7 +207,7 @@ cv::Mat decode(const cv::Mat& image)
                 uint32_t tmp = image.at<uint8_t>(i, 4 * j + k);
                 value |= tmp << k * 8;
             }
-            float floatVal = *(reinterpret_cast<float*>(&value));
+            float floatVal = bitwiseUInt32_tToFloat(value);
             decoded.at<float>(i, j) = floatVal;
         }
     }

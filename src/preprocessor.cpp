@@ -356,9 +356,9 @@ int getFirstNonempty(cv::Mat matrix, int minNonemptySquares, ScanOrder scanOrder
     const auto firstDim = scanByRow ? matrix.rows : matrix.cols;
     const auto secondDim = scanByRow ? matrix.cols : matrix.rows;
 
-    for (auto k = 0; k < firstDim; ++k) { // look for first non-empty row
+    for (auto k = 0; k < firstDim; ++k) {
         int nonzeroSquares = 0;
-        i = increasing ? k : firstDim - k - 1; // TODO: double check this
+        i = increasing ? k : firstDim - k - 1;
         for (j = 0; j < secondDim; ++j) {
             if (matrix.at<T>(u, v) != 0)
                 ++nonzeroSquares;

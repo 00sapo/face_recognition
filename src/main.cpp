@@ -98,8 +98,11 @@ int main(int argc, char* argv[])
                     covariance::getNormalizedCovariances(faces, SUBSETS, grayscale, depthmap);
 
                     int predicted = faceRec.predict(grayscale, depthmap);
-                    string idDir = trainingSet.getDirectory(predicted);
-                    std::cout << "Path " << x.path().filename() << " predicted ID: " << idDir << std::endl;
+                    std::cout << "Path " << x.path().filename() << " predicted ID: ";
+                    if (predicted == -1)
+                        std::cout << "unknown_ID" << std::endl;
+                    else
+                        std::cout << trainingSet.getDirectory(predicted) << std::endl;
                 }
             }
         }

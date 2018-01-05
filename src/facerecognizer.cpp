@@ -305,21 +305,5 @@ vector<string> generateLabels(int numOfLabels)
     return identities;
 }
 
-/*
-Mat extractSubset(const Mat& data, int subsetIndex, int totalSubsets)
-{
-    const auto HEIGHT = data.rows / totalSubsets;
-    Mat out(HEIGHT, data.cols, data.type());
-
-    for (auto i = 0; i < HEIGHT; ++i) {
-        auto identityIndex = totalSubsets * i;
-        for (auto j = 0; j < data.cols; ++j) {
-            out.at<float>(i, j) = data.at<float>(identityIndex + subsetIndex, j);
-        }
-    }
-
-    return out;
-}
-*/
 
 } // namespace face
