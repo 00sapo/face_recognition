@@ -154,6 +154,11 @@ bool Preprocessor::cropFace(const Image4D& image4d, Face& croppedFace)
 
     auto yTop = getFirstNonempty<uint16_t>(image4d.depthMap, NONZERO_PXL, ScanOrder::top_down);
 
+    if (yTop == -1) {
+        std::cout << "WARNING! getFirstNonempty() == -1" << std::endl;
+        return false;
+    }
+
     yTop += BETA * eulerAngles[0] + GAMMA * eulerAngles[2];
     if (yTop < 0)
         yTop = 0;
@@ -176,6 +181,11 @@ bool Preprocessor::cropFace(const Image4D& image4d, Face& croppedFace)
     auto roiMat = image4d.depthMap(scanROI);
     auto xTop = getFirstNonempty<uint16_t>(roiMat, NONZERO_PXL, ScanOrder::left_to_right);
     auto xBase = getFirstNonempty<uint16_t>(roiMat, NONZERO_PXL, ScanOrder::right_to_left);
+
+    if (xTop == -1 || xBase == -1) {
+        std::cout << "WARNING! getFirstNonempty() == -1" << std::endl;
+        return false;
+    }
 
     // TODO: use a sigmoidal function to minimize lateral cropping for small
     //       values of eulerAngles[1] (but where should it be centered?, in 15?)
@@ -370,4 +380,4 @@ int getFirstNonempty(cv::Mat matrix, int minNonemptySquares, ScanOrder scanOrder
     return -1;
 }
 
-} // nemaspace face
+} // namespace face

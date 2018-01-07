@@ -83,27 +83,25 @@ int main(int argc, char* argv[])
     cout << "Querying model..." << endl;
     if (parser.has(OPTION_QUERY)) {
         auto queryPath = parser.get<string>(OPTION_QUERY);
+        if (!is_directory(queryPath)) {
+            std::cout << queryPath << " is not a directory!" << std::endl;
+            return 0;
+        }
+
         Image4DLoader loader(queryPath, "frame_[0-9]*_(rgb|depth).*");
         Preprocessor preproc;
-        regex expr{ ".*/[0-9][0-9]" };
-        if (is_directory(queryPath)) {
-            for (auto& x : directory_iterator(queryPath)) {
-                string path = x.path().string();
-                if (is_directory(path) && regex_match(path, expr)) {
-                    //std::cout << "Identity " << id << std::endl;
-                    loader.setCurrentPath(path);
-                    auto faces = preproc.preprocess(loader.get());
+        regex expr{ ".*/[0-9][0-9]" };        
+        for (auto& x : directory_iterator(queryPath)) {
+            string path = x.path().string();
+            if (is_directory(path) && regex_match(path, expr)) {
+                loader.setCurrentPath(path);
+                auto faces = preproc.preprocess(loader.get());
 
-                    vector<Mat> grayscale, depthmap;
-                    covariance::getNormalizedCovariances(faces, SUBSETS, grayscale, depthmap);
+                vector<Mat> grayscale, depthmap;
+                covariance::getNormalizedCovariances(faces, SUBSETS, grayscale, depthmap);
 
-                    int predicted = faceRec.predict(grayscale, depthmap);
-                    std::cout << "Path " << x.path().filename() << " predicted ID: ";
-                    if (predicted == -1)
-                        std::cout << "unknown_ID" << std::endl;
-                    else
-                        std::cout << trainingSet.getDirectory(predicted) << std::endl;
-                }
+                std::cout << "Path " << x.path().filename() << " predicted ID: "
+                          << faceRec.predict(grayscale, depthmap) << std::endl;
             }
         }
     }
@@ -121,32 +119,31 @@ bool datasetLoader(const cv::CommandLineParser& parser, DatasetCov& trainingSet,
 
         trainingSet.load(pathTr);
         validationSet.load(pathVal);
-
-        if (!trainingSet.isConsistent() || !validationSet.isConsistent())
-            std::cout << "Warning! Loaded inconsistent dataset!" << std::endl;
-        if (trainingSet.empty() || validationSet.empty()) {
-            std::cout << "Error! Loaded empty dataset!" << std::endl;
-            return false;
-        }
     } else if (parser.has(OPTION_DATASET)) {
-
         auto path = parser.get<string>(OPTION_DATASET);
         loadAndPreprocess(path, SUBSETS, trainingSet, validationSet);
-
-        if (parser.has(OPTION_SAVE_DATASET_TR)) {
-            auto path = parser.get<string>(OPTION_SAVE_DATASET_TR);
-            auto success = trainingSet.save(path);
-            if (!success)
-                std::cerr << "Error saving preprocessed dataset to " << path << std::endl;
-        }
-        if (parser.has(OPTION_SAVE_DATASET_VAL)) {
-            auto path = parser.get<string>(OPTION_SAVE_DATASET_VAL);
-            auto success = validationSet.save(path);
-            if (!success)
-                std::cerr << "Error saving preprocessed dataset to " << path << std::endl;
-        }
     } else {
         return false;
+    }
+
+    if (!trainingSet.isConsistent() || !validationSet.isConsistent())
+        std::cout << "Warning! Loaded inconsistent dataset!" << std::endl;
+    if (trainingSet.empty() || validationSet.empty()) {
+        std::cout << "Error! Loaded empty dataset!" << std::endl;
+        return false;
+    }
+
+    if (parser.has(OPTION_SAVE_DATASET_TR)) {
+        auto path = parser.get<string>(OPTION_SAVE_DATASET_TR);
+        auto success = trainingSet.save(path);
+        if (!success)
+            std::cerr << "Error saving preprocessed dataset to " << path << std::endl;
+    }
+    if (parser.has(OPTION_SAVE_DATASET_VAL)) {
+        auto path = parser.get<string>(OPTION_SAVE_DATASET_VAL);
+        auto success = validationSet.save(path);
+        if (!success)
+            std::cerr << "Error saving preprocessed dataset to " << path << std::endl;
     }
 
     return true;
@@ -161,32 +158,37 @@ void loadAndPreprocess(const string& datasetPath, std::size_t covarianceSubsets,
     vector<vector<Mat>> grayscaleVal, depthmapVal;
     vector<string> dirMap;
     regex expr{ ".*/[0-9][0-9]" };
-    if (is_directory(datasetPath)) {
-        for (auto& x : directory_iterator(datasetPath)) {
-            auto path = x.path();
-            if (is_directory(path) && regex_match(path.string(), expr)) {
-                //std::cout << "Identity " << id << std::endl;
-                loader.setCurrentPath(path);
+    if (!is_directory(datasetPath)) {
+        std::cerr << "ERROR! " << datasetPath << " is not a directory!" << std::endl;
+        trainingSet.clear();
+        validationSet.clear();
+        return;
+    }
 
-                std::cout << "Loading and preprocessing images from " << path << std::endl;
-                auto preprocessedFaces = preproc.preprocess(loader.get());
+    for (auto& x : directory_iterator(datasetPath)) {
+        auto path = x.path();
+        if (is_directory(path) && regex_match(path.string(), expr)) {
+            //std::cout << "Identity " << id << std::endl;
+            loader.setCurrentPath(path);
 
-                vector<Face> train, validation;
-                splitTrainValidation(preprocessedFaces, train, validation);
+            std::cout << "Loading and preprocessing images from " << path << std::endl;
+            auto preprocessedFaces = preproc.preprocess(loader.get());
 
-                std::cout << "Computing covariance representation..." << std::endl;
-                vector<Mat> grayscaleCovarTr, depthmapCovarTr;
-                vector<Mat> grayscaleCovarVal, depthmapCovarVal;
+            vector<Face> train, validation;
+            splitTrainValidation(preprocessedFaces, train, validation);
 
-                covariance::getNormalizedCovariances(train, covarianceSubsets, grayscaleCovarTr, depthmapCovarTr);
-                covariance::getNormalizedCovariances(validation, covarianceSubsets, grayscaleCovarVal, depthmapCovarVal);
+            std::cout << "Computing covariance representation..." << std::endl;
+            vector<Mat> grayscaleCovarTr, depthmapCovarTr;
+            vector<Mat> grayscaleCovarVal, depthmapCovarVal;
 
-                grayscaleTr.push_back(std::move(grayscaleCovarTr));
-                depthmapTr.push_back(std::move(depthmapCovarTr));
-                grayscaleVal.push_back(std::move(grayscaleCovarVal));
-                depthmapVal.push_back(std::move(depthmapCovarVal));
-                dirMap.push_back(path.filename());
-            }
+            covariance::getNormalizedCovariances(train, covarianceSubsets, grayscaleCovarTr, depthmapCovarTr);
+            covariance::getNormalizedCovariances(validation, covarianceSubsets, grayscaleCovarVal, depthmapCovarVal);
+
+            grayscaleTr.push_back(std::move(grayscaleCovarTr));
+            depthmapTr.push_back(std::move(depthmapCovarTr));
+            grayscaleVal.push_back(std::move(grayscaleCovarVal));
+            depthmapVal.push_back(std::move(depthmapCovarVal));
+            dirMap.push_back(path.filename());
         }
     }
 

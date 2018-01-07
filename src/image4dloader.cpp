@@ -19,7 +19,6 @@ using std::vector;
 namespace face {
 
 Mat loadDepthImageCompressed(const string& fname);
-Mat loadDepthImageCompressedAt(const string& fname);
 
 //----------------------------------------------
 //--------------- CalibParams-------------------

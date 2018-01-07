@@ -28,6 +28,11 @@ public:
     bool empty() const;
 
     /**
+     * @brief clear calls clear on grayscale, depthmap and direcotryMap
+     */
+    void clear();
+
+    /**
      * @brief isConsistent returns the last consistency state computed by checkConsistency()
      */
     bool isConsistent() const;

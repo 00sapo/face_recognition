@@ -45,6 +45,11 @@ void FaceRecognizer::train(const DatasetCov& trainingSet, const DatasetCov& vali
 
     N = trainingSet.grayscale.size();
 
+    labels.resize(N);
+    for (auto i = 0; i < N; ++i) {
+        labels[i] = trainingSet.getDirectory(i);
+    }
+
     grayscaleSVMs.resize(N);
     depthmapSVMs.resize(N);
     for (auto& svmVector : grayscaleSVMs)
@@ -64,7 +69,7 @@ void FaceRecognizer::train(const DatasetCov& trainingSet, const DatasetCov& vali
     trainSVMs(depthmapMatTr, depthmapMatVal, groundTruthDp, ImgType::depthmap); // depthmap  images training
 }
 
-int FaceRecognizer::predict(const vector<Mat>& grayscaleCovar, const vector<Mat>& depthmapCovar) const
+string FaceRecognizer::predict(const vector<Mat>& grayscaleCovar, const vector<Mat>& depthmapCovar) const
 {
     auto grayscaleData = formatDataForPrediction(grayscaleCovar);
     auto depthmapData = formatDataForPrediction(depthmapCovar);
@@ -116,7 +121,10 @@ int FaceRecognizer::predict(const vector<Mat>& grayscaleCovar, const vector<Mat>
         }
     }
 
-    return bestIndex;
+    if(bestIndex == -1)
+        return "unknown_ID";
+
+    return labels[bestIndex];
 }
 
 bool FaceRecognizer::load(const string& directoryName)

@@ -45,7 +45,7 @@ public:
      * @return person label if the identity was in the training samples and is recognized,
      *         unknownIdentity otherwise
      */
-    int predict(const std::vector<cv::Mat>& grayscaleCovar, const std::vector<cv::Mat>& depthmapCovar) const;
+    std::string predict(const std::vector<cv::Mat>& grayscaleCovar, const std::vector<cv::Mat>& depthmapCovar) const;
 
     /**
      * @brief loads a pretrained model
@@ -71,6 +71,7 @@ private:
     int N = 0; // number of identities provided for training
     std::vector<std::vector<SVMStein>> grayscaleSVMs; // a row for each identity and a column for each head rotation subset
     std::vector<std::vector<SVMStein>> depthmapSVMs; // thus resulting in a Nxc matrix where N is the number of identities
+    std::vector<std::string> labels; // vector for index-identity associations
         // and c the number of head rotation subsets
 
     void trainSVMs(const cv::Mat& dataTr, const cv::Mat& dataVal, const std::vector<int>& groundTruth, ImgType svmToTrain);

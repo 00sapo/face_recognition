@@ -20,9 +20,9 @@ DatasetCov::DatasetCov()
 }
 
 DatasetCov::DatasetCov(vector<vector<Mat>> grayscale, vector<vector<Mat>> depthmap, std::vector<std::string> directoryMap)
-    : grayscale(grayscale)
-    , depthmap(depthmap)
-    , directoryMap(directoryMap)
+    : grayscale(std::move(grayscale))
+    , depthmap(std::move(depthmap))
+    , directoryMap(std::move(directoryMap))
 {
     consistent = checkConsistency();
 }
@@ -35,6 +35,13 @@ std::string DatasetCov::getDirectory(int id) const
 bool DatasetCov::empty() const
 {
     return grayscale.empty() && depthmap.empty();
+}
+
+void DatasetCov::clear()
+{
+    grayscale.clear();
+    depthmap.clear();
+    directoryMap.clear();
 }
 
 bool DatasetCov::isConsistent() const
@@ -86,19 +93,23 @@ bool DatasetCov::save(const fs::path& path)
     assert(checkConsistency() && "Error! Inconsistent dataset!");
 
     try { // try creating dataset root directory
-        if (!fs::create_directory(path))
+        if (!fs::create_directory(path))    // if path already exists fs::create_directory(path) returns true
             return false;
     } catch (const fs::filesystem_error& fsex) {
         std::cerr << fsex.what() << std::endl;
         return false;
     }
 
+    vector<int> compression_params;
+    compression_params.push_back(CV_IMWRITE_PNG_COMPRESSION);
+    compression_params.push_back(0);
+
     bool success = true;
     for (std::size_t i = 0; i < grayscale.size(); ++i) { // for each identity
         const auto& grayscaleID = grayscale[i];
         const auto& depthmapID = depthmap[i];
 
-        auto idPath = path / directoryMap.at(i);
+        auto idPath = path / directoryMap[i];
 
         try { // try creating identity's directory
             if (!fs::create_directory(idPath))
@@ -118,15 +129,17 @@ bool DatasetCov::save(const fs::path& path)
             auto grayscaleImg = encode(grayscaleID[j]);
             auto depthmapImg = encode(depthmapID[j]);
 
-            success &= cv::imwrite(grayscalePath.string(), grayscaleImg);
-            success &= cv::imwrite(depthmapPath.string(), depthmapImg);
+            std::cout << "Encoded:\n" << grayscaleImg << std::endl;
+
+            success &= cv::imwrite(grayscalePath.string(), grayscaleImg, compression_params);
+            success &= cv::imwrite(depthmapPath.string(),  depthmapImg,  compression_params);
         }
     }
 
     return success;
 }
 
-void DatasetCov::load(const std::string& path) //, vector<string>& idMap)
+void DatasetCov::load(const std::string& path)
 {
     fs::path datasetPath(path);
     if (!fs::exists(datasetPath)) {
@@ -140,20 +153,34 @@ void DatasetCov::load(const std::string& path) //, vector<string>& idMap)
     std::regex grayscaleTemplate("grayscale_.*png");
     std::regex depthmapTemplate("depthmap_.*png");
     for (const auto& subdir : fs::directory_iterator(datasetPath)) {
-        vector<Mat> grayscaleID, depthmapID;
+        vector<string> grayscaleFiles, depthmapFiles;
+
         for (const auto& dirEntry : fs::directory_iterator(subdir)) {
             auto file = dirEntry.path();
             auto fileName = file.filename();
             if (std::regex_match(fileName.string(), grayscaleTemplate, std::regex_constants::match_any)) {
-                auto image = cv::imread(file.string(), CV_8UC1);
-                auto decoded = decode(image);
-                grayscaleID.push_back(decoded); // TODO: check image format
+                grayscaleFiles.push_back(file.string());
             } else if (std::regex_match(fileName.string(), depthmapTemplate, std::regex_constants::match_any)) {
-                auto image = cv::imread(file.string(), CV_8UC1);
-                auto decoded = decode(image);
-                depthmapID.push_back(decoded); // TODO: check image format
+                depthmapFiles.push_back(file.string());
             }
         }
+
+        // this gurantees files are loaded in the same order they where stored
+        std::sort(grayscaleFiles.begin(), grayscaleFiles.end());
+        std::sort(depthmapFiles.begin(),  depthmapFiles.end());
+
+        vector<Mat> grayscaleID, depthmapID;
+        for (const auto &file : grayscaleFiles){
+            auto image = cv::imread(file, cv::IMREAD_GRAYSCALE);
+            auto decoded = decode(image);
+            grayscaleID.push_back(decoded);
+        }
+        for (const auto &file : depthmapFiles) {
+            auto image = cv::imread(file, cv::IMREAD_GRAYSCALE);
+            auto decoded = decode(image);
+            depthmapID.push_back(decoded);
+        }
+
         directoryMap.push_back(subdir.path().filename());
 
         grayscale.push_back(std::move(grayscaleID));
@@ -162,6 +189,9 @@ void DatasetCov::load(const std::string& path) //, vector<string>& idMap)
 }
 
 
+// ------------------------------------------------------------------------
+// - Encoding and decoding functions to save and load covariance matrixes -
+// ------------------------------------------------------------------------
 
 uint32_t bitwiseFloatToUInt32_t(float x) {
     union { float f; uint32_t u; } converter;
