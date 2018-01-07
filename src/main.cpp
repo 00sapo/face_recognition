@@ -151,13 +151,6 @@ bool datasetLoader(const cv::CommandLineParser& parser, DatasetCov& trainingSet,
 
 void loadAndPreprocess(const string& datasetPath, std::size_t covarianceSubsets, DatasetCov& trainingSet, DatasetCov& validationSet)
 {
-    Image4DLoader loader(datasetPath, "frame_[0-9]*_(rgb|depth).*");
-
-    Preprocessor preproc;
-    vector<vector<Mat>> grayscaleTr, depthmapTr;
-    vector<vector<Mat>> grayscaleVal, depthmapVal;
-    vector<string> dirMap;
-    regex expr{ ".*/[0-9][0-9]" };
     if (!is_directory(datasetPath)) {
         std::cerr << "ERROR! " << datasetPath << " is not a directory!" << std::endl;
         trainingSet.clear();
@@ -165,10 +158,17 @@ void loadAndPreprocess(const string& datasetPath, std::size_t covarianceSubsets,
         return;
     }
 
+    Image4DLoader loader(datasetPath, "frame_[0-9]*_(rgb|depth).*");
+
+    Preprocessor preproc;
+    vector<vector<Mat>> grayscaleTr, depthmapTr;
+    vector<vector<Mat>> grayscaleVal, depthmapVal;
+    vector<string> dirMap;
+    regex expr{ ".*/[0-9][0-9]" };
+
     for (auto& x : directory_iterator(datasetPath)) {
         auto path = x.path();
         if (is_directory(path) && regex_match(path.string(), expr)) {
-            //std::cout << "Identity " << id << std::endl;
             loader.setCurrentPath(path);
 
             std::cout << "Loading and preprocessing images from " << path << std::endl;

@@ -66,10 +66,6 @@ public:
 
     cv::Mat getIntrinsicMatrix() const;
 
-    std::string getName()
-    {
-        return name;
-    }
     /**
      * @brief This function crops both the image and the cloud removing
      *        every point outside the cropping region and adjusting

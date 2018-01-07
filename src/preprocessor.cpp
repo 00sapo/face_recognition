@@ -74,7 +74,7 @@ vector<Face> Preprocessor::preprocess(vector<Image4D> images)
     vector<Face> croppedFaces;
 
     // get number of concurrently executable threads
-    const auto numOfThreads = std::thread::hardware_concurrency();
+    const auto numOfThreads = 1;//std::thread::hardware_concurrency();
     vector<std::thread> threads(numOfThreads);
 
     // equally split number of images to process
@@ -179,6 +179,7 @@ bool Preprocessor::cropFace(const Image4D& image4d, Face& croppedFace)
     }
 
     auto roiMat = image4d.depthMap(scanROI);
+
     auto xTop = getFirstNonempty<uint16_t>(roiMat, NONZERO_PXL, ScanOrder::left_to_right);
     auto xBase = getFirstNonempty<uint16_t>(roiMat, NONZERO_PXL, ScanOrder::right_to_left);
 
