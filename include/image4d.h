@@ -161,9 +161,6 @@ protected:
     void resizeImage();
 };
 
-cv::Mat cvtDepthMapTo3D(const cv::Mat& depthMap, const cv::Mat& intrinsicMatrix);
-cv::Mat cvt3DToDepthMap(const cv::Mat& image3D,  const cv::Mat& intrinsicMatrix);
-
 } // face
 
 #endif // IMAGE_4D_H_

@@ -19,14 +19,14 @@ using std::vector;
 namespace face {
 
 Mat loadDepthImageCompressed(const string& fname);
+std::vector<cv::Point3f> cvtDepthMapTo3DVec(const cv::Mat& depthMap, const cv::Mat& intrinsicMatrix);
 
 //----------------------------------------------
 //--------------- CalibParams-------------------
 //----------------------------------------------
 
 Image4DLoader::CalibParams::CalibParams()
-    : depthCameraMatrix(3, 3, CV_32FC1)
-    , rgbCameraMatrix(3, 3, CV_32FC1)
+    : depthCameraMatrix(3, 3, CV_32FC1), rgbCameraMatrix(3, 3, CV_32FC1), rgbRotationMatrix(3, 3, CV_32FC1)
 {
 }
 
@@ -61,10 +61,20 @@ bool Image4DLoader::CalibParams::load(const fs::path& dir)
     rgbFile >> rgbCameraMatrix.at<float>(2, 2);
 
     // skip useless params
-    for (auto i = 0; i < 13; ++i) {
+    for (auto i = 0; i < 4; ++i) {
         float useless;
         rgbFile >> useless;
     }
+
+    rgbFile >> rgbRotationMatrix.at<float>(0, 0);
+    rgbFile >> rgbRotationMatrix.at<float>(0, 1);
+    rgbFile >> rgbRotationMatrix.at<float>(0, 2);
+    rgbFile >> rgbRotationMatrix.at<float>(1, 0);
+    rgbFile >> rgbRotationMatrix.at<float>(1, 1);
+    rgbFile >> rgbRotationMatrix.at<float>(1, 2);
+    rgbFile >> rgbRotationMatrix.at<float>(2, 0);
+    rgbFile >> rgbRotationMatrix.at<float>(2, 1);
+    rgbFile >> rgbRotationMatrix.at<float>(2, 2);
 
     rgbFile >> rgbTranslationVector[0];
     rgbFile >> rgbTranslationVector[1];
@@ -168,35 +178,39 @@ void Image4DLoader::threadGet(vector<Image4D>& image4DSequence, int begin, int e
 
 bool Image4DLoader::get(const fs::path& imageFile, const fs::path& depthFile, Image4D& image4D) const
 {
-    auto image = cv::imread(imageFile.string(), CV_LOAD_IMAGE_GRAYSCALE);
-    if (image.empty()) {
+    // load grayscale image
+    auto grayscale = cv::imread(imageFile.string(), CV_LOAD_IMAGE_GRAYSCALE);
+    if (grayscale.empty()) {
         std::cerr << "Unable to load file " << imageFile << std::endl;
         return false;
     }
 
+    // load depth image
     auto depthMap = loadDepthImageCompressed(depthFile.string());
     if (depthMap.empty()) {
         std::cerr << "Unable to load file " << depthFile << std::endl;
         return false;
     }
 
-    auto x = calibParams.rgbTranslationVector[0];
-    auto y = calibParams.rgbTranslationVector[1];
-    auto z = calibParams.rgbTranslationVector[2];
+    // --- align depth image with grayscale image ---
 
-    auto image3D = cvtDepthMapTo3D(depthMap, calibParams.depthCameraMatrix);
+    auto points3D = cvtDepthMapTo3DVec(depthMap, calibParams.depthCameraMatrix); // compute 3D points from depth image
 
-    for (auto j = 0; j < image3D.rows; ++j) {
-        for (auto k = 0; k < image3D.cols; ++k) {
-            auto& vec = image3D.at<cv::Vec3f>(j, k);
-            vec[0] += x;
-            vec[1] += y;
-            vec[2] += z;
-        }
+    // project 3D points to grayscale image plane
+    Mat rvec, projPoints;
+    cv::Rodrigues(calibParams.rgbRotationMatrix,rvec);
+    cv::projectPoints(points3D, rvec, calibParams.rgbTranslationVector, calibParams.rgbCameraMatrix, std::vector<float>(), projPoints);
+
+    depthMap = Mat::zeros(depthMap.rows, depthMap.cols, depthMap.type()); // clear old depth map
+
+    // fill depthMap with projected points
+    for (auto k = 0; k < projPoints.rows; ++k) {
+        const auto &point = projPoints.at<cv::Point2f>(k,1);
+        if (point.x > 0 && point.x < depthMap.cols && point.y > 0 && point.y < depthMap.rows)
+            depthMap.at<uint16_t>(point.y, point.x) = points3D[k].z;
     }
-    depthMap = cvt3DToDepthMap(image3D, calibParams.rgbCameraMatrix);
 
-    image4D = Image4D(image, depthMap, calibParams.rgbCameraMatrix);
+    image4D = Image4D(grayscale, depthMap, calibParams.rgbCameraMatrix);
 
     return true;
 }
@@ -310,6 +324,30 @@ Mat loadDepthImageCompressed(const string& fname)
         return depth;
 
     return Mat();
+}
+
+std::vector<cv::Point3f> cvtDepthMapTo3DVec(const cv::Mat& depthMap, const cv::Mat& intrinsicMatrix)
+{
+    auto fx = intrinsicMatrix.at<float>(0,0);
+    auto fy = intrinsicMatrix.at<float>(1,1);
+    auto cx = intrinsicMatrix.at<float>(0,2);
+    auto cy = intrinsicMatrix.at<float>(1,2);
+
+    const auto HEIGHT = depthMap.rows;
+    const auto WIDTH  = depthMap.cols;
+    std::vector<cv::Point3f> points3D;
+
+    for (uint i = 0; i < HEIGHT; ++i) {
+        for (uint j = 0; j < WIDTH; ++j) {
+            auto d = static_cast<float>(depthMap.at<uint16_t>(i,j));
+            auto x = d * (float(j) - cx)/fx;
+            auto y = d * (float(i) - cy)/fy;
+            auto z = d;
+            points3D.emplace_back(x,y,z);
+        }
+    }
+
+    return points3D;
 }
 
 } // namespace face

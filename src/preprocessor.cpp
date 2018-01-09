@@ -74,7 +74,7 @@ vector<Face> Preprocessor::preprocess(vector<Image4D> images)
     vector<Face> croppedFaces;
 
     // get number of concurrently executable threads
-    const auto numOfThreads = 1;//std::thread::hardware_concurrency();
+    const auto numOfThreads = std::thread::hardware_concurrency();
     vector<std::thread> threads(numOfThreads);
 
     // equally split number of images to process
