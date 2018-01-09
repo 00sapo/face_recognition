@@ -129,8 +129,6 @@ bool DatasetCov::save(const fs::path& path)
             auto grayscaleImg = encode(grayscaleID[j]);
             auto depthmapImg = encode(depthmapID[j]);
 
-            std::cout << "Encoded:\n" << grayscaleImg << std::endl;
-
             success &= cv::imwrite(grayscalePath.string(), grayscaleImg, compression_params);
             success &= cv::imwrite(depthmapPath.string(),  depthmapImg,  compression_params);
         }
