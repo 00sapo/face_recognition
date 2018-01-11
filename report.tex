@@ -1,185 +1,198 @@
 %! TEX program = xelatex
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Journal Article
-	% LaTeX Template
+% LaTeX Template
 % Version 1.4 (15/5/16)
-	%
-	% This template has been downloaded from:
-	% http://www.LaTeXTemplates.com
-	%
-	% Original author:
-	% Frits Wenneker (http://www.howtotex.com) with extensive modifications by
+%
+% This template has been downloaded from:
+% http://www.LaTeXTemplates.com
+%
+% Original author:
+% Frits Wenneker (http://www.howtotex.com) with extensive modifications by
 % Vel (vel@LaTeXTemplates.com)
-	%
-	% License:
-	% CC BY-NC-SA 3.0 (http://creativecommons.org/licenses/by-nc-sa/3.0/)
-	%
-	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-	%----------------------------------------------------------------------------------------
-	%	PACKAGES AND OTHER DOCUMENT CONFIGURATIONS
-	%----------------------------------------------------------------------------------------
-
-	\documentclass[twoside,twocolumn]{article}
-
-	\usepackage{blindtext} % Package to generate dummy text throughout this template
-
-	\usepackage[sc]{mathpazo} % Use the Palatino font
-	\usepackage[T1]{fontenc} % Use 8-bit encoding that has 256 glyphs
-	\linespread{1.05} % Line spacing - Palatino needs more space between lines
-	\usepackage{microtype} % Slightly tweak font spacing for aesthetics
-
-	\usepackage[english]{babel} % Language hyphenation and typographical rules
-
-	\usepackage[hmarginratio=1:1,top=32mm,columnsep=20pt]{geometry} % Document margins
-	\usepackage[hang, small,labelfont=bf,up,textfont=it,up]{caption} % Custom captions under/above floats in tables or figures
-	\usepackage{booktabs} % Horizontal rules in tables
-
-	\usepackage{lettrine} % The lettrine is the first enlarged letter at the beginning of the text
-
-	\usepackage{enumitem} % Customized lists
-	\setlist[itemize]{noitemsep} % Make itemize lists more compact
-
-	\usepackage{abstract} % Allows abstract customization
-	\renewcommand{\abstractnamefont}{\normalfont\bfseries} % Set the "Abstract" text to bold
-	\renewcommand{\abstracttextfont}{\normalfont\small\itshape} % Set the abstract itself to small italic text
-
-	\usepackage{titlesec} % Allows customization of titles
-	\renewcommand\thesection{\Roman{section}} % Roman numerals for the sections
-	\renewcommand\thesubsection{\roman{subsection}} % roman numerals for subsections
-	\titleformat{\section}[block]{\large\scshape\centering}{\thesection.}{1em}{} % Change the look of the section titles
-	\titleformat{\subsection}[block]{\large}{\thesubsection.}{1em}{} % Change the look of the section titles
-
-	\usepackage{fancyhdr} % Headers and footers
-	\pagestyle{fancy} % All pages have headers and footers
-	\fancyhead{} % Blank out the default header
-	\fancyfoot{} % Blank out the default footer
-	\fancyhead[C]{Running title $\bullet$ May 2016 $\bullet$ Vol. XXI, No. 1} % Custom header text
-	\fancyfoot[RO,LE]{\thepage} % Custom footer text
-
-	\usepackage{titling} % Customizing the title section
-
-	\usepackage{hyperref} % For hyperlinks in the PDF
-
-	%----------------------------------------------------------------------------------------
-	%	TITLE SECTION
-	%----------------------------------------------------------------------------------------
-
-	\setlength{\droptitle}{-4\baselineskip} % Move the title up
-
-	\pretitle{\begin{center}\Huge\bfseries} % Article title formatting
-	\posttitle{\end{center}} % Article title closing formatting
-	\title{Face recognition through RGB-D images and matrices of SVMs} % Article title
-	\author{%
-		\textsc{Federico Simonetta}\thanks{Ingegneria Informatica LM, matricola 1129912} \\[1ex] % Your name
-		\normalsize \href{mailto:simonettaf@dei.unipd.it}{simonettaf@dei.unipd.it} % Your email address
-		\and % Uncomment if 2 authors are required, duplicate these 4 lines if more
-		\textsc{Alberto Cenzato}\thanks{Informatica LM, matricola xxxxxx} \\[1ex] % Your name
-		\normalsize \href{mailto:john@smith.com}{john@smith.com} % Your email address
-		%\textsc{Jane Smith}\thanks{Corresponding author} \\[1ex] % Second author's name
-		%\normalsize University of Utah \\ % Second author's institution
-		%\normalsize \href{mailto:jane@smith.com}{jane@smith.com} % Second author's email address
-	}
-	\date{\today} % Leave empty to omit a date
-	\renewcommand{\maketitlehookd}{%
-		\begin{abstract}
-			\noindent We tried to reimplement the algorithm
-			described in [....]. We found that their results are
-			reproducible only with large datasets and that with smaller dataset, the SVM models have very low precision results.
-		\end{abstract}
-	}
-
-	%----------------------------------------------------------------------------------------
-
-	\begin{document}
-
-	% Print the title
-	\maketitle
-
-	%----------------------------------------------------------------------------------------
-	%	ARTICLE CONTENTS
-	%----------------------------------------------------------------------------------------
-
-	\section{Introduction}
-
-	\lettrine[nindent=0em,lines=3]{L} orem ipsum dolor sit amet, consectetur adipiscing elit.
-	\blindtext % Dummy text
-
-	\blindtext % Dummy text
-
-	%------------------------------------------------
-
-	\section{Methods}
-
-	Maecenas sed ultricies felis. Sed imperdiet dictum arcu a egestas.
-	\begin{itemize}
-		\item Donec dolor arcu, rutrum id molestie in, viverra sed diam
-		\item Curabitur feugiat
-		\item turpis sed auctor facilisis
-		\item arcu eros accumsan lorem, at posuere mi diam sit amet tortor
-		\item Fusce fermentum, mi sit amet euismod rutrum
-		\item sem lorem molestie diam, iaculis aliquet sapien tortor non nisi
-		\item Pellentesque bibendum pretium aliquet
-	\end{itemize}
-	\blindtext % Dummy text
-
-	Text requiring further explanation\footnote{Example footnote}.
-
-	%------------------------------------------------
-
-	\section{Results}
-
-	\begin{table}
-		\caption{Example table}
-		\centering
-		\begin{tabular}{llr}
-			\toprule
-			\multicolumn{2}{c}{Name} \\
-			\cmidrule(r){1-2}
-			First name & Last Name & Grade \\
-			\midrule
-			John & Doe & $7.5$ \\
-			Richard & Miles & $2$ \\
-			\bottomrule
-		\end{tabular}
-	\end{table}
-
-	\blindtext % Dummy text
-
-	\begin{equation}
-		\label{eq:emc}
-		e = mc^2
-	\end{equation}
-
-	\blindtext % Dummy text
-
-	%------------------------------------------------
-
-	\section{Discussion}
-
-	\subsection{Subsection One}
-
-	A statement requiring citation \cite{Figueredo:2009dg}.
-	\blindtext % Dummy text
-
-	\subsection{Subsection Two}
-
-	\blindtext % Dummy text
-
-	%----------------------------------------------------------------------------------------
-	%	REFERENCE LIST
-	%----------------------------------------------------------------------------------------
-
-	\begin{thebibliography}{99} % Bibliography - this is intentionally simple in this template
-
-		\bibitem[Figueredo and Wolf, 2009]{Figueredo:2009dg}
-		Figueredo, A.~J. and Wolf, P. S.~A. (2009).
-		\newblock Assortative pairing and life history strategy - a cross-cultural
-		study.
-		\newblock {\em Human Nature}, 20:317--330.
-
-\end{thebibliography}
+%
+% License:
+% CC BY-NC-SA 3.0 (http://creativecommons.org/licenses/by-nc-sa/3.0/)
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %----------------------------------------------------------------------------------------
+%	PACKAGES AND OTHER DOCUMENT CONFIGURATIONS
+%----------------------------------------------------------------------------------------
+
+\documentclass[twoside,twocolumn]{article}
+
+\usepackage{blindtext} % Package to generate dummy text throughout this template
+
+\usepackage[sc]{mathpazo} % Use the Palatino font
+\usepackage[T1]{fontenc} % Use 8-bit encoding that has 256 glyphs
+\linespread{1.05} % Line spacing - Palatino needs more space between lines
+\usepackage{microtype} % Slightly tweak font spacing for aesthetics
+
+\usepackage[english]{babel} % Language hyphenation and typographical rules
+
+\usepackage[hmarginratio=1:1,top=32mm,columnsep=20pt]{geometry} % Document margins
+\usepackage[hang, small,labelfont=bf,up,textfont=it,up]{caption} % Custom captions under/above floats in tables or figures
+\usepackage{booktabs} % Horizontal rules in tables
+
+\usepackage{lettrine} % The lettrine is the first enlarged letter at the beginning of the text
+
+\usepackage{enumitem} % Customized lists
+\setlist[itemize]{noitemsep} % Make itemize lists more compact
+
+\usepackage{abstract} % Allows abstract customization
+\renewcommand{\abstractnamefont}{\normalfont\huge} % Set the "Abstract" text to bold
+\renewcommand{\abstracttextfont}{\normalfont\small\itshape} % Set the abstract itself to small italic text
+
+\usepackage{titlesec} % Allows customization of titles
+\renewcommand\thesection{\Roman{section}} % Roman numerals for the sections
+\renewcommand\thesubsection{\roman{subsection}} % roman numerals for subsections
+\titleformat{\section}[block]{\large\scshape\centering}{\thesection.}{1em}{} % Change the look of the section titles
+\titleformat{\subsection}[block]{\large}{\thesubsection.}{1em}{} % Change the look of the section titles
+
+\usepackage{fancyhdr} % Headers and footers
+\fancyhead{} % Blank out the default header
+\fancyfoot{} % Blank out the default footer
+\fancyfoot[RO,LE]{\thepage} % Custom footer text
+
+\usepackage{titling} % Customizing the title section
+
+\usepackage{hyperref} % For hyperlinks in the PDF
+\usepackage[bibstyle=numeric,citestyle=authoryear,backend=biber,natbib=true,maxcitenames=2]{biblatex}
+
+
+\newrobustcmd*{\parentexttrack}[1]{%
+	\begingroup
+	\blx@blxinit
+	\blx@setsfcodes
+	\blx@bibopenparen#1\blx@bibcloseparen
+\endgroup}
+
+\AtEveryCite{%
+	\let\parentext=\parentexttrack%
+	\let\bibopenparen=\bibopenbracket%
+\let\bibcloseparen=\bibclosebracket}
+\addbibresource{bibliography.bib}
+
+%----------------------------------------------------------------------------------------
+%	TITLE SECTION
+%----------------------------------------------------------------------------------------
+
+\setlength{\droptitle}{-4\baselineskip} % Move the title up
+
+\title{Face recognition through RGB-D images and matrices of SVMs} % Article title
+\author{%
+	\textsc{Federico Simonetta}\thanks{Ingegneria Informatica LM, matricola 1129912} \\[1ex] % Your name
+	\normalsize \href{mailto:simonettaf@dei.unipd.it}{simonettaf@dei.unipd.it} % Your email address
+	\and % Uncomment if 2 authors are required, duplicate these 4 lines if more
+	\textsc{Alberto Cenzato}\thanks{Informatica LM, matricola xxxxxx} \\[1ex] % Your name
+	\normalsize \href{mailto:john@smith.com}{john@smith.com} % Your email address
+}
+\date{\today} % Leave empty to omit a date
+\renewcommand{\maketitlehookd}{%
+	\begin{abstract}
+		\noindent We tried to reimplement the algorithm described in
+		\citep{Hayat2016}. We found that their results are reproducible
+		with large datasets and that with small dataset, the SVM models
+		have very low precision.  We optimized the algorithm for two
+		datasets of different size and tried several different
+		preprocessing tweaks and decision algorithms. Lastly, we states
+		that the biggest contributes to the good training of the SVMs
+		are given by the sizes and the noiseness of the dataset.
+	\end{abstract}
+}
+
+
+\begin{document}
+
+% Print the title
+\Huge
+\bfseries
+\maketitle
+\mdseries
+\normalsize
+
+\section{Introduction}
+
+\lettrine[nindent=0em,lines=3]{I}n \citep{Hayat2016} an algorithm for face
+recognition based on RGB-D image is given. RGB-D images are a state-of-the-art
+scene representation paradigm through wich a 3D scene is described. Compared to
+classical RGB images, the RGB-D paradigm adds the depth information that gives
+the chance to study images in a three-dimensional space. In their paper, Hayat
+et al. show that the depth information can really raise precision of face
+recognition algorithms.
+\\
+We tried to reproduce their results using a small dataset consisting of 338
+images of 26 different persons. Because of the very poor results, we tried to
+train the model with a new dataset of 20 different peoples in 24 sequences for
+a total of 15.678 \citep{Fanelli2013}. In \citep{Hayat2016}, authors used the
+second of these datasets, merged with other two datasets for a total of more
+than 35.000 images.  \\ Our results let us think that this algorithm needs a
+very huge dataset for training, and, most of all, it needs a lot of different
+people.
+
+\section{Algorithm description}
+The algorithm is based on a 2 steps preprocessing and on big matrice of SVMs.
+
+\subsection{Background removal}
+First step in preprocessing is the background removal. In \cite{Hayat2016},
+they used a simple \textit{k-means} clustering procedure on depth images and
+used the nearest cluster to filter out pixels of the RGB images.
+\\
+In the second dataset we used, this was already done on depth images, so we
+have been able to skip this step.
+\\
+In the first dataset, instead, images were a bit noisy so that, forwarded by
+our inital poor results, we tried to optimize this stage.
+
+\subsubsection{Face detection first}
+The first optimization was to introduce a face-detection check to remove
+segment background only near the face. We used the Haar Cascades classifiers
+provided by OpenCV\footnote{For a presentation of the method see
+\href{https://docs.opencv.org/3.3.0/d7/d8b/tutorial_py_face_detection.html}{https://docs.opencv.org/3.3.0/d7/d8b/tutorial\_py\_face\_detection.html}}
+and based on Haar features method proposed by \citep{ViolaJones}.
+\\
+If no face were detected, a fixed threshold segmentation was performed.
+This algorithm allowed to better remove noisy objects near the face of
+the person.
+
+\subsubsection{Outlier removal}
+We also introduced a step to remove outliers so that \textit{k-means} was
+less disturbed. The process was based on OpenCV connected components
+algorithms performed on a boolean depth map. Only the connected component
+with the maximum area was considered: it was approximated with a rectangle
+everything out of the rectangle was discarded.
+
+\subsubsection{Dynamic segmentation with depth histograms}
+We also developed an algorithm that was able to dynamically segment depth
+images with very good precision traded off against very long computation times.
+\\
+To evaluate this new algorithm we gave a judgment of the segmentation
+quality on all the 338 images of the first dataset. Jugments were given
+with boolean values in reference to goodness of the segmentation of the main
+object represented in the pictures (in this case a person).
+\\
+Results gave 92.3\% of precision. Anyway, the longer computational time was not
+worth of the precision improvement (only 2\% more than the face-detection-first
+algorithm). However, this could be an improvement if very differents images
+are used.
+\\
+The algorithm was based on a histogram computation of depth values. It looked
+for the most frequent value and tried to estimate the range containing the hill
+of the maximum. If no face was detected in this range it reperform on the
+second most frequent value and so on. Estimation of the range was made
+analyzing second derivative and using fixed thresholds. Maybe the most frequent
+value could be replaced with the most large range, or the most wide area in a
+range.
+
+\section{Face pose estimation and face cropping}
+In \cite{Hayat2016}, authors used the algorithm proposed in \cite{Fanelli2011}
+to compute a face detection and pose estimation.
+\\
+We used the same algorithm in the same way. However we choosed to change a bit
+the parameters proposed in \cite{Hayat2016} for face cropping.
+
+
+\printbibliography
 
 \end{document}

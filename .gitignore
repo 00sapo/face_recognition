@@ -71,3 +71,19 @@ Thumbs.db
 *.exe
 
 
+
+*.aux
+
+*.bbl
+
+*.bcf
+
+*.blg
+
+*.log
+
+*.out
+
+*.pdf
+
+*.xml
