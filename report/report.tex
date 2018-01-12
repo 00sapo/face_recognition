@@ -21,19 +21,19 @@
 %	PACKAGES AND OTHER DOCUMENT CONFIGURATIONS
 %----------------------------------------------------------------------------------------
 
-\documentclass[twoside,twocolumn]{article}
+\documentclass[twocolumn]{article}
+% \documentclass{article}
 
 \usepackage{blindtext} % Package to generate dummy text throughout this template
 
-\usepackage[sc]{mathpazo} % Use the Palatino font
 \usepackage[T1]{fontenc} % Use 8-bit encoding that has 256 glyphs
-\linespread{1.05} % Line spacing - Palatino needs more space between lines
+% \linespread{1.15} % Line spacing - Palatino needs more space between lines
 \usepackage{microtype} % Slightly tweak font spacing for aesthetics
 
 \usepackage[english]{babel} % Language hyphenation and typographical rules
 
-\usepackage[hmarginratio=1:1,top=32mm,columnsep=20pt]{geometry} % Document margins
-\usepackage[hang, small,labelfont=bf,up,textfont=it,up]{caption} % Custom captions under/above floats in tables or figures
+% \usepackage[hmarginratio=1:1,top=32mm,columnsep=20pt]{geometry} % Document margins
+% \usepackage[hang, small,labelfont=bf,up,textfont=it,up]{caption} % Custom captions under/above floats in tables or figures
 \usepackage{booktabs} % Horizontal rules in tables
 
 \usepackage{lettrine} % The lettrine is the first enlarged letter at the beginning of the text
@@ -46,10 +46,10 @@
 \renewcommand{\abstracttextfont}{\normalfont\small\itshape} % Set the abstract itself to small italic text
 
 \usepackage{titlesec} % Allows customization of titles
-\renewcommand\thesection{\Roman{section}} % Roman numerals for the sections
-\renewcommand\thesubsection{\roman{subsection}} % roman numerals for subsections
-\titleformat{\section}[block]{\large\scshape\centering}{\thesection.}{1em}{} % Change the look of the section titles
-\titleformat{\subsection}[block]{\large}{\thesubsection.}{1em}{} % Change the look of the section titles
+% \renewcommand\thesubsection{\Roman{subsection}} % roman numerals for subsections
+\titleformat{\section}[block]{\Large\scshape\centering}{\thesection}{1em}{} % Change the look of the section titles
+% \titleformat{\subsection}[block]{\large}{\thesubsection}{1em}{} % Change the look of the section titles
+% \titleformat{\subsubsection}[block]{\large}{\thesubsubsection}{1em}{} % Change the look of the section titles
 
 \usepackage{fancyhdr} % Headers and footers
 \fancyhead{} % Blank out the default header
@@ -115,7 +115,7 @@
 
 \section{Introduction}
 
-\lettrine[nindent=0em,lines=3]{I}n \citep{Hayat2016} an algorithm for face
+\lettrine[nindent=0em,lines=2]{I}n \citep{Hayat2016} an algorithm for face
 recognition based on RGB-D image is given. RGB-D images are a state-of-the-art
 scene representation paradigm through wich a 3D scene is described. Compared to
 classical RGB images, the RGB-D paradigm adds the depth information that gives
@@ -136,6 +136,7 @@ people.
 The algorithm is based on a 2 steps preprocessing and on big matrice of SVMs.
 
 \subsection{Background removal}
+\label{sec:background}
 First step in preprocessing is the background removal. In \cite{Hayat2016},
 they used a simple \textit{k-means} clustering procedure on depth images and
 used the nearest cluster to filter out pixels of the RGB images.
@@ -188,6 +189,7 @@ enlarging the range. Maybe the most frequent value could be replaced with the
 most large range, or the most wide area in a range.
 
 \subsection{Face pose estimation and face cropping}
+\label{sec:cropping}
 In \citep{Hayat2016}, authors used the algorithm proposed in \citep{Fanelli2011}
 to compute a face detection and pose estimation.
 \\
@@ -221,13 +223,14 @@ $$y_t = y_t + (\beta \phi +\gamma \psi)$$
 
 where $\phi$ and $\psi$ are the \textit{roll} and \textit{yaw} angles returned
 by the pose estimation of which in \citep{Fanelli2011}, while $\beta$ and
-$\gamma$ are parameters setted to $\frac{5}{8}$.
+$\gamma$ are parameters setted to $5/8$.
 \\
 We instead choosed to [FILL IN] ------------------------------------
 -------------------------------------------------------------------
 \\
 
 \subsection{Image sets representation}
+\label{sec:covariances}
 Next steps expected to clusterize pose estimation converted from Euler angles to
 rotation matrix and to represent each cluster of each person with the covariance
 matrix described below.
@@ -237,16 +240,16 @@ matrix; instead, we clusterized just those Euler angles.
 \\
 \\
 After having divided poses informations through \textit{k-means} in $c$
-clusters (with $c=3$), we ended up with $2xc$ sets of images: $c$ sets of RGB
+clusters (with $c=3$), we ended up with $2\times c$ sets of images: $c$ sets of RGB
 images and $c$ sets of depth images. Next, the algorithm execute these steps
 for each set:
 \begin{itemize}
-	\item divide each cropped image $j$ in $4x4$ non overlapping and equally
+	\item divide each cropped image $j$ in $4\times 4$ non overlapping and equally
 		spaced distinct blocks
 	\item for each block, compute the LBP representation
 	\item compute the difference $y(k, j)$ of each $k$-th LBP vector from
 		its own mean
-	\item compute a $16x16$ covariance matrix by summing up all products
+	\item compute a $16\times16$ covariance matrix by summing up all products
 		between the standard deviations; in formula:
 
 		$$
@@ -259,25 +262,26 @@ for each set:
 \end{itemize}
 Authors of the proposed paper say that this approach to image set representation
 is really effective and that, compared to previous usage of covariance based set
-representation \citep{Dai2012}, they overcame some issues dued to a $400x400$
+representation \citep{Dai2012}, they overcame some issues dued to a $400\times 400$
 very huge matrix covariance.
 
 \subsection{SVM training and prediction}
+\label{sec:training}
 \cite{Hayat2016} is not very clear in the algorithm used to train
 the SVMs. We argued the following:
 \begin{itemize}
 	\item they created a matrix of SVMs with a row for each different person
-		and $2xc$ colums for each person
+		and $2\times c$ colums for each person
 	\item every covariance matrix is associated to a SVM
 	\item every SVM is trained with only one item labeled $1$ and all other
 		items labeled $-1$
-	\item every SVM is queried with a covariance $16x16$ matrix representing
+	\item every SVM is queried with a covariance $16\times 16$ matrix representing
 		a query RGB-D image set
 \end{itemize}
-Authors merged the predictions of all the $2xnxc$ SVMs ($n$ is the number of
+Authors merged the predictions of all the $2\times n \times c$ SVMs ($n$ is the number of
 identities) using the following strategy:
 \begin{itemize}
-	\item for each of the $2xc$ SVMs of the person $i$ that classify the
+	\item for each of the $2\times c$ SVMs of the person $i$ that classify the
 		query set as being the person $i$, person $i$ earn a vote
 	\item the identity choosed is the one with the maximum number of votes
 	\item if more than one identity has the maximum number of votes, the
@@ -286,7 +290,89 @@ identities) using the following strategy:
 		it is classified as "unknown"
 \end{itemize}
 
+We followed the same strategy. To train the SVMs we used the default grid
+provided by OpenCV with logstep. We evaluated each combination of parameters of
+each SVM with F-measure, so that only one true positive item existed. We used
+the mean of the parameters that performed best. We have also verified that the
+mean performed good as well with reference to the F-measure.
+\\
+The proposed paper did not specify any particular training strategy. Because of
+this, we tried three different algorithms:
+\begin{itemize}
+	\item a simple training in which all covariance matrixes but one had
+		negative labels, as described above
+	\item a training in which all SVMs of the same correct identity had
+		positive label
+	\item a training (only on the first dataset) in which the covariance
+		matrix of the correct identity but of different poses were
+		removed from the trainig set
+	\item \textit{leave-one-out} --------- ma era sbagliata perché non
+		ricreavamo le svm e i risultati di ciascun training non
+		venivano usati, riproviamo ----------
+\end{itemize}
+\\
+The strategy to merge results from all the $2 \times n \times c$ SVMs was kept
+the same too, but we introduced a rule to achieve a better recognition of
+"unknown" faces: if more than $t$ SVMs had the maximum number of votes, the
+face was forced to be "unknown". $t$ is a threshold that we setted to $4$.
+\\
+The type of SVMs tested was the only one proposed by \citep{Hayat2016}, that
+was based on the following Stein Kernel:
+$$
+k(X, Y) = e^{\sigma S(X,Y)}
+$$
+Where
+$$
+S(X, Y) = \log\det\left(\frac{X + Y}{2}\right)-\frac{1}{2} \log \det(X\times Y)
+$$
+This is similar to the RBF kernel function and it accepts the same $\gamma$
+parameter. Hence, SVMs were trained looking for the two optimal parameters
+$\gamma$ and $C$.
 
+\section{Datasets}
+Our initial aim was to adapt the algorithm by \citep{Hayat2016} on a small dataset
+containing 338 images of 26 different persons. This dataset contained:
+\begin{itemize}
+	\item frontal faces at 1 meter from the sensor
+	\item frontal faces at 2 meter from the sensor
+	\item non frontal faces at 1 meter from the sensor
+	\item frontal faces at 1 meter from the sensor with different expressions
+	\item different lighting
+	\item different backgound scenes
+\end{itemize}
+
+The very poor results that we obtained on this dataset forwarded us to
+implement all tweaks described in \ref{sec:background}, \ref{sec:cropping},
+\ref{sec:training}. Anyway, results did not agree with the ones of the paper.
+We can state with a reasonable certainty that the dataset was too small for
+training the model.
+\\
+Therefore, we tested the algorithm on a new dataset, containing almost half of
+the images of the original paper \citep{Fanelli2013}, with more than 15.000
+images of 20 different persons.
+
+\section{Experiments}
+With the first small dataset we made a lot of experiment without succeed.
+\\
+From the second dataset we randomly extracted 40 images from each person to be
+used as testing set and 5 persons were completely removed from the training
+set, to simulate the 'unknown' behaviour. Also, we used $1/3$ of the remaining
+training set as validation set to evaluate SVMs performance and to find the
+best hyper-parameters.
+
+\section{Results}
+
+\section{Conclusions}
+
+\section{Technical issues}
+During the developement we found a lots of issues dued to a beta stage of
+developement in OpenCV. Also, we began using both OpenCV for RGB images and
+Point Cloud Library for depth images. Since algorithm \citep{Fanelli2011}
+needed depth images represented in OpenCV \textit{Mat} objects, we needed to
+switch completely to OpenCV and to leave PCL.
+\\
+Major issues were found in the use of machine learning module of OpenCV, namely
+in kmeans algorithm and in loading and saving from file of custom kernel SVMs.
 
 \printbibliography
 

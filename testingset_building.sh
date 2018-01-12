@@ -30,7 +30,9 @@ fi
 mkdir testingset
 if [ $? -ne 0 ]
 then
-	exit 1
+	echo "moving testingset to testingset.back"
+	mv testingset testingset.back
+	mkdir testingset
 fi
 
 testingpath=$(realpath testingset)
@@ -58,10 +60,14 @@ done
 mkdir removed
 if [ $? -ne 0 ]
 then
-	exit 1
+	echo "moving removed to removed.back"
+	mv removed removed.back
+	mkdir removed
 fi
 echo "removing identities from training set..."
-for dir in `ls -d ??/ | shuf -n $NUMBER_OF_ID_TO_REMOVE`
+# this is for extended syntax
+shopt -s extglob
+for dir in `ls  !(03|15|18|05|21|02|22|07|*.*) -d | shuf -n $NUMBER_OF_ID_TO_REMOVE`
 do
 	mv $dir removed
 done

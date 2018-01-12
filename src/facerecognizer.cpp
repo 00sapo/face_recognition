@@ -121,7 +121,10 @@ string FaceRecognizer::predict(const vector<Mat>& grayscaleCovar, const vector<M
         }
     }
 
-    if(bestIndex == -1)
+    if (ties.size() > 4)
+        bestIndex = -1;
+
+    if (bestIndex == -1)
         return "unknown_ID";
 
     return labels[bestIndex];
@@ -312,6 +315,5 @@ vector<string> generateLabels(int numOfLabels)
 
     return identities;
 }
-
 
 } // namespace face

@@ -90,7 +90,7 @@ int main(int argc, char* argv[])
 
         Image4DLoader loader(queryPath, "frame_[0-9]*_(rgb|depth).*");
         Preprocessor preproc;
-        regex expr{ ".*/[0-9][0-9]" };        
+        regex expr{ ".*/[0-9][0-9]" };
         for (auto& x : directory_iterator(queryPath)) {
             string path = x.path().string();
             if (is_directory(path) && regex_match(path, expr)) {
@@ -100,8 +100,29 @@ int main(int argc, char* argv[])
                 vector<Mat> grayscale, depthmap;
                 covariance::getNormalizedCovariances(faces, SUBSETS, grayscale, depthmap);
 
-                std::cout << "Path " << x.path().filename() << " predicted ID: "
-                          << faceRec.predict(grayscale, depthmap) << std::endl;
+                string predicted = faceRec.predict(grayscale, depthmap);
+                if (predicted == "15")
+                    predicted = "03";
+                else if (predicted == "18")
+                    predicted = "05";
+                else if (predicted == "21")
+                    predicted = "02";
+                else if (predicted == "22")
+                    predicted = "07";
+
+                std::cout << "Path ";
+                if (x.path().filename() == "15")
+                    std::cout << "03";
+                else if (x.path().filename() == "18")
+                    std::cout << "05";
+                else if (x.path().filename() == "21")
+                    std::cout << "02";
+                else if (x.path().filename() == "22")
+                    std::cout << "07";
+                else
+                    std::cout << x.path().filename();
+                std::cout << " predicted ID: "
+                          << predicted << std::endl;
             }
         }
     }
