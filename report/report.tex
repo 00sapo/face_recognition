@@ -1,4 +1,5 @@
-%! TEX program = xelatex
+%! TEX program =      xelatex
+%! TEX bibliography = biber
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Journal Article
 % LaTeX Template
@@ -86,15 +87,15 @@
 	\normalsize \href{mailto:simonettaf@dei.unipd.it}{simonettaf@dei.unipd.it} % Your email address
 	\and % Uncomment if 2 authors are required, duplicate these 4 lines if more
 	\textsc{Alberto Cenzato}\thanks{Informatica LM, matricola xxxxxx} \\[1ex] % Your name
-	\normalsize \href{mailto:john@smith.com}{john@smith.com} % Your email address
+	\normalsize \href{mailto:john@smith.com}{--FILL IN ---} % Your email address
 }
 \date{\today} % Leave empty to omit a date
 \renewcommand{\maketitlehookd}{%
 	\begin{abstract}
 		\noindent We tried to reimplement the algorithm described in
 		\citep{Hayat2016}. We found that their results are reproducible
-		with large datasets and that with small dataset, the SVM models
-		have very low precision.  We optimized the algorithm for two
+		with large datasets while with small datasets the SVM models
+		have very low precision. We optimized the algorithm for two
 		datasets of different size and tried several different
 		preprocessing tweaks and decision algorithms. Lastly, we states
 		that the biggest contributes to the good training of the SVMs
@@ -119,7 +120,7 @@ recognition based on RGB-D image is given. RGB-D images are a state-of-the-art
 scene representation paradigm through wich a 3D scene is described. Compared to
 classical RGB images, the RGB-D paradigm adds the depth information that gives
 the chance to study images in a three-dimensional space. In their paper, Hayat
-et al. show that the depth information can really raise precision of face
+et al.\ show that the depth information can really raise precision of face
 recognition algorithms.
 \\
 We tried to reproduce their results using a small dataset consisting of 338
@@ -148,8 +149,8 @@ our inital poor results, we tried to optimize this stage.
 \subsubsection{Face detection first}
 The first optimization was to introduce a face-detection check to remove
 segment background only near the face. We used the Haar Cascades classifiers
-provided by OpenCV\footnote{For a presentation of the method see
-\href{https://docs.opencv.org/3.3.0/d7/d8b/tutorial_py_face_detection.html}{https://docs.opencv.org/3.3.0/d7/d8b/tutorial\_py\_face\_detection.html}}
+provided by OpenCV\footnote{For a presentation of the method see \href{https://docs.opencv.org/3.3.0/d7/d8b/tutorial_py_face_detection.html}{https://docs.opencv.org/3.3.0/d7/d8b/\\
+/tutorial\_py\_face\_detection.html}}
 and based on Haar features method proposed by \citep{ViolaJones}.
 \\
 If no face were detected, a fixed threshold segmentation was performed.
@@ -177,20 +178,114 @@ worth of the precision improvement (only 2\% more than the face-detection-first
 algorithm). However, this could be an improvement if very differents images
 are used.
 \\
-The algorithm was based on a histogram computation of depth values. It looked
-for the most frequent value and tried to estimate the range containing the hill
-of the maximum. If no face was detected in this range it reperform on the
-second most frequent value and so on. Estimation of the range was made
-analyzing second derivative and using fixed thresholds. Maybe the most frequent
-value could be replaced with the most large range, or the most wide area in a
-range.
+The algorithm was based on a histogram computation of depth values and on the
+assumption that it was made of "hills", like a lots of gaussians juxtaposed. It
+looked for the most frequent value trying to estimate the range containing the
+highest "hill". If no face was detected in this range it was re-executed on the
+second most high "hill" and so on. Estimation of the range was made analyzing
+the logarithm of the second derivative, using fixed thresholds and gradually
+enlarging the range. Maybe the most frequent value could be replaced with the
+most large range, or the most wide area in a range.
 
-\section{Face pose estimation and face cropping}
-In \cite{Hayat2016}, authors used the algorithm proposed in \cite{Fanelli2011}
+\subsection{Face pose estimation and face cropping}
+In \citep{Hayat2016}, authors used the algorithm proposed in \citep{Fanelli2011}
 to compute a face detection and pose estimation.
 \\
 We used the same algorithm in the same way. However we choosed to change a bit
-the parameters proposed in \cite{Hayat2016} for face cropping.
+the parameters proposed in \citep{Hayat2016} for face cropping.
+\\
+The basic idea is to look for the first non empty row from the top and for the
+first non empty column from the left in the segmented depth image, where
+\textit{non empty} means with at least $m$ pixels different from $0$. In the
+proposed paper and in our implementations $m = 5$.
+\\
+The point determined by these coordinates represents the \textit{top-left}
+corner of the cropping window.
+\\
+Next, the window hight is computed enlarging with respect to the distance of
+the head from the sensor). Authors proposed height equal to $100/z$, where $z$
+is the avarage distance of the head in meters. We instead used $120/z$.
+\\
+The cropping window width is computed by looking for the first non empty column
+starting from the right.
+\\
+Also, authors made some adaptation to the window \textit{top} edge to better
+fit the face position estimated through the algorithm. They also claimed that
+their face cropping algorithm, being based on depth values, could make use of a
+more precise pose estimation, ending with a more precise face cropping than the
+one realized by classical 2D algorithm.
+\\
+Namely, they recomputed the \textit{top} edge by the following formula:
+
+$$y_t = y_t + (\beta \phi +\gamma \psi)$$
+
+where $\phi$ and $\psi$ are the \textit{roll} and \textit{yaw} angles returned
+by the pose estimation of which in \citep{Fanelli2011}, while $\beta$ and
+$\gamma$ are parameters setted to $\frac{5}{8}$.
+\\
+We instead choosed to [FILL IN] ------------------------------------
+-------------------------------------------------------------------
+\\
+
+\subsection{Image sets representation}
+Next steps expected to clusterize pose estimation converted from Euler angles to
+rotation matrix and to represent each cluster of each person with the covariance
+matrix described below.
+\\
+We followed all of these steps, but we did not convert Euler angles to rotation
+matrix; instead, we clusterized just those Euler angles.
+\\
+\\
+After having divided poses informations through \textit{k-means} in $c$
+clusters (with $c=3$), we ended up with $2xc$ sets of images: $c$ sets of RGB
+images and $c$ sets of depth images. Next, the algorithm execute these steps
+for each set:
+\begin{itemize}
+	\item divide each cropped image $j$ in $4x4$ non overlapping and equally
+		spaced distinct blocks
+	\item for each block, compute the LBP representation
+	\item compute the difference $y(k, j)$ of each $k$-th LBP vector from
+		its own mean
+	\item compute a $16x16$ covariance matrix by summing up all products
+		between the standard deviations; in formula:
+
+		$$
+		C_{p, q} = \frac{1}{n} \sum_{i=1}^n y(p, i)y(q, i)
+		$$
+
+		where $i$ is the index of the image, $p$ and $q$ are
+		respectively the row and the column index of the covariance
+		matrix.
+\end{itemize}
+Authors of the proposed paper say that this approach to image set representation
+is really effective and that, compared to previous usage of covariance based set
+representation \citep{Dai2012}, they overcame some issues dued to a $400x400$
+very huge matrix covariance.
+
+\subsection{SVM training and prediction}
+\cite{Hayat2016} is not very clear in the algorithm used to train
+the SVMs. We argued the following:
+\begin{itemize}
+	\item they created a matrix of SVMs with a row for each different person
+		and $2xc$ colums for each person
+	\item every covariance matrix is associated to a SVM
+	\item every SVM is trained with only one item labeled $1$ and all other
+		items labeled $-1$
+	\item every SVM is queried with a covariance $16x16$ matrix representing
+		a query RGB-D image set
+\end{itemize}
+Authors merged the predictions of all the $2xnxc$ SVMs ($n$ is the number of
+identities) using the following strategy:
+\begin{itemize}
+	\item for each of the $2xc$ SVMs of the person $i$ that classify the
+		query set as being the person $i$, person $i$ earn a vote
+	\item the identity choosed is the one with the maximum number of votes
+	\item if more than one identity has the maximum number of votes, the
+		one with the maximum distance from the hyper-plane is choosed
+	\item if no SVM classify the query covariance matrix with positive label,
+		it is classified as "unknown"
+\end{itemize}
+
 
 
 \printbibliography
