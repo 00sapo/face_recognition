@@ -6,7 +6,7 @@
 \definecolor{dei}{RGB}{209, 0, 86}
 
 \title{Face recognition through RGB-D images and matrices of SVMs} % Article title
-\subtitle{Stemmer STON by Melucci and Orio}
+\subtitle{Based on Hayat et al., 2016}
 \date{\today}
 \author{Federico Simonetta, matricola 1129912 \\[1ex] Albert Cenzato, matricola 0000000 }
 \setbeamercolor{title separator}{fg=dei}
@@ -26,44 +26,62 @@
 	\end{textblock*}
 }
 
+\setbeamertemplate{section in toc}{\textbullet\ \normalsize \inserttocsection \\}
+\setbeamertemplate{subsection in toc}{\-\hspace{2em}\textbullet\ \small \inserttocsubsection \\ }
 \begin{frame}{Overview}
+	\vspace*{6mm}
+	\tableofcontents[sections, subsections]
+\end{frame}
+
+\section{Hayat et al., 2016: \textit{An RGB–D based image set classification
+for robust face recognition from Kinect data}}
+\begin{frame}{Purpose of the algorithm}
 	\begin{itemize}
-		\item STON stemmer - the algorithm
-			\begin{itemize}
-				\item HMM review
-				\item STON stemmer characteristics
-			\end{itemize}
-		\item STON stemmer - the implementation
-			\begin{itemize}
-				\item Math and computability considerations
-				\item Code implementation and design patterns
-				\item Implementation issues
-			\end{itemize}
-		\item Evaluation
-			\begin{itemize}
-				\item Index with no stopwords lists and no stemmers
-				\item Use index for training the STON stemmer and for creating a stems table
-				\item Use the stems table created by the STON stemmer as input for a lookup stemmer
-				\item Retrieve runs
-				\item Evaluate results
-			\end{itemize}
-		\item Future Development
+		\item Purpose of the proposed algorithm is to recognize persons
+			given an image set of that person in different poses.
+		\item This is useful especially for face recognition in video
+			recording.
+		\item The algorithm take advantage of depth info.
 	\end{itemize}
-\end{frame}
-
-\section{STON stemmer - the algorithm}
-\begin{frame}{Hidden Markov Models review}
-
-	HMMs are a tool to describe systems through a finite discrete set of \textit{states} $X_i$ and a finite set of probabilities $a_{ij}$ to model the transition from state $X_i$ to state $X_j$ (like Markov Chains). We do not know in which \textit{state} the system is (it is "hidden"), but we know some other feature (called \textit{observed symbol} $Y_k$) that is linked to the actual \textit{state} by the \textit{emission probabilities} $b_{ik}$
 	\vspace*{-8mm}
-	\begin{figure}
-		\centering
-		\includegraphics[width=0.7\linewidth]{HiddenMarkovModel}
-		\label{fig:hiddenmarkovmodel}
-	\end{figure}
-
 
 \end{frame}
+\subsection{Preprocessing}
+\begin{frame}
+\end{frame}
+\subsection{Image sets representation}
+\begin{frame}
+\end{frame}
+\subsection{Training}
+\begin{frame}
+\end{frame}
+\section{Datasets}
+\section{Our implementation}
+\begin{frame}
+\end{frame}
+\subsection{Preprocessing Boost}
+\begin{frame}
+\end{frame}
+\subsection{Code implementation and design patterns}
+\begin{frame}
+\end{frame}
+\subsection{Implementation issues}
+\begin{frame}
+\end{frame}
+\section{Evaluation}
+\subsection{Description of the experiments}
+\begin{frame}
+\end{frame}
+\subsection{Results}
+\begin{frame}
+\end{frame}
+\subsection{Discussion and comparison}
+\begin{frame}
+\end{frame}
+\section{Future Development}
+\begin{frame}
+\end{frame}
 
-\section{Thank you for your kind attention}
+\section*{Thank you for your kind attention}
+
 \end{document}

@@ -119,21 +119,16 @@ int main(int argc, char* argv[])
 
                 string predicted = faceRec.predict(grayscale, depthmap);
 
-                std::cout << "Path ";
                 if (predicted == x.path().filename()) {
-                    std::cout << x.path().filename();
                     correct++;
                 } else if (predicted == idmap[std::stoi(x.path().filename())]) {
-                    std::cout << idmap[std::stoi(x.path().filename())];
                     correct++;
-                } else {
-                    std::cout << x.path().filename();
                 }
 
                 if (predicted == "unknown" && idmap[std::stoi(x.path().filename())] == "unknown")
                     correct_unknown++;
 
-                std::cout << " predicted ID: "
+                std::cout << "Path " << x.path().filename() << " predicted ID: "
                           << predicted << std::endl;
                 total_number_of_query++;
             }
