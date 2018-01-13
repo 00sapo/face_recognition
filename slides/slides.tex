@@ -41,14 +41,24 @@ for robust face recognition from Kinect data}}
 			given an image set of that person in different poses.
 		\item This is useful especially for face recognition in video
 			recording.
-		\item The algorithm take advantage of depth info.
+		\item The algorithm take advantage of depth info captured
+			through Kinect cameras.
 	\end{itemize}
 	\vspace*{-8mm}
 
 \end{frame}
 \subsection{Preprocessing}
-\begin{frame}
+\begin{frame}{Preprocessing}
+	\begin{itemize}
+		\item An important step is the image preprocessing
+		\item First of all, depth images let a simple \textit{kmeans}
+			algorithm being enough to background segmentation
+		\item Next, a precise cropping can be made, using precise pose
+			informations computed on depth images
+		\item Pose info are used to adjust cropping window sizes
+	\end{itemize}
 \end{frame}
+
 \subsection{Image sets representation}
 \begin{frame}
 \end{frame}
