@@ -45,7 +45,7 @@ public:
      * @return person label if the identity was in the training samples and is recognized,
      *         unknownIdentity otherwise
      */
-    std::string predict(const std::vector<cv::Mat>& grayscaleCovar, const std::vector<cv::Mat>& depthmapCovar) const;
+    std::string predict(const std::vector<cv::Mat>& grayscaleCovar, const std::vector<cv::Mat>& depthmapCovar, bool useRGB, bool useDepth) const;
 
     /**
      * @brief loads a pretrained model

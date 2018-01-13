@@ -23,6 +23,9 @@
 
 % \documentclass[twocolumn]{article}
 \documentclass{article}
+% allows for temporary adjustment of side margins
+\usepackage{chngpage}
+\usepackage{multirow}
 
 \usepackage{blindtext} % Package to generate dummy text throughout this template
 
@@ -383,6 +386,10 @@ matrixes and a bigger number of items that we can use to train the SVMs. Also,
 this is coherent with Hayat's statement according to which the covariance set
 representation is very effective.
 \\
+Also, we note that our results with only RGB or only D images are much lower
+han those claimed by the authors. We believe that in small datasets, the depth
+information is more representative than in big datasets.
+\\
 In the following table we show our results achieved on multiple executions of
 the experiment with different combinations of `unknown'-`known' identities.
 Results are in terms of
@@ -393,47 +400,24 @@ Results are in terms of
 	\item \textit{FP-unknown}: ratio between uncorrect recognition of
 		`unknown' persons and the total number of `unknown' persons
 \end{itemize}
+
+
 \begin{table}[]
-	\centering
-	\caption{Results with RGB and depth}
-	\label{tab:results-rgbd}
-	\begin{tabular}{|l|c|}
-		\hline
-		\bf Rank-1 & \bf FP-unknown \\ \hline
-		0.89	   & 0.8 \\ \hline
-		0.83	   & 0.8 \\ \hline
-		0.75	   & 0.3 \\ \hline
-		0.83	   & 0.6 \\ \hline
-		0.875      & 0.8 \\ \hline
-	\end{tabular}
-\end{table}
-\begin{table}[]
-	\centering
-	\caption{Results with RGB only}
-	\label{tab:results-rgb}
-	\begin{tabular}{|l|c|}
-		\hline
-		\bf Rank-1 & \bf FP-unknown \\ \hline
-		0.89	   & 0.8 \\ \hline
-		0.83	   & 0.8 \\ \hline
-		0.75	   & 0.3 \\ \hline
-		0.83	   & 0.6 \\ \hline
-		0.875      & 0.8 \\ \hline
-	\end{tabular}
-\end{table}
-\begin{table}[]
-	\centering
-	\caption{Results with depth only}
-	\label{tab:results-d}
-	\begin{tabular}{|l|c|}
-		\hline
-		\bf Rank-1 & \bf FP-unknown \\ \hline
-		0.89	   & 0.8 \\ \hline
-		0.83	   & 0.8 \\ \hline
-		0.75	   & 0.3 \\ \hline
-		0.83	   & 0.6 \\ \hline
-		0.875      & 0.8 \\ \hline
-	\end{tabular}
+	\begin{adjustwidth}{-.75in}{-.75in}
+		\centering
+		\caption{Results}
+		\label{tab:results-rgbd}
+		\begin{tabular}{|l|l|c|l|c|l|c|}
+			\hline
+			\multirow{2}{*}{\bf Removed ids} & \multicolumn{2}{c|}{Using RGB-D images} &\multicolumn{2}{c|}{Using RGB images only} &\multicolumn{2}{c|}{Using D images only} \\ \cline{2-7}
+							 & \bf Rank-1 & \bf FP-unknown            & \bf Rank-1 & \bf FP-unknown              & \bf Rank-1 & \bf FP-unknown  \\ \hline
+			04, 06, 10, 11, 19               & 0.83	      & 0.4                       & 0.29       & 0.0                         & 0.33       & 0.4\\ \hline
+			06, 10, 19, 20, 24               & 0.87	      & 0.0                       & 0.33       & 0.0                         & 0.50       & 0.0\\ \hline
+			08, 09, 14, 17, 24               & 0.79	      & 0.4                       & 0.375      & 0.0                         & 0.33       & 0.2\\ \hline
+			01, 16, 17, 19, 24               & 0.92	      & 0.2                       & 0.375      & 0.0                         & 0.42       & 0.2\\ \hline
+			01, 09, 12, 16, 19               & 0.83	      & 0.6                       & 0.25       & 0.0                         & 0.375      & 0.4\\ \hline
+		\end{tabular}
+	\end{adjustwidth}
 \end{table}
 
 \section{Technical issues}

@@ -69,25 +69,34 @@ void FaceRecognizer::train(const DatasetCov& trainingSet, const DatasetCov& vali
     trainSVMs(depthmapMatTr, depthmapMatVal, groundTruthDp, ImgType::depthmap); // depthmap  images training
 }
 
-string FaceRecognizer::predict(const vector<Mat>& grayscaleCovar, const vector<Mat>& depthmapCovar) const
+string FaceRecognizer::predict(const vector<Mat>& grayscaleCovar, const vector<Mat>& depthmapCovar, bool useRGB, bool useDepth) const
 {
     auto grayscaleData = formatDataForPrediction(grayscaleCovar);
     auto depthmapData = formatDataForPrediction(depthmapCovar);
 
+    if (!useRGB && !useDepth)
+        return "one between useRGB and useDepth must be true";
+
     // count votes for each identity
     vector<int> votes(N);
+    Mat row;
+    float prediction;
     int maxVotes = -1;
     for (auto i = 0; i < N; ++i) {
         int vote = 0;
         for (auto j = 0; j < c; ++j) {
-            auto row = grayscaleData.row(j);
-            auto prediction = grayscaleSVMs[i][j].predict(row);
-            if (prediction == 1)
-                ++vote;
-            row = depthmapData.row(j);
-            prediction = depthmapSVMs[i][j].predict(row);
-            if (prediction == 1)
-                ++vote;
+            if (useRGB) {
+                row = grayscaleData.row(j);
+                prediction = grayscaleSVMs[i][j].predict(row);
+                if (prediction == 1)
+                    ++vote;
+            }
+            if (useDepth) {
+                row = depthmapData.row(j);
+                prediction = depthmapSVMs[i][j].predict(row);
+                if (prediction == 1)
+                    ++vote;
+            }
         }
         if (vote > maxVotes)
             maxVotes = vote;
@@ -105,15 +114,20 @@ string FaceRecognizer::predict(const vector<Mat>& grayscaleCovar, const vector<M
     // pick the identity with maximum mean distance from the hyperplane
     auto maxDistance = std::numeric_limits<float>::min();
     int bestIndex = -1;
+    float dist;
     for (auto i : ties) {
         float distance = 0;
         for (auto j = 0; j < c; ++j) {
-            auto dist = grayscaleSVMs[i][j].getDistanceFromHyperplane(grayscaleData.row(j));
-            if (std::isnormal(dist))
-                distance += dist;
-            dist = depthmapSVMs[i][j].getDistanceFromHyperplane(depthmapData.row(j));
-            if (std::isnormal(dist))
-                distance += dist;
+            if (useRGB) {
+                dist = grayscaleSVMs[i][j].getDistanceFromHyperplane(grayscaleData.row(j));
+                if (std::isnormal(dist))
+                    distance += dist;
+            }
+            if (useDepth) {
+                dist = depthmapSVMs[i][j].getDistanceFromHyperplane(depthmapData.row(j));
+                if (std::isnormal(dist))
+                    distance += dist;
+            }
         }
         if (distance > maxDistance) {
             maxDistance = distance;
@@ -121,7 +135,10 @@ string FaceRecognizer::predict(const vector<Mat>& grayscaleCovar, const vector<M
         }
     }
 
-    if (ties.size() > 2 * c)
+    int k = 2;
+    if (!(useRGB && useDepth))
+        k = 1;
+    if (ties.size() > k * c)
         bestIndex = -1;
 
     if (bestIndex == -1)

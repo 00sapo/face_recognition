@@ -19,7 +19,12 @@ fi
 bash ./source/testingset_building.sh ${dataset_path}
 cd build-debug
 ./FaceRecognition --saveTrainingset=../preprocessed_trainingset --saveValidationset=../preprocessed_validationset --dataset=../dataset/hpdb
-./FaceRecognition --train --loadTrainingset=../preprocessed_trainingset/ --loadValidationset=../preprocessed_validationset/ --query=../testingset/ --idmap=../source/map.txt --unknown=../removed_id.txt
+echo "---------- TESTING WITH RGB AND DEPTH --------------"
+./FaceRecognition --train --useRGB --useDepth --loadTrainingset=../preprocessed_trainingset/ --loadValidationset=../preprocessed_validationset/ --query=../testingset/ --idmap=../source/map.txt --unknown=../removed_id.txt
+echo "------------ TESTING WITH RGB ONLY -----------------"
+./FaceRecognition --train --useRGB --loadTrainingset=../preprocessed_trainingset/ --loadValidationset=../preprocessed_validationset/ --query=../testingset/ --idmap=../source/map.txt --unknown=../removed_id.txt
+echo "----------- TESTING WITH DEPTH ONLY ----------------"
+./FaceRecognition --train --useDepth --loadTrainingset=../preprocessed_trainingset/ --loadValidationset=../preprocessed_validationset/ --query=../testingset/ --idmap=../source/map.txt --unknown=../removed_id.txt
 
 cd ..
 rm -r preprocessed_trainingset preprocessed_validationset
@@ -27,4 +32,6 @@ cp -rn ${dataset_path}/removed/* ${dataset_path}/
 cp -rn testingset/* ${dataset_path}/
 rm -r testingset
 rm -r ${dataset_path}/removed
+echo "Removed ids: "
+cat removed_id.txt
 rm removed_id.txt

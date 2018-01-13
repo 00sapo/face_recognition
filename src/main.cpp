@@ -32,6 +32,8 @@ const string OPTION_LOAD = "loadTrained";
 const string OPTION_MAP = "idmap";
 const string OPTION_UNKNOWN = "unknown";
 const string OPTION_TRAIN = "train";
+const string OPTION_USE_RGB = "useRGB";
+const string OPTION_USE_DEPTH = "useDepth";
 
 const int SUBSETS = 3;
 
@@ -55,6 +57,10 @@ const cv::String KEYS = "{ " + OPTION_HELP + " | | print this message }"
                     "{ "
     + OPTION_TRAIN + " | | if you want train and test }"
                      "{ "
+    + OPTION_USE_DEPTH + " | | if you want use depth images for prediction }"
+                         "{ "
+    + OPTION_USE_RGB + " | | if you want use rgb images for prediction }"
+                       "{ "
     + OPTION_MAP + " | | path to the id map file path to trained svms }"
                    "{ "
     + OPTION_UNKNOWN + " | | path the unknown file (one id per line) }";
@@ -111,7 +117,7 @@ int main(int argc, char* argv[])
         Preprocessor preproc;
         regex expr{ ".*/[0-9][0-9]" };
         int correct = 0;
-        int correct_unknown = 0;
+        int uncorrect_unknown = 0;
         int total_number_of_query = 0;
         for (auto& x : directory_iterator(queryPath)) {
             string path = x.path().string();
@@ -122,7 +128,9 @@ int main(int argc, char* argv[])
                 vector<Mat> grayscale, depthmap;
                 covariance::getNormalizedCovariances(faces, SUBSETS, grayscale, depthmap);
 
-                string predicted = faceRec.predict(grayscale, depthmap);
+                bool useRGB = parser.has(OPTION_USE_RGB);
+                bool useDepth = parser.has(OPTION_USE_DEPTH);
+                string predicted = faceRec.predict(grayscale, depthmap, useRGB, useDepth);
 
                 if (predicted == x.path().filename()) {
                     correct++;
@@ -130,8 +138,8 @@ int main(int argc, char* argv[])
                     correct++;
                 }
 
-                if (predicted == "unknown" && idmap[std::stoi(x.path().filename())] == "unknown")
-                    correct_unknown++;
+                if (predicted != "unknown" && idmap[std::stoi(x.path().filename())] == "unknown")
+                    uncorrect_unknown++;
 
                 std::cout << "Path " << x.path().filename() << " predicted ID: "
                           << predicted << std::endl;
@@ -140,7 +148,7 @@ int main(int argc, char* argv[])
         }
         std::cout << "-------------------------" << std::endl;
         std::cout << "Rank-1: " << (float)correct / total_number_of_query << std::endl;
-        std::cout << "FP-precision: " << (float)correct_unknown / total_unknown_ids << std::endl;
+        std::cout << "FP-unknown: " << (float)uncorrect_unknown / total_unknown_ids << std::endl;
     }
 
     //testFunctions();
