@@ -121,7 +121,7 @@ string FaceRecognizer::predict(const vector<Mat>& grayscaleCovar, const vector<M
         }
     }
 
-    if (ties.size() > 4)
+    if (ties.size() > 2 * c)
         bestIndex = -1;
 
     if (bestIndex == -1)

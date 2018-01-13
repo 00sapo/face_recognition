@@ -60,10 +60,71 @@ for robust face recognition from Kinect data}}
 \end{frame}
 
 \subsection{Image sets representation}
-\begin{frame}
+\begin{frame}{Image sets representation}
+	\begin{itemize}
+		\item Authors use faces poses to discover 3 different clusters
+			for each original image set
+		\item They represent each of these clusters with a $16 \times
+			16$ covariance matrix computed through LBP features
+			vectors
+			\begin{itemize}
+				\item Each image is subdivided in 16 blocks of
+					equal size through a $4 \times 4$ grid
+				\item Over each block is computed the LBP
+					feature vector
+				\item Each entry of the covariance is computed
+					on all the LBP of the same block of the
+					person in the same pose:
+					$$
+					C_{p, q} = \frac{1}{n} \sum_{i=1}^n
+					y(p, i)y(q, i)
+					$$
+					where $y(k, j)$ is the difference of
+					each $k$-th LBP vector from
+					its own mean
+
+			\end{itemize}
+	\end{itemize}
 \end{frame}
-\subsection{Training}
-\begin{frame}
+\subsection{SVMs training and prediction}
+\begin{frame}{Training}
+	\begin{itemize}
+		\item Atuhors are not very clear in the training description
+		\item They used Stein function as kernel for a vector of SVMs
+		\item Each SVM is charged of recognizing one person in one of
+			the three poses
+		\item For each person in each pose, two SVMs exist, one for RGB
+			images and one for depth images
+		\item Stein kernel is defined by this equation:
+			$$
+			k(X, Y) = e^{\sigma S(X,Y)}
+			$$
+			where
+			$$
+			S(X, Y) = \log\det\left(\frac{X +
+			Y}{2}\right)-\frac{1}{2} \log \det(X\times Y)
+			$$
+		\item They also tested \textit{k-fold} testing showing that
+			results decrease increasing $k$
+
+	\end{itemize}
+\end{frame}
+
+\begin{frame}{Prediction}
+	\begin{itemize}
+		\item A query is composed by a set of images that are
+			preprocessed and clusterized in three sets based on
+			poses
+		\item On each subset the covariance matrix is computed and is
+			given in input to each SVM model
+		\item Each of the three covariance matrixes of the query will
+			receive $6 \times n$ votes, where $n$ is the umber of
+			SVMs training sets
+		\item The one that will receive the maximum number ov votes
+			will be predicted as the recognized face
+		\item If no SVM will recognize it, it will be labeld as
+			`unknown'
+	\end{itemize}
 \end{frame}
 \section{Datasets}
 \section{Our implementation}

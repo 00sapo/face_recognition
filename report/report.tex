@@ -313,7 +313,8 @@ this, we tried three different algorithms:
 The strategy to merge results from all the $2 \times n \times c$ SVMs was kept
 the same too, but we introduced a rule to achieve a better recognition of
 "unknown" faces: if more than $t$ SVMs had the maximum number of votes, the
-face was forced to be "unknown". $t$ is a threshold that we setted to $4$.
+face was forced to be "unknown". $t$ is a threshold that we setted to $2 \times
+c$, that is the maximum number of votes that each person should receive.
 \\
 The type of SVMs tested was the only one proposed by \citep{Hayat2016}, that
 was based on the following Stein Kernel:
@@ -401,7 +402,8 @@ Results are in terms of
 		\bf Rank-1 & \bf FP-unknown \\ \hline
 		0.89	   & 0.8 \\ \hline
 		0.83	   & 0.8 \\ \hline
-		xxxx	   & xxxx \\ \hline
+		0.75	   & 0.3 \\ \hline
+		0.83	   & 0.6 \\ \hline
 	\end{tabular}
 \end{table}
 
