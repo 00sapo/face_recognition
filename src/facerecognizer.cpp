@@ -125,7 +125,7 @@ string FaceRecognizer::predict(const vector<Mat>& grayscaleCovar, const vector<M
         bestIndex = -1;
 
     if (bestIndex == -1)
-        return "unknown_ID";
+        return "unknown";
 
     return labels[bestIndex];
 }

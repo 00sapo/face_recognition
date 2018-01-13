@@ -2,6 +2,7 @@
 
 NUMBER_OF_FILES_PER_ID=40
 NUMBER_OF_ID_TO_REMOVE=5
+initial_dir = $(pwd)
 
 if [ "$1" == "-h" ] || [ -z $1 ]
 then
@@ -70,4 +71,5 @@ shopt -s extglob
 for dir in `ls  !(03|15|18|05|21|02|22|07|*.*) -d | shuf -n $NUMBER_OF_ID_TO_REMOVE`
 do
 	mv $dir removed
+	echo $dir >> $initial_dir}/removed_id.txt
 done

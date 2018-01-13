@@ -11,6 +11,7 @@
 #include "preprocessor.h"
 #include "test.h"
 #include <experimental/filesystem>
+#include <fstream>
 
 using namespace std::experimental::filesystem;
 using namespace boost;
@@ -28,6 +29,8 @@ const string OPTION_LOAD_DATASET_VAL = "loadValidationset";
 const string OPTION_QUERY = "query";
 const string OPTION_SAVE = "saveTrained";
 const string OPTION_LOAD = "loadTrained";
+const string OPTION_MAP = "idmap";
+const string OPTION_UNKNOWN = "unknown";
 
 const int SUBSETS = 3;
 
@@ -47,13 +50,18 @@ const cv::String KEYS = "{ " + OPTION_HELP + " | | print this message }"
                      "{ "
     + OPTION_SAVE + " | | path to store trained svms }"
                     "{ "
-    + OPTION_LOAD + " | | path to trained svms }";
+    + OPTION_LOAD + " | | path to trained svms }"
+                    "{ "
+    + OPTION_MAP + " | | path to the id map file path to trained svms }"
+                   "{ "
+    + OPTION_UNKNOWN + " | | path the unknown file (one id per line) }";
 
 void testFunctions();
 void loadAndPreprocess(const string& datasetPath, std::size_t covarianceSubsets, DatasetCov& trainingSet, DatasetCov& validationSet);
 bool datasetLoader(const cv::CommandLineParser& parser, DatasetCov& trainingSet, DatasetCov& validationSet);
 void testing(const FaceRecognizer& faceRec, const DatasetCov& testingset, const vector<string>& idTestingMap);
 void splitTrainValidation(const vector<Face>& dataset, vector<Face>& trainingSet, vector<Face>& validationSet);
+bool loadMap(const cv::CommandLineParser& parser, vector<std::string>& idmap, int& total_unknown_ids);
 
 int main(int argc, char* argv[])
 {
@@ -80,6 +88,12 @@ int main(int argc, char* argv[])
         faceRec.save(parser.get<string>(OPTION_SAVE));
     }
 
+    cout << "Loading MAP" << endl;
+    vector<string> idmap;
+    int total_unknown_ids = 0;
+    if (!loadMap(parser, idmap, total_unknown_ids))
+        return 1;
+
     cout << "Querying model..." << endl;
     if (parser.has(OPTION_QUERY)) {
         auto queryPath = parser.get<string>(OPTION_QUERY);
@@ -91,6 +105,9 @@ int main(int argc, char* argv[])
         Image4DLoader loader(queryPath, "frame_[0-9]*_(rgb|depth).*");
         Preprocessor preproc;
         regex expr{ ".*/[0-9][0-9]" };
+        int correct = 0;
+        int correct_unknown = 0;
+        int total_number_of_query = 0;
         for (auto& x : directory_iterator(queryPath)) {
             string path = x.path().string();
             if (is_directory(path) && regex_match(path, expr)) {
@@ -101,30 +118,29 @@ int main(int argc, char* argv[])
                 covariance::getNormalizedCovariances(faces, SUBSETS, grayscale, depthmap);
 
                 string predicted = faceRec.predict(grayscale, depthmap);
-                if (predicted == "15")
-                    predicted = "03";
-                else if (predicted == "18")
-                    predicted = "05";
-                else if (predicted == "21")
-                    predicted = "02";
-                else if (predicted == "22")
-                    predicted = "07";
 
                 std::cout << "Path ";
-                if (x.path().filename() == "15")
-                    std::cout << "03";
-                else if (x.path().filename() == "18")
-                    std::cout << "05";
-                else if (x.path().filename() == "21")
-                    std::cout << "02";
-                else if (x.path().filename() == "22")
-                    std::cout << "07";
-                else
+                if (predicted == x.path().filename()) {
                     std::cout << x.path().filename();
+                    correct++;
+                } else if (predicted == idmap[std::stoi(x.path().filename())]) {
+                    std::cout << idmap[std::stoi(x.path().filename())];
+                    correct++;
+                } else {
+                    std::cout << x.path().filename();
+                }
+
+                if (predicted == "unknown" && idmap[std::stoi(x.path().filename())] == "unknown")
+                    correct_unknown++;
+
                 std::cout << " predicted ID: "
                           << predicted << std::endl;
+                total_number_of_query++;
             }
         }
+        std::cout << "-------------------------" << std::endl;
+        std::cout << "Rank-1: " << (float)correct / total_number_of_query << std::endl;
+        std::cout << "FP-precision: " << (float)correct_unknown / total_unknown_ids << std::endl;
     }
 
     //testFunctions();
@@ -132,6 +148,55 @@ int main(int argc, char* argv[])
     return 0;
 }
 
+bool loadMap(const cv::CommandLineParser& parser, vector<string>& idmap, int& total_unknown_ids)
+{
+    // loading map
+    std::ifstream infile(parser.get<string>(OPTION_MAP));
+    std::string line;
+    int number_of_ids = 0;
+    // counting lines
+    while (std::getline(infile, line))
+        ++number_of_ids;
+    idmap = vector<string>(number_of_ids);
+    infile.clear();
+    infile.seekg(0, std::ios::beg);
+
+    while (std::getline(infile, line)) {
+        if (line.at(0) == '#')
+            continue;
+        std::istringstream iss(line);
+        int a;
+        string b;
+        if (!(iss >> a >> b)) {
+            std::cout << "idmap not well formatted" << std::endl;
+            return false;
+            break;
+        }
+
+        idmap[a] = b;
+    }
+    infile.close();
+
+    // loading unknown
+    infile = std::ifstream(parser.get<string>(OPTION_UNKNOWN));
+    while (std::getline(infile, line)) {
+        if (line.at(0) == '#')
+            continue;
+        std::istringstream iss(line);
+        int a;
+        if (!(iss >> a)) {
+            std::cout << "unkown map not well formatted" << std::endl;
+            return false;
+            break;
+        }
+
+        total_unknown_ids++;
+        idmap[a] = "unknown";
+    }
+    infile.close();
+
+    return true;
+}
 bool datasetLoader(const cv::CommandLineParser& parser, DatasetCov& trainingSet, DatasetCov& validationSet)
 {
     if (parser.has(OPTION_LOAD_DATASET_TR) && parser.has(OPTION_LOAD_DATASET_VAL)) {
