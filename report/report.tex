@@ -287,7 +287,7 @@ identities) using the following strategy:
 	\item if more than one identity has the maximum number of votes, the
 		one with the maximum distance from the hyper-plane is choosed
 	\item if no SVM classify the query covariance matrix with positive label,
-		it is classified as "unknown"
+		it is classified as `unknown'
 \end{itemize}
 
 We followed the same strategy. To train the SVMs we used the default grid
@@ -306,9 +306,9 @@ this, we tried three different algorithms:
 	\item a training (only on the first dataset) in which the covariance
 		matrix of the correct identity but of different poses were
 		removed from the trainig set
-	\item \textit{leave-one-out} --------- ma era sbagliata perché non
-		ricreavamo le svm e i risultati di ciascun training non
-		venivano usati, riproviamo ----------
+	\item \textit{leave-one-out}: only on the first datase, without
+		success; authors say that \textit{k-fold} cross
+		validation gave low results
 \end{itemize}
 The strategy to merge results from all the $2 \times n \times c$ SVMs was kept
 the same too, but we introduced a rule to achieve a better recognition of
@@ -374,7 +374,7 @@ All this let us argue that our results still suffer from a too much little
 dataset. Probably, a bigger dataset is needed to perform this algorithm. We
 also argue that it is not the bigger number of image itself that would made the
 algorithm perform better on another dataset, but a larger number of different
-identities, because the mean number of images per identity in the dataset from
+identities, because the avarage number of images per identity in the dataset from
 \citep{Fanelli2013} (about 700 images per identity) is much larger than the
 one of the final dataset used by the authors (about 300 images per identity).
 \\
@@ -397,13 +397,14 @@ Results are in terms of
 	\centering
 	\caption{Results}
 	\label{tab:results}
-	\begin{tabular}{|l|l|l|}
+	\begin{tabular}{|l|c|}
 		\hline
 		\bf Rank-1 & \bf FP-unknown \\ \hline
 		0.89	   & 0.8 \\ \hline
 		0.83	   & 0.8 \\ \hline
 		0.75	   & 0.3 \\ \hline
 		0.83	   & 0.6 \\ \hline
+		0.875      & 0.8 \\ \hline
 	\end{tabular}
 \end{table}
 
