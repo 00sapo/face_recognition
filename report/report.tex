@@ -343,8 +343,8 @@ containing 338 images of 26 different persons. This dataset contained:
 The very poor results that we obtained on this dataset forwarded us to
 implement all tweaks described in \ref{sec:background}, \ref{sec:cropping},
 \ref{sec:training}. Anyway, results did not agree with the ones of the paper.
-We can state with a reasonable certainty that the dataset was too small for
-training the model.
+We can state with a reasonable certainty that the dataset was too small to
+train the model.
 \\
 Therefore, we tested the algorithm on a new dataset, containing almost half of
 the images of the original paper \citep{Fanelli2013}, with more than 15.000
@@ -356,7 +356,7 @@ With the first small dataset we made a lot of experiment without succeed.
 \\
 From the second dataset we randomly extracted 40 images from each person to be
 used as testing set and 5 persons were completely removed from the training
-set, to simulate the 'unknown' behaviour. Also, we used $1/3$ of the remaining
+set, to simulate the `unknown' behaviour. Also, we used $1/3$ of the remaining
 training set as validation set to evaluate SVMs performance and to find the
 best hyper-parameters.
 \\
@@ -383,14 +383,14 @@ this is coherent with Hayat's statement according to which the covariance set
 representation is very effective.
 \\
 In the following table we show our results achieved on multiple executions of
-the experiment with different combinations of 'unknown'-'known' identities.
+the experiment with different combinations of `unknown'-`known' identities.
 Results are in terms of
 \begin{itemize}
 	\item \textit{rank-1}: ratio between correct recognitions and the
-		total number of sets in the query, where 'unknown'
-		identities are considered correct if detected as 'unknown'
+		total number of sets in the query, where `unknown'
+		identities are considered correct if detected as `unknown'
 	\item \textit{FP-unknown}: ratio between uncorrect recognition of
-		'unknown' persons and the total number of 'unknown' persons
+		`unknown' persons and the total number of `unknown' persons
 \end{itemize}
 \begin{table}[]
 	\centering
@@ -398,10 +398,10 @@ Results are in terms of
 	\label{tab:results}
 	\begin{tabular}{|l|l|l|}
 		\hline
-		\bf Rank-1 & \bf FP-unknown & \bf Comments \\ \hline
-		0.89	   & 0.8 &        \\ \hline
-		xxxx	   & xxxx & xxxx  \\ \hline
-		xxxx	   & xxxx & xxxx  \\ \hline
+		\bf Rank-1 & \bf FP-unknown \\ \hline
+		0.89	   & 0.8 \\ \hline
+		xxxx	   & xxxx \\ \hline
+		xxxx	   & xxxx \\ \hline
 	\end{tabular}
 \end{table}
 

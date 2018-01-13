@@ -1,0 +1,69 @@
+\documentclass{beamer}
+\usetheme{metropolis}
+\usepackage{textpos}
+\usepackage{multirow}
+\usepackage[utf8x]{inputenc}
+\definecolor{dei}{RGB}{209, 0, 86}
+
+\title{Face recognition through RGB-D images and matrices of SVMs} % Article title
+\subtitle{Stemmer STON by Melucci and Orio}
+\date{\today}
+\author{Federico Simonetta, matricola 1129912 \\[1ex] Albert Cenzato, matricola 0000000 }
+\setbeamercolor{title separator}{fg=dei}
+\setbeamercolor{progress bar}{fg=dei}
+
+\begin{document}
+\titlegraphic{\vspace{4.3cm}
+	\hspace{8.5cm}
+	\includegraphics[width=1.5cm]{unipd}
+
+	\hspace{8.5cm}
+	\includegraphics[width=2cm]{dei-logo}
+}
+\maketitle
+\addtobeamertemplate{frametitle}{}{\begin{textblock*}{100mm}(.85\textwidth,-1cm)
+		\includegraphics[height=1cm,width=2cm]{dei-logo}
+	\end{textblock*}
+}
+
+\begin{frame}{Overview}
+	\begin{itemize}
+		\item STON stemmer - the algorithm
+			\begin{itemize}
+				\item HMM review
+				\item STON stemmer characteristics
+			\end{itemize}
+		\item STON stemmer - the implementation
+			\begin{itemize}
+				\item Math and computability considerations
+				\item Code implementation and design patterns
+				\item Implementation issues
+			\end{itemize}
+		\item Evaluation
+			\begin{itemize}
+				\item Index with no stopwords lists and no stemmers
+				\item Use index for training the STON stemmer and for creating a stems table
+				\item Use the stems table created by the STON stemmer as input for a lookup stemmer
+				\item Retrieve runs
+				\item Evaluate results
+			\end{itemize}
+		\item Future Development
+	\end{itemize}
+\end{frame}
+
+\section{STON stemmer - the algorithm}
+\begin{frame}{Hidden Markov Models review}
+
+	HMMs are a tool to describe systems through a finite discrete set of \textit{states} $X_i$ and a finite set of probabilities $a_{ij}$ to model the transition from state $X_i$ to state $X_j$ (like Markov Chains). We do not know in which \textit{state} the system is (it is "hidden"), but we know some other feature (called \textit{observed symbol} $Y_k$) that is linked to the actual \textit{state} by the \textit{emission probabilities} $b_{ik}$
+	\vspace*{-8mm}
+	\begin{figure}
+		\centering
+		\includegraphics[width=0.7\linewidth]{HiddenMarkovModel}
+		\label{fig:hiddenmarkovmodel}
+	\end{figure}
+
+
+\end{frame}
+
+\section{Thank you for your kind attention}
+\end{document}
