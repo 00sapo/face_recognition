@@ -240,6 +240,7 @@ for robust face recognition from Kinect data}}
 			testing set. Each query was made by a set of 40 images
 		\item 5 peoples choiced randomly were completely removed from
 			the training set to simulate the `unkown' behaviour
+		\item People who had two recordings was never removed
 		\item $1/3$ of each sequence of the training set was used as
 			validation set to evaluate SVMs during parameters
 			otpimization
@@ -261,7 +262,7 @@ for robust face recognition from Kinect data}}
 	\end{itemize}
 \end{frame}
 
-\begin{frame}{Results}
+\begin{frame}{Results (1)}
 	We computed results in terms of:
 	\begin{itemize}
 		\item \textit{rank-1}: ratio between correct recognitions and
@@ -272,10 +273,13 @@ for robust face recognition from Kinect data}}
 			of `unknown' persons and the total number of `unknown'
 			persons
 	\end{itemize}
+\end{frame}
+
+\begin{frame}{Results (2)}
 	\begin{table}[]
 		\centering
-		\caption{Results}
-		\label{tab:results}
+		\caption{Results with RGB and depth images}
+		\label{tab:results-rgbd}
 		\begin{tabular}{|l|c|}
 			\hline
 			\bf Rank-1 & \bf FP-unknown \\ \hline

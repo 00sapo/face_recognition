@@ -31,6 +31,7 @@ const string OPTION_SAVE = "saveTrained";
 const string OPTION_LOAD = "loadTrained";
 const string OPTION_MAP = "idmap";
 const string OPTION_UNKNOWN = "unknown";
+const string OPTION_TRAIN = "train";
 
 const int SUBSETS = 3;
 
@@ -52,6 +53,8 @@ const cv::String KEYS = "{ " + OPTION_HELP + " | | print this message }"
                     "{ "
     + OPTION_LOAD + " | | path to trained svms }"
                     "{ "
+    + OPTION_TRAIN + " | | if you want train and test }"
+                     "{ "
     + OPTION_MAP + " | | path to the id map file path to trained svms }"
                    "{ "
     + OPTION_UNKNOWN + " | | path the unknown file (one id per line) }";
@@ -80,8 +83,10 @@ int main(int argc, char* argv[])
     FaceRecognizer faceRec(SUBSETS);
     if (parser.has(OPTION_LOAD)) {
         faceRec.load(parser.get<string>(OPTION_LOAD));
-    } else {
+    } else if (parser.has(OPTION_TRAIN)) {
         faceRec.train(trainingSet, validationSet);
+    } else {
+        return 0;
     }
 
     if (parser.has(OPTION_SAVE)) {

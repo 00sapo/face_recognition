@@ -19,7 +19,7 @@ fi
 bash ./source/testingset_building.sh ${dataset_path}
 cd build-debug
 ./FaceRecognition --saveTrainingset=../preprocessed_trainingset --saveValidationset=../preprocessed_validationset --dataset=../dataset/hpdb
-./FaceRecognition --loadTrainingset=../preprocessed_trainingset/ --loadValidationset=../preprocessed_validationset/ --query=../testingset/ --idmap=../source/map.txt --unknown=../removed_id.txt
+./FaceRecognition --train --loadTrainingset=../preprocessed_trainingset/ --loadValidationset=../preprocessed_validationset/ --query=../testingset/ --idmap=../source/map.txt --unknown=../removed_id.txt
 
 cd ..
 rm -r preprocessed_trainingset preprocessed_validationset

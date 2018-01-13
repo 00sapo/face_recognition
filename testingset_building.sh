@@ -68,7 +68,7 @@ fi
 echo "removing identities from training set..."
 # this is for extended syntax
 shopt -s extglob
-for dir in `ls  !(03|15|18|05|21|02|22|07|*.*) -d | shuf -n $NUMBER_OF_ID_TO_REMOVE`
+for dir in `ls  !(03|15|18|05|21|02|22|07|removed|*.*) -d | shuf -n $NUMBER_OF_ID_TO_REMOVE`
 do
 	mv $dir removed
 	echo $dir >> ${initial_dir}/removed_id.txt

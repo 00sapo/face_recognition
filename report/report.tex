@@ -395,8 +395,8 @@ Results are in terms of
 \end{itemize}
 \begin{table}[]
 	\centering
-	\caption{Results}
-	\label{tab:results}
+	\caption{Results with RGB and depth}
+	\label{tab:results-rgbd}
 	\begin{tabular}{|l|c|}
 		\hline
 		\bf Rank-1 & \bf FP-unknown \\ \hline
@@ -407,6 +407,48 @@ Results are in terms of
 		0.875      & 0.8 \\ \hline
 	\end{tabular}
 \end{table}
+\begin{table}[]
+	\centering
+	\caption{Results with RGB only}
+	\label{tab:results-rgb}
+	\begin{tabular}{|l|c|}
+		\hline
+		\bf Rank-1 & \bf FP-unknown \\ \hline
+		0.89	   & 0.8 \\ \hline
+		0.83	   & 0.8 \\ \hline
+		0.75	   & 0.3 \\ \hline
+		0.83	   & 0.6 \\ \hline
+		0.875      & 0.8 \\ \hline
+	\end{tabular}
+\end{table}
+\begin{table}[]
+	\centering
+	\caption{Results with depth only}
+	\label{tab:results-d}
+	\begin{tabular}{|l|c|}
+		\hline
+		\bf Rank-1 & \bf FP-unknown \\ \hline
+		0.89	   & 0.8 \\ \hline
+		0.83	   & 0.8 \\ \hline
+		0.75	   & 0.3 \\ \hline
+		0.83	   & 0.6 \\ \hline
+		0.875      & 0.8 \\ \hline
+	\end{tabular}
+\end{table}
+
+\section{Technical issues}
+During the developement we found a lots of issues dued to a beta stage of
+developement in OpenCV. Also, we began using both OpenCV for RGB images and
+Point Cloud Library for depth images. Since algorithm \citep{Fanelli2011}
+needed depth images represented in OpenCV \textit{Mat} objects, we needed to
+switch completely to OpenCV and to leave PCL.
+\\
+Major issues were found in the use of machine learning module of OpenCV, namely
+in kmeans algorithm and in loading and saving from file of custom kernel SVMs.
+
+\printbibliography
+
+\end{document}
 
 \section{Technical issues}
 During the developement we found a lots of issues dued to a beta stage of
