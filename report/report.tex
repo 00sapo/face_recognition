@@ -317,7 +317,10 @@ The strategy to merge results from all the $2 \times n \times c$ SVMs was kept
 the same too, but we introduced a rule to achieve a better recognition of
 "unknown" faces: if more than $t$ SVMs had the maximum number of votes, the
 face was forced to be "unknown". $t$ is a threshold that we setted to $2 \times
-c$, that is the maximum number of votes that each person should receive.
+c$, that is the maximum number of votes that each person should receive. We
+checked that this rule was effective: in our experiments it improved the final
+algorithm between the 10\% and the 40\% of \textit{rank-1}, while
+\textit{FP-unknown} was always 1.
 \\
 The type of SVMs tested was the only one proposed by \citep{Hayat2016}, that
 was based on the following Stein Kernel:
@@ -337,7 +340,7 @@ Our initial aim was to adapt the algorithm by \citep{Hayat2016} on a small datas
 containing 338 images of 26 different persons. This dataset contained:
 \begin{itemize}
 	\item frontal faces at 1 meter from the sensor
-	\item frontal faces at 2 meter from the sensor
+	\item frontal faces at 2 meters from the sensor
 	\item non frontal faces at 1 meter from the sensor
 	\item frontal faces at 1 meter from the sensor with different expressions
 	\item different lighting
@@ -356,7 +359,7 @@ images of 20 different persons. On this new dataset, depth images were already
 segmented, therefore we did not performed the background removal.
 
 \section{Experiments}
-With the first small dataset we made a lot of experiment without succeed.
+With the first small dataset we made many experiments without succeed.
 \\
 From the second dataset we randomly extracted 40 images from each person to be
 used as testing set and 5 persons were completely removed from the training
@@ -378,16 +381,17 @@ dataset. Probably, a bigger dataset is needed to perform this algorithm. We
 also argue that it is not the bigger number of image itself that would made the
 algorithm perform better on another dataset, but a larger number of different
 identities, because the avarage number of images per identity in the dataset from
-\citep{Fanelli2013} (about 700 images per identity) is much larger than the
-one of the final dataset used by the authors (about 300 images per identity).
+\citep{Fanelli2013} (about 700 images per identity) is much larger than in the
+final dataset used by the authors (about 300 images per identity).
 \\
 Actually, a bigger number of identities means a bigger number of covariance
 matrixes and a bigger number of items that we can use to train the SVMs. Also,
 this is coherent with Hayat's statement according to which the covariance set
-representation is very effective.
+representation is very effective, in that it describes each person in a pose
+without needing a larger number of images.
 \\
 Also, we note that our results with only RGB or only D images are much lower
-han those claimed by the authors. We believe that in small datasets, the depth
+than those claimed by the authors. We believe that in small datasets, the depth
 information is more representative than in big datasets.
 \\
 In the following table we show our results achieved on multiple executions of
@@ -406,7 +410,7 @@ Results are in terms of
 	\begin{adjustwidth}{-.75in}{-.75in}
 		\centering
 		\caption{Results}
-		\label{tab:results-rgbd}
+		\label{tab:results}
 		\begin{tabular}{|l|l|c|l|c|l|c|}
 			\hline
 			\multirow{2}{*}{\bf Removed ids} & \multicolumn{2}{c|}{Using RGB-D images} &\multicolumn{2}{c|}{Using RGB images only} &\multicolumn{2}{c|}{Using D images only} \\ \cline{2-7}
@@ -416,26 +420,18 @@ Results are in terms of
 			08, 09, 14, 17, 24               & 0.79	      & 0.4                       & 0.375      & 0.0                         & 0.33       & 0.2\\ \hline
 			01, 16, 17, 19, 24               & 0.92	      & 0.2                       & 0.375      & 0.0                         & 0.42       & 0.2\\ \hline
 			01, 09, 12, 16, 19               & 0.83	      & 0.6                       & 0.25       & 0.0                         & 0.375      & 0.4\\ \hline
+			09, 10, 16, 19, 24               & 0.67	      & 0.8                       & 0.29       & 0.0                         & 0.125      & 0.8\\ \hline
+			04, 09, 10, 11, 16               & 0.92	      & 0.2                       & 0.375      & 0.0                         & 0.33       & 0.2\\ \hline
+			01, 08, 09, 10, 19               & 0.50	      & 0.8                       & 0.375      & 0.0                         & 0.125      & 0.6\\ \hline
+			04, 10, 11, 13, 24               & 0.54	      & 1.0                       & 0.375      & 0.0                         & 0.20       & 0.0\\ \hline
+			08, 14, 17, 23, 24               & 0.75	      & 0.6                       & 0.375      & 0.0                         & 0.29       & 0.6\\ \hline
+			\bf mean                         & \bf 0.76   & \bf 0.5                   & \bf 0.3785 & \bf 0.0                     & \bf 0.33   & \bf 0.34\\ \hline
 		\end{tabular}
 	\end{adjustwidth}
 \end{table}
 
 \section{Technical issues}
-During the developement we found a lots of issues dued to a beta stage of
-developement in OpenCV. Also, we began using both OpenCV for RGB images and
-Point Cloud Library for depth images. Since algorithm \citep{Fanelli2011}
-needed depth images represented in OpenCV \textit{Mat} objects, we needed to
-switch completely to OpenCV and to leave PCL.
-\\
-Major issues were found in the use of machine learning module of OpenCV, namely
-in kmeans algorithm and in loading and saving from file of custom kernel SVMs.
-
-\printbibliography
-
-\end{document}
-
-\section{Technical issues}
-During the developement we found a lots of issues dued to a beta stage of
+During the developement we found many issues dued to a beta stage of
 developement in OpenCV. Also, we began using both OpenCV for RGB images and
 Point Cloud Library for depth images. Since algorithm \citep{Fanelli2011}
 needed depth images represented in OpenCV \textit{Mat} objects, we needed to

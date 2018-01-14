@@ -280,20 +280,29 @@ for robust face recognition from Kinect data}}
 \end{frame}
 
 \begin{frame}{Results (2)}
+	\scriptsize
 	\begin{table}[]
 		\centering
-		\caption{Results with RGB and depth images}
-		\label{tab:results-rgbd}
-		\begin{tabular}{|l|c|}
+		\caption{Results}
+		\label{tab:results}
+		\begin{tabular}{|l|l|c|l|c|l|c|}
 			\hline
-			\bf Rank-1 & \bf FP-unknown \\ \hline
-			0.89	   & 0.8 \\ \hline
-			0.83	   & 0.8 \\ \hline
-			0.75	   & 0.3 \\ \hline
-			0.83	   & 0.6 \\ \hline
-			0.875      & 0.8 \\ \hline
+			\multirow{2}{*}{\bf Removed ids} & \multicolumn{2}{c|}{Using RGB-D} &\multicolumn{2}{c|}{Using RGB only} &\multicolumn{2}{c|}{Using D only} \\ \cline{2-7}
+							 & \bf Rank-1 & \bf FP-unk          & \bf Rank-1 & \bf FP-unk            & \bf Rank-1 & \bf FP-unk  \\ \hline
+			04, 06, 10, 11, 19               & 0.83	      & 0.4                 & 0.29       & 0.0                         & 0.33       & 0.4\\ \hline
+			06, 10, 19, 20, 24               & 0.87	      & 0.0                 & 0.33       & 0.0                         & 0.50       & 0.0\\ \hline
+			08, 09, 14, 17, 24               & 0.79	      & 0.4                 & 0.375      & 0.0                         & 0.33       & 0.2\\ \hline
+			01, 16, 17, 19, 24               & 0.92	      & 0.2                 & 0.375      & 0.0                         & 0.42       & 0.2\\ \hline
+			01, 09, 12, 16, 19               & 0.83	      & 0.6                 & 0.25       & 0.0                         & 0.375      & 0.4\\ \hline
+			09, 10, 16, 19, 24               & 0.67	      & 0.8                 & 0.29       & 0.0                         & 0.125      & 0.8\\ \hline
+			04, 09, 10, 11, 16               & 0.92	      & 0.2                 & 0.375      & 0.0                         & 0.33       & 0.2\\ \hline
+			01, 08, 09, 10, 19               & 0.50	      & 0.8                 & 0.375      & 0.0                         & 0.125      & 0.6\\ \hline
+			04, 10, 11, 13, 24               & 0.54	      & 1.0                 & 0.375      & 0.0                         & 0.20       & 0.0\\ \hline
+			08, 14, 17, 23, 24               & 0.75	      & 0.6                 & 0.375      & 0.0                         & 0.29       & 0.6\\ \hline
+			\bf mean                         & \bf 0.76   & \bf 0.5             & \bf 0.3785 & \bf 0.0                     & \bf 0.33   & \bf 0.34\\ \hline
 		\end{tabular}
 	\end{table}
+
 
 \end{frame}
 
