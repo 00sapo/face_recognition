@@ -63,6 +63,8 @@
 
 \usepackage{hyperref} % For hyperlinks in the PDF
 \usepackage[bibstyle=numeric,citestyle=authoryear,backend=biber,natbib=true,maxcitenames=2]{biblatex}
+\usepackage{amssymb}
+
 
 
 \newrobustcmd*{\parentexttrack}[1]{%
@@ -89,8 +91,8 @@
 	\textsc{Federico Simonetta}\thanks{Ingegneria Informatica LM, matricola 1129912} \\[1ex] % Your name
 	\normalsize \href{mailto:simonettaf@dei.unipd.it}{simonettaf@dei.unipd.it} % Your email address
 	\and % Uncomment if 2 authors are required, duplicate these 4 lines if more
-	\textsc{Alberto Cenzato}\thanks{Informatica LM, matricola xxxxxx} \\[1ex] % Your name
-	\normalsize \href{mailto:john@smith.com}{--FILL IN ---} % Your email address
+	\textsc{Alberto Cenzato}\thanks{Ingegneria Informatica LM, matricola 1134707} \\[1ex] % Your name
+	\normalsize \href{mailto:alberto.cenzato@studenti.unipd.it}{alberto.cenzato@studenti.unipd.it} % Your email address
 }
 \date{\today} % Leave empty to omit a date
 \renewcommand{\maketitlehookd}{%
@@ -100,9 +102,9 @@
 		with large datasets while with small datasets the SVM models
 		have very low precision. We optimized the algorithm for two
 		datasets of different size and tried several different
-		preprocessing tweaks and decision algorithms. Lastly, we states
-		that the biggest contributes to the good training of the SVMs
-		are given by the sizes and the noiseness of the dataset.
+		preprocessing tweaks and decision algorithms. Lastly, we state
+		that the biggest contributions to the good training of the SVMs
+		are given by the size and the noiseness of the dataset and the accuracy of the preprocessing steps.
 	\end{abstract}
 }
 
@@ -120,28 +122,46 @@
 
 \lettrine[nindent=0em,lines=2]{I}n \citep{Hayat2016} an algorithm for face
 recognition based on RGB-D image is given. RGB-D images are a state-of-the-art
-scene representation paradigm through wich a 3D scene is described. Compared to
+scene representation paradigm through which a 3D scene is described. Compared to
 classical RGB images, the RGB-D paradigm adds the depth information that gives
 the chance to study images in a three-dimensional space. In their paper, Hayat
 et al.\ show that the depth information can really raise precision of face
 recognition algorithms.
 \\
 We tried to reproduce their results using a small dataset consisting of 338
-images of 26 different persons. Because of the very poor results, we tried to
+images of 26 different individuals. Because of the very poor results, we tried to
 train the model with a new dataset of 20 different peoples in 24 sequences for
-a total of 15.678 \citep{Fanelli2013}. In \citep{Hayat2016}, authors used the
+a total of 15.678 RGB-D images \citep{Fanelli2013}. In \citep{Hayat2016}, authors used the
 second of these datasets, merged with other two datasets for a total of more
 than 35.000 images.  \\ Our results let us think that this algorithm needs a
-very huge dataset for training, and, most of all, it needs a lot of different
-people.
+very huge dataset for training.
 
 \section{Algorithm description}
-The algorithm is based on a 2 steps preprocessing and on big matrice of SVMs.
+The algorithm is based on a 2 steps preprocessing and on a big matrice of SVMs.
+
+\subsection{Normalization}
+The input RGB-D images are preprocessed with a three steps pipeline. First step in preprocessing is the background removal through a simple \textit{k}-means clustering procedure on depth images, the nearest cluster is the person. Then a face detection and pose estimation algorithm is used \citep{Fanelli2013}. Finally the pose information is used to precisely crop the face.
+
+\subsection{Image subsets}
+Once the cropped faces are available they are clustered based on their pose. For each person $c$ pose cluster centers are computed by \textit{k}-means; using these cluster centers, images of the person are assigned to one of the $c$ clusters based on the shortest euclidean distance between the cluster centers and the pose vector of each image.
+
+\subsection{Image subsets representation}
+Given a cluster of images from the same person each image in the subset is divided into $4 \times 4$ non-overlapping blocks. The image subset is represented by a $\mathbb{R}^{16 \times 16}$ covariance matrix of these blocks\footnote{See \citep{Hayat2016} for further details on how the covariance matrix is computed.}.
+
+\subsection{SVMs}
+The covariance matrices are then used as a feature vector for the SVMs. $c \times N$ SVMs are trained (where $N$ is the number of people in the dataset) for the covariance matrices of the RGB images and just as many for the covariance matrices of the depth images. All SVMs are binary classification SVMs trained in a one-vs-all fashion. \\
+The SVMs use the Stein kernel function to map the covariance matrices (symmetric positive definite matrices) from Riemannian manifold to a high dimensional Hilbert space where they are linearly separable. The Stein kernel function is defined as $$k(X,Y) = e^{-\sigma (\log{\det{\frac{X+Y}{2}}} - \frac{1}{2}\log{\det{XY}})}$$
+
+\subsection{Fusion of results}
+Once the SVMs are trained a query image set can be submitted to the algorithm. The image set must be of RGB and depth image all of the same person. These images are preprocessed as in the training. The resulting $2c$ covariance matrices ($c$ for RGB and $c$ for depth images) are classified by the $2c$ SVMs of each training person. The identity which receives the maximum number of "votes" is the predicted identity.
+
+
+\section{Algorithm implementation}
 
 \subsection{Background removal}
 \label{sec:background}
 First step in preprocessing is the background removal. In \cite{Hayat2016},
-they used a simple \textit{k-means} clustering procedure on depth images and
+they used a simple \textit{k}-means clustering procedure on depth images and
 used the nearest cluster to filter out pixels of the RGB images.
 \\
 In the second dataset we used, this was already done on depth images, so we
@@ -193,8 +213,7 @@ most large range, or the most wide area in a range.
 
 \subsection{Face pose estimation and face cropping}
 \label{sec:cropping}
-In \citep{Hayat2016}, authors used the algorithm proposed in \citep{Fanelli2011}
-to compute a face detection and pose estimation.
+In \citep{Hayat2016}, authors used the algorithm proposed in \citep{Fanelli2011} to compute a face detection and pose estimation.
 \\
 We used the same algorithm in the same way. However we choosed to change a bit
 the parameters proposed in \citep{Hayat2016} for face cropping.
