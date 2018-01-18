@@ -82,14 +82,19 @@ string FaceRecognizer::predict(const vector<Mat>& grayscaleCovar, const vector<M
     Mat row;
     float prediction;
     int maxVotes = -1;
+    int maxRGBVotes = -1;
+    int RGBties = 0;
     for (auto i = 0; i < N; ++i) {
         int vote = 0;
+        int voteRGB = 0;
         for (auto j = 0; j < c; ++j) {
             if (useRGB) {
                 row = grayscaleData.row(j);
                 prediction = grayscaleSVMs[i][j].predict(row);
-                if (prediction == 1)
+                if (prediction == 1) {
                     ++vote;
+                    ++voteRGB;
+                }
             }
             if (useDepth) {
                 row = depthmapData.row(j);
@@ -97,6 +102,12 @@ string FaceRecognizer::predict(const vector<Mat>& grayscaleCovar, const vector<M
                 if (prediction == 1)
                     ++vote;
             }
+        }
+        if (voteRGB > maxRGBVotes) {
+            maxRGBVotes = voteRGB;
+            RGBties = 1;
+        } else if (voteRGB == maxRGBVotes) {
+            RGBties++;
         }
         if (vote > maxVotes)
             maxVotes = vote;
@@ -135,10 +146,9 @@ string FaceRecognizer::predict(const vector<Mat>& grayscaleCovar, const vector<M
         }
     }
 
-    int k = 2;
-    if (!(useRGB && useDepth))
-        k = 1;
-    if (ties.size() > k * c)
+    if (useDepth && !useRGB)
+        RGBties = ties.size();
+    if (RGBties > c)
         bestIndex = -1;
 
     if (bestIndex == -1)
