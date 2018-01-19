@@ -27,9 +27,9 @@
 }
 
 \setbeamertemplate{section in toc}{\textbullet\ \normalsize \inserttocsection \\}
-\setbeamertemplate{subsection in toc}{\-\hspace{2em}\textbullet\ \small \inserttocsubsection \\ }
+\setbeamertemplate{subsection in toc}{\-\hspace{2em}\textbullet\ \scriptsize \inserttocsubsection \\ }
 \begin{frame}{Overview}
-	\vspace*{3mm}
+	\vspace*{6mm}
 	\tableofcontents[sections, subsections]
 \end{frame}
 
@@ -44,7 +44,6 @@ for robust face recognition from Kinect data}}
 		\item The algorithm take advantage of depth info captured
 			through Kinect cameras.
 	\end{itemize}
-	\vspace*{-8mm}
 
 \end{frame}
 \subsection{Preprocessing}
@@ -120,7 +119,7 @@ for robust face recognition from Kinect data}}
 		\item Each of the three covariance matrixes of the query will
 			receive $6 \times n$ votes, where $n$ is the umber of
 			SVMs training sets
-		\item The one that will receive the maximum number ov votes
+		\item The one that will receive the maximum number of votes
 			will be predicted as the recognized face
 		\item If no SVM will recognize it, it will be labeld as
 			`unknown'
@@ -192,6 +191,30 @@ for robust face recognition from Kinect data}}
 		\item \textit{leave-one-out}: only on the first datase, without
 			success; authors say that \textit{k-fold} cross
 			validation gave low results
+	\end{itemize}
+\end{frame}
+
+\subsection{Prediction}
+\begin{frame}{Prediction}
+	\begin{itemize}
+		\item We noted that some identity received too many votes
+		\item We introduced a new prediction rule: if an identity has
+			more than $t$ candidates with the maximum number of
+			votes, it is forced to `unknown'
+		\item At first, $t=k \times c$, where:
+			\begin{itemize}
+				\item $k=1$ if only RGB or
+					only Depth is used
+				\item $k=2$ if they are used together
+				\item $c$ is the number of pose subsets
+			\end{itemize}
+			In fact, $k \times c$ is the maximum number of votes
+			that an identity should receive.
+		\item From experiments we found that using RGB images only,
+			\textit{FP-unknown} was always 0. We changed the rule
+			so that it took in account only RGB images;
+			consequently, $t = c$.
+
 	\end{itemize}
 \end{frame}
 
@@ -283,8 +306,7 @@ for robust face recognition from Kinect data}}
 	\scriptsize
 	\begin{table}[]
 		\centering
-		\caption{Results}
-		\label{tab:results}
+		\caption{Results with first version of the prediction rule}
 		\begin{tabular}{|l|l|c|l|c|l|c|}
 			\hline
 			\multirow{2}{*}{\bf Removed ids} & \multicolumn{2}{c|}{Using RGB-D} &\multicolumn{2}{c|}{Using RGB only} &\multicolumn{2}{c|}{Using D only} \\ \cline{2-7}
@@ -306,6 +328,32 @@ for robust face recognition from Kinect data}}
 
 \end{frame}
 
+\begin{frame}{Results (3)}
+	\scriptsize
+	\begin{table}[]
+		\centering
+		\caption{Results with second version of the prediction rule}
+		\begin{tabular}{|l|l|c|l|c|l|c|}
+			\hline
+			\multirow{2}{*}{\bf Removed ids} & \multicolumn{2}{c|}{Using RGB-D} &\multicolumn{2}{c|}{Using RGB only} &\multicolumn{2}{c|}{Using D only} \\ \cline{2-7}
+							 & \bf Rank-1 & \bf FP-unk          & \bf Rank-1 & \bf FP-unk            & \bf Rank-1 & \bf FP-unk  \\ \hline
+
+			06, 09, 13, 17, 24               & 1.0        & 0.0                 & 0.33       & 0.0                   & 0.375      & 0.0\\ \hline
+			06, 10, 11, 17, 20               & 0.92       & 0.0                 & 0.42       & 0.0                   & 0.54       & 0.0\\ \hline
+			01, 09, 13, 14, 19               & 0.875      & 0.0                 & 0.42       & 0.0                   & 0.33       & 0.2\\ \hline
+			04, 06, 11, 16, 17               & 0.79       & 0.0                 & 0.42       & 0.0                   & 0.42       & 0.2\\ \hline
+			04, 11, 12, 17, 20               & 0.79       & 0.0                 & 0.29       & 0.0                   & 0.125      & 0.8\\ \hline
+			04, 11, 12, 16, 23               & 0.71       & 0.0                 & 0.33       & 0.0                   & 0.08       & 1.0\\ \hline
+			01, 06, 10, 17, 20               & 0.875      & 0.0                 & 0.375      & 0.0                   & 0.21       & 1.0\\ \hline
+			10, 14, 16, 20, 24               & 0.92       & 0.0                 & 0.25       & 0.0                   & 0.375      & 0.0\\ \hline
+			04, 06, 08, 14, 23               & 0.67       & 0.0                 & 0.33       & 0.0                   & 0.08       & 1.0\\ \hline
+			04, 08, 11, 16, 20               & 0.92       & 0.0                 & 0.375      & 0.0                   & 0.08       & 1.0\\ \hline
+			\bf mean                         & \bf 0.85   & \bf 0.0             & \bf 0.354  & \bf 0.0               & \bf 0.2615 & \bf 0.52\\ \hline
+		\end{tabular}
+	\end{table}
+
+
+\end{frame}
 \section{Future Development}
 \begin{frame}
 	????
