@@ -34,7 +34,7 @@ namespace test {
     {
         FaceRecognizer rec("/home/alberto/Desktop/svms");
     }
-
+/*
     void testSVM()
     {
         string dirPath = "/home/alberto/Downloads/hpdb/";
@@ -84,6 +84,19 @@ namespace test {
         std::cout << faceRec.predict(grayscaleCovar, depthmapCovar) << std::endl;
     }
 
+    void testSettings()
+    {
+        cout << "Settings test..." << endl;
+        auto& settings = Settings::getInstance();
+        cout << settings.getD() << endl
+             << settings.getK() << endl
+             << settings.getP() << endl
+             << settings.getR() << endl
+             << settings.getHeight() << endl
+             << settings.getWidth() << endl;
+        system("read -p 'Press [enter] to continue'");
+    }
+*/
     void testImage4DLoader()
     {
         cout << "\n\nFace loader test..." << endl;

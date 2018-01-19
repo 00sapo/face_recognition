@@ -7,31 +7,28 @@
 
 #include "svmstein.h"
 
-
 namespace face {
 
 class Face;
+class DatasetCov;
 
 class NotImplementedException : public std::logic_error {
 public:
-    NotImplementedException() : std::logic_error("Function not yet implemented") { }
+    NotImplementedException()
+        : std::logic_error("Function not yet implemented")
+    {
+    }
 };
 
-using FaceMatrix     = std::vector<std::vector<face::Face>>;
-using MatMatrix      = std::vector<std::vector<cv::Mat>>;
+using FaceMatrix = std::vector<std::vector<face::Face>>;
+using MatMatrix = std::vector<std::vector<cv::Mat>>;
 using SVMSteinMatrix = std::vector<std::vector<SVMStein>>;
 
-
-class FaceRecognizer
-{
+class FaceRecognizer {
 public:
-
-    static const std::string unknownIdentity;   // unknown identity label
-
     FaceRecognizer(int c = 3);
 
-    FaceRecognizer(const std::string &fileName);
-
+    FaceRecognizer(const std::string& fileName);
 
     /**
      * @brief Given a vector of faces trains an SVM model to recognize those faces
@@ -39,8 +36,8 @@ public:
      * @param labels: labels to be assigned to each identity; these labels will be returned
      *                by FaceRecognizer::predict() when identifies a person
      */
-    void train(const MatMatrix &grayscaleCovar, const MatMatrix &depthmapCovar,
-               const std::vector<std::string> &samplLabels = std::vector<std::string>());
+    void train(const DatasetCov& trainingSet, const DatasetCov& validationSet); //,
+        //const std::vector<std::string>& samplLabels = std::vector<std::string>());
 
     /**
      * @brief predict predicts the identity of the given face set
@@ -48,38 +45,36 @@ public:
      * @return person label if the identity was in the training samples and is recognized,
      *         unknownIdentity otherwise
      */
-    std::string predict(const std::vector<cv::Mat>& grayscaleCovar, const std::vector<cv::Mat>& depthmapCovar) const;
+    std::string predict(const std::vector<cv::Mat>& grayscaleCovar, const std::vector<cv::Mat>& depthmapCovar, bool useRGB, bool useDepth) const;
 
     /**
      * @brief loads a pretrained model
      * @param fileName: path of the folder containing the pretrained models
      * @return true if succedes
      */
-    bool load(const std::string &directoryName);
+    bool load(const std::string& directoryName);
 
     /**
      * @brief saves a trained model
      * @param fileName: path to save the model to
      * @return true if saved as expected
      */
-    bool save(const std::string &directoryName);
+    bool save(const std::string& directoryName);
 
 private:
-
     enum class ImgType {
         grayscale,
         depthmap
     };
 
-    int c = 3;  // number of head rotation subsets for each identity
-    int N = 0;  // number of identities provided for training
-    std::vector<std::string> IDs;  // labels associated to each identity in the same order as in grayscaleSVMs and depthmapSVMs
-    std::vector<SVMStein> grayscaleSVMs;  // a row for each identity and a column for each head rotation subset
-    std::vector<SVMStein> depthmapSVMs;   // thus resulting in a Nxc matrix where N is the number of identities
-                                   // and c the number of head rotation subsets
+    int c = 3; // number of head rotation subsets for each identity
+    int N = 0; // number of identities provided for training
+    std::vector<std::vector<SVMStein>> grayscaleSVMs; // a row for each identity and a column for each head rotation subset
+    std::vector<std::vector<SVMStein>> depthmapSVMs; // thus resulting in a Nxc matrix where N is the number of identities
+    std::vector<std::string> labels; // vector for index-identity associations
+        // and c the number of head rotation subsets
 
-    void trainSVMs(const cv::Mat &data, ImgType svmToTrain);
-
+    void trainSVMs(const cv::Mat& dataTr, const cv::Mat& dataVal, const std::vector<int>& groundTruth, ImgType svmToTrain);
 
     /**
      * @brief formatDataForTraining transforms the input dataset in a suitable format to be used by
@@ -92,10 +87,10 @@ private:
      *         has the same dimensions)
      */
     cv::Mat formatDataForTraining(const MatMatrix& data) const;
-
+    cv::Mat formatDataForValidation(const MatMatrix& data, std::vector<int>& groundTruth) const;
     cv::Mat formatDataForPrediction(const std::vector<cv::Mat>& data) const;
 };
 
-}   // namespace face
+} // namespace face
 
 #endif // FACE_FACERECOGNIZER_H

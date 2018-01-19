@@ -1,0 +1,316 @@
+\documentclass{beamer}
+\usetheme{metropolis}
+\usepackage{textpos}
+\usepackage{multirow}
+\usepackage[utf8x]{inputenc}
+\definecolor{dei}{RGB}{209, 0, 86}
+
+\title{Face recognition through RGB-D images and matrices of SVMs} % Article title
+\subtitle{Based on Hayat et al., 2016}
+\date{\today}
+\author{Federico Simonetta, matricola 1129912 \\[1ex] Albert Cenzato, matricola 0000000 }
+\setbeamercolor{title separator}{fg=dei}
+\setbeamercolor{progress bar}{fg=dei}
+
+\begin{document}
+\titlegraphic{\vspace{4.3cm}
+	\hspace{8.5cm}
+	\includegraphics[width=1.5cm]{unipd}
+
+	\hspace{8.5cm}
+	\includegraphics[width=2cm]{dei-logo}
+}
+\maketitle
+\addtobeamertemplate{frametitle}{}{\begin{textblock*}{100mm}(.85\textwidth,-1cm)
+		\includegraphics[height=1cm,width=2cm]{dei-logo}
+	\end{textblock*}
+}
+
+\setbeamertemplate{section in toc}{\textbullet\ \normalsize \inserttocsection \\}
+\setbeamertemplate{subsection in toc}{\-\hspace{2em}\textbullet\ \small \inserttocsubsection \\ }
+\begin{frame}{Overview}
+	\vspace*{3mm}
+	\tableofcontents[sections, subsections]
+\end{frame}
+
+\section{Hayat et al., 2016: \textit{An RGB–D based image set classification
+for robust face recognition from Kinect data}}
+\begin{frame}{Purpose of the algorithm}
+	\begin{itemize}
+		\item Purpose of the proposed algorithm is to recognize persons
+			given an image set of that person in different poses.
+		\item This is useful especially for face recognition in video
+			recording.
+		\item The algorithm take advantage of depth info captured
+			through Kinect cameras.
+	\end{itemize}
+	\vspace*{-8mm}
+
+\end{frame}
+\subsection{Preprocessing}
+\begin{frame}{Preprocessing}
+	\begin{itemize}
+		\item An important step is the image preprocessing
+		\item First of all, depth images let a simple \textit{kmeans}
+			algorithm being enough to background segmentation
+		\item Next, a precise cropping can be made, using precise pose
+			informations computed on depth images
+		\item Pose info are used to adjust cropping window sizes
+	\end{itemize}
+\end{frame}
+
+\subsection{Image sets representation}
+\begin{frame}{Image sets representation}
+	\begin{itemize}
+		\item Authors use faces poses to discover 3 different clusters
+			for each original image set
+		\item They represent each of these clusters with a $16 \times
+			16$ covariance matrix computed through LBP features
+			vectors
+			\begin{itemize}
+				\item Each image is subdivided in 16 blocks of
+					equal size through a $4 \times 4$ grid
+				\item Over each block is computed the LBP
+					feature vector
+				\item Each entry of the covariance is computed
+					on all the LBP of the same block of the
+					person in the same pose:
+					$$
+					C_{p, q} = \frac{1}{n} \sum_{i=1}^n
+					y(p, i)y(q, i)
+					$$
+					where $y(k, j)$ is the difference of
+					each $k$-th LBP vector from
+					its own mean
+
+			\end{itemize}
+	\end{itemize}
+\end{frame}
+\subsection{SVMs training and prediction}
+\begin{frame}{Training}
+	\begin{itemize}
+		\item Atuhors are not very clear in the training description
+		\item They used Stein function as kernel for a vector of SVMs
+		\item Each SVM is charged of recognizing one person in one of
+			the three poses
+		\item For each person in each pose, two SVMs exist, one for RGB
+			images and one for depth images
+		\item Stein kernel is defined by this equation:
+			$$
+			k(X, Y) = e^{\sigma S(X,Y)}
+			$$
+			where
+			$$
+			S(X, Y) = \log\det\left(\frac{X +
+			Y}{2}\right)-\frac{1}{2} \log \det(X\times Y)
+			$$
+		\item They also tested \textit{k-fold} testing showing that
+			results decrease increasing $k$
+
+	\end{itemize}
+\end{frame}
+
+\begin{frame}{Prediction}
+	\begin{itemize}
+		\item A query is composed by a set of images that are
+			preprocessed and clusterized in three sets based on
+			poses
+		\item On each subset the covariance matrix is computed and is
+			given in input to each SVM model
+		\item Each of the three covariance matrixes of the query will
+			receive $6 \times n$ votes, where $n$ is the umber of
+			SVMs training sets
+		\item The one that will receive the maximum number ov votes
+			will be predicted as the recognized face
+		\item If no SVM will recognize it, it will be labeld as
+			`unknown'
+	\end{itemize}
+\end{frame}
+
+\section{Datasets}
+\begin{frame}{Datasets}
+	\begin{itemize}
+		\item The project assignment was to test the proposed algorithm
+			on a new small dataset of 338 images coming from 26
+			people, with different lightings and background scenes
+		\item This was unsuccesful, hence, after many attempts, we
+			changed the dataset and we tested the algorithm on a
+			subset of the dataset used by the authors
+		\item This new dataset contains more than 15.000 RGB-D images
+			with 24 different images sets of 20 different peoples
+	\end{itemize}
+\end{frame}
+
+\section{Our implementation}
+\subsection{Proprocessing tweaks}
+\begin{frame}{Preprocessing tweaks (1)}
+	The very poor results on the first small dataset
+	forwarded us to implement some changes to the
+	preprocessing algorithm
+	\begin{itemize}
+		\item \textit{face-detection-first}: we used Haar cascade
+			classifiers made available by OpenCV to detect a face,
+			crop it and then segment background and refine
+			cropping; if no face was detected, we use a fixed
+			threshold segmentation.
+		\item \textit{outlier removal}: we first compute the maximum
+			areconnected component and crop it with its smallest
+			rectangle approximation; this is useful to a better
+			clustering
+	\end{itemize}
+\end{frame}
+
+\begin{frame}{Preprocessing tweaks (2)}
+	\begin{itemize}
+		\item \textit{histograms segmentation}: we also develped a new
+			algorithm based on the assumption that depth histograms
+			envelope is similar to several gaussians or `hills'
+			justaxposed; we tried to segment the most wide `hill'
+			and if face detection or pose estimation failed we went
+			through the second wider `hill'. Despite this algorithm
+			was very effective, we decided to abandon it because of
+			its huge computational cost.
+		\item \textit{adjusted face cropping}:
+			------------FILL-------------------FILL-------
+		\item \textit{pose clustering}:
+			------------FILL-------------------FILL-------
+	\end{itemize}
+\end{frame}
+
+\subsection{Training strategies}
+\begin{frame}
+	The proposed paper did not specify any particular training strategy.
+	Because of this, we tried three different algorithms:
+	\begin{itemize}
+		\item a simple training in which all covariance matrixes but
+			one had negative labels
+		\item a training in which all SVMs of the same correct identity
+			had positive label (very bad results)
+		\item a training (only on the first dataset) in which the
+			covariance matrix of the correct identity but of
+			different poses were removed from the trainig set
+		\item \textit{leave-one-out}: only on the first datase, without
+			success; authors say that \textit{k-fold} cross
+			validation gave low results
+	\end{itemize}
+\end{frame}
+
+\section{Technical issues}
+\subsection{Computational issues}
+\begin{frame}{Computational issues}
+	\begin{itemize}
+		\item Preprocessing is really slow, especially the covariance
+			computation
+		\item We implemented multithread version but the main advantage
+			given by the multithread is in file loading, background
+			removal and face cropping because in covariance
+			computing --------FILL IN--------
+		\item Using Intel i7-4510HQ CPU, (4 cores, 2 threads per core,
+			2.5 GHz frequency, boosted to 3.5 GHz), preprocessing
+			and covariance computing of all the dataset take about
+			10 minutes
+		\item There are not particular issue on RAM usage, it is nedded
+			about 1GB during preprocessing.
+	\end{itemize}
+\end{frame}
+
+\subsection{Implementation issues}
+\begin{frame}{Implementation issues}
+	\begin{itemize}
+		\item Code for pose estimation needed depth images represented
+			in OpenCV \textit{Mat} objects
+		\item We needed to switch completely to OpenCV
+		\item Other issues were found in the use of machine learning
+			module of OpenCV, namely
+			\begin{itemize}
+				\item in kmeans algorithm
+				\item in loading and saving from file of custom
+					kernel SVMs
+			\end{itemize}
+	\end{itemize}
+\end{frame}
+
+\section{Evaluation}
+\subsection{Description of the experiments}
+\begin{frame}{Description of the experiments}
+	We setted many experiments, with different combination of
+	`known'-`unknown' ids. Every one was setted up in this way:
+	\begin{itemize}
+		\item 40 images per person were randomly removed and used as
+			testing set. Each query was made by a set of 40 images
+		\item 5 peoples choiced randomly were completely removed from
+			the training set to simulate the `unkown' behaviour
+		\item People who had two recordings was never removed
+		\item $1/3$ of each sequence of the training set was used as
+			validation set to evaluate SVMs during parameters
+			otpimization
+	\end{itemize}
+\end{frame}
+
+\subsection{Discussion and results}
+\begin{frame}{Discussion}
+	\begin{itemize}
+		\item Our results are comparable to the ones of the authors,
+			taking in account the minor size of our dataset
+		\item Despite the smaller sizes, the second dataset that we
+			used had a very larger mean number of images per
+			persons (about 700 images) with respect to the dataset
+			used by the authors (about 300 images per identity)
+		\item This let us argue that the major contribute to good
+			performances is not given by the total number of images,
+			but it is given by the number of identities
+		\item Our results with only RGB or D images are much lower than
+			those claimed by authors. We bielieve that in small
+			datasets depth info is more representative than in
+			bigger datset.
+	\end{itemize}
+\end{frame}
+
+\begin{frame}{Results (1)}
+	We computed results in terms of:
+	\begin{itemize}
+		\item \textit{rank-1}: ratio between correct recognitions and
+			the total number of sets in the query, where `unknown'
+			identities are considered correct if detected as
+			`unknown'
+		\item \textit{FP-unknown}: ratio between uncorrect recognition
+			of `unknown' persons and the total number of `unknown'
+			persons
+	\end{itemize}
+\end{frame}
+
+\begin{frame}{Results (2)}
+	\scriptsize
+	\begin{table}[]
+		\centering
+		\caption{Results}
+		\label{tab:results}
+		\begin{tabular}{|l|l|c|l|c|l|c|}
+			\hline
+			\multirow{2}{*}{\bf Removed ids} & \multicolumn{2}{c|}{Using RGB-D} &\multicolumn{2}{c|}{Using RGB only} &\multicolumn{2}{c|}{Using D only} \\ \cline{2-7}
+							 & \bf Rank-1 & \bf FP-unk          & \bf Rank-1 & \bf FP-unk            & \bf Rank-1 & \bf FP-unk  \\ \hline
+			04, 06, 10, 11, 19               & 0.83	      & 0.4                 & 0.29       & 0.0                         & 0.33       & 0.4\\ \hline
+			06, 10, 19, 20, 24               & 0.87	      & 0.0                 & 0.33       & 0.0                         & 0.50       & 0.0\\ \hline
+			08, 09, 14, 17, 24               & 0.79	      & 0.4                 & 0.375      & 0.0                         & 0.33       & 0.2\\ \hline
+			01, 16, 17, 19, 24               & 0.92	      & 0.2                 & 0.375      & 0.0                         & 0.42       & 0.2\\ \hline
+			01, 09, 12, 16, 19               & 0.83	      & 0.6                 & 0.25       & 0.0                         & 0.375      & 0.4\\ \hline
+			09, 10, 16, 19, 24               & 0.67	      & 0.8                 & 0.29       & 0.0                         & 0.125      & 0.8\\ \hline
+			04, 09, 10, 11, 16               & 0.92	      & 0.2                 & 0.375      & 0.0                         & 0.33       & 0.2\\ \hline
+			01, 08, 09, 10, 19               & 0.50	      & 0.8                 & 0.375      & 0.0                         & 0.125      & 0.6\\ \hline
+			04, 10, 11, 13, 24               & 0.54	      & 1.0                 & 0.375      & 0.0                         & 0.20       & 0.0\\ \hline
+			08, 14, 17, 23, 24               & 0.75	      & 0.6                 & 0.375      & 0.0                         & 0.29       & 0.6\\ \hline
+			\bf mean                         & \bf 0.76   & \bf 0.5             & \bf 0.3785 & \bf 0.0                     & \bf 0.33   & \bf 0.34\\ \hline
+		\end{tabular}
+	\end{table}
+
+
+\end{frame}
+
+\section{Future Development}
+\begin{frame}
+	????
+\end{frame}
+
+\section*{Thank you for your kind attention}
+
+\end{document}

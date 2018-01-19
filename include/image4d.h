@@ -66,10 +66,6 @@ public:
 
     cv::Mat getIntrinsicMatrix() const;
 
-    std::string getName()
-    {
-        return name;
-    }
     /**
      * @brief This function crops both the image and the cloud removing
      *        every point outside the cropping region and adjusting
@@ -164,9 +160,6 @@ protected:
          */
     void resizeImage();
 };
-
-cv::Mat cvtDepthMapTo3D(const cv::Mat& depthMap, const cv::Mat& intrinsicMatrix);
-cv::Mat cvt3DToDepthMap(const cv::Mat& image3D,  const cv::Mat& intrinsicMatrix);
 
 } // face
 

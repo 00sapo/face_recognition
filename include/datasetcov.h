@@ -1,8 +1,8 @@
 #ifndef FACE_COVARIANCEDATASET_H
 #define FACE_COVARIANCEDATASET_H
 
-#include <vector>
 #include <experimental/filesystem>
+#include <vector>
 
 #include <opencv2/core.hpp>
 
@@ -17,14 +17,20 @@ class DatasetCov {
     bool save(const fs::path& path);
 
 public:
-
     std::vector<std::vector<cv::Mat>> grayscale; // stores a vector of grayscale covariance matrixes for each identity
-    std::vector<std::vector<cv::Mat>> depthmap;  // stores a vector of depthmap  covariance matrixes for each identity
+    std::vector<std::vector<cv::Mat>> depthmap; // stores a vector of depthmap  covariance matrixes for each identity
 
     DatasetCov();
-    DatasetCov(std::vector<std::vector<cv::Mat>> grayscale, std::vector<std::vector<cv::Mat>> depthmap);
+    DatasetCov(std::vector<std::vector<cv::Mat>> grayscale, std::vector<std::vector<cv::Mat>> depthmap, std::vector<std::string> directoryMap);
+
+    std::string getDirectory(int id) const;
 
     bool empty() const;
+
+    /**
+     * @brief clear calls clear on grayscale, depthmap and direcotryMap
+     */
+    void clear();
 
     /**
      * @brief isConsistent returns the last consistency state computed by checkConsistency()
@@ -41,10 +47,11 @@ public:
 
     bool save(const std::string& path);
 
-    static DatasetCov load(const std::string& path);
+    void load(const std::string& path); //, std::vector<std::string> &idMap);
 
+private:
+    std::vector<std::string> directoryMap;
 };
-
 }
 
 #endif // FACE_COVARIANCEDATASET_H
