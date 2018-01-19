@@ -64,6 +64,8 @@
 \usepackage{hyperref} % For hyperlinks in the PDF
 \usepackage[bibstyle=numeric,citestyle=authoryear,backend=biber,natbib=true,maxcitenames=2]{biblatex}
 \usepackage{amssymb}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
 
 
 
@@ -127,22 +129,31 @@ These steps are briefly described in the next paragraphs. For a complete descrip
 
 	\subsection{Normalization}\label{sec:normalization}
 	The input RGB-D images are preprocessed with a three steps pipeline. First step in preprocessing is the background removal through a simple \textit{k}-means clustering procedure on depth images, the nearest cluster is the person. Then a face detection and pose estimation algorithm is used \citep{Fanelli2013}. Finally the pose information is used to precisely crop the face. \\
-	The basic idea is to look for the first non empty row from top in the segmented depth image, where \textit{non empty} means with at least $m$ non-zero pixels; this is the top of the face ROI, lets call it $y_{top}$. $y_{top}$ is then adjusted adding a factor proportional to the estimated head pose $$y_t = y_t + (\beta \phi +\gamma \psi)$$ where $\phi$ and $\psi$ are the \textit{roll} and \textit{yaw} angles returned by the pose estimation of which in \citep{Fanelli2011}, while $\beta$ and $\gamma$ are parameters set to $5/8$. The ROI height is proportionally inverse to the distance of the head from the camera $$y_{bottom} = y_{top} + 100/z$$
+	The basic idea is to look for the first non empty row from top in the segmented depth image, where \textit{non empty} means with at least $m$ non-zero pixels; this is the top of the face ROI, lets call it $y_{top}$. $y_{top}$ is then adjusted adding a factor proportional to the estimated head pose $$y_{top}' = y_{top} + (\beta \phi +\gamma \psi)$$ where $\phi$ and $\psi$ are the \textit{roll} and \textit{yaw} angles returned by the pose estimation of which in \citep{Fanelli2011}, while $\beta$ and $\gamma$ are parameters set to $5/8$. The ROI height is proportionally inverse to the distance of the head from the camera $$y_{bottom} = y_{top} + 100/z$$
 	The cropping window position along the \verb|X| axis is computed by looking for the first non empty column starting from right and the first non empty column from left. \\
 
 	\subsection{Image subsets}
 	Once the cropped faces are available they are clustered based on their pose. For each person $c$ pose cluster centers are computed by \textit{k}-means; using these cluster centers, images of the person are assigned to one of the $c$ clusters based on the shortest euclidean distance between the cluster centers and the pose vector of each image.
 
 	\subsection{Image subsets representation}
-	Given a cluster of images from the same person each image in the subset is divided into $4 \times 4$ non-overlapping blocks. The image subset is represented by a $\mathbb{R}^{16 \times 16}$ covariance matrix of these blocks\footnote{See \citep{Hayat2016} for further details on how the covariance matrix is computed.}.
+	Given a cluster of images from the same person a suitable representation for SVMs is computed:
+	\begin{itemize}
+		\item each cropped image $j$ is divided in $4\times 4$ non-overlapping blocks;
+		\item for each block, the LBP representation is computed;
+		\item then the algorithm computes the difference $y(k, j)$ of each $k$-th LBP vector from its own mean;
+		\item finally a $16\times16$ covariance matrix is computed by summing up all products between the standard deviations; in formula: 
+		$$C_{p, q} = \frac{1}{n} \sum_{i=1}^n y(p, i)y(q, i)$$ 
+		where $i$ is the index of the image, $p$ and $q$ are respectively the row and the column index of the covariance matrix.
+	\end{itemize}
 
-	\subsection{SVMs}
+	\subsection{SVMs}\label{sec:svm}
 	The covariance matrices are then used as a feature vector for the SVMs. $c \times N$ SVMs are trained (where $N$ is the number of people in the dataset) for the covariance matrices of the RGB images and just as many for the covariance matrices of the depth images. All SVMs are binary classification SVMs trained in a one-vs-all fashion. \\
-	The SVMs use the Stein kernel function to map the covariance matrices (symmetric positive definite matrices) from Riemannian manifold to a high dimensional Hilbert space where they are linearly separable. The Stein kernel function is defined as $$k(X,Y) = e^{-\sigma (\log{\det{\frac{X+Y}{2}}} - \frac{1}{2}\log{\det{XY}})}$$
+	The SVMs use the Stein kernel function to map the covariance matrices (symmetric positive definite matrices) from Riemannian manifold to a high dimensional Hilbert space where they are linearly separable. The Stein kernel function is defined as 
+	$$k(X,Y) = e^{-\sigma (\log{\det{\frac{X+Y}{2}}} - \frac{1}{2}\log{\det{XY}})}$$
 
 	\subsection{Fusion of results}
 	Once the SVMs are trained a query image set can be submitted to the algorithm. The image set must be of RGB and depth image all of the same person. These images are preprocessed as in the training. The resulting $2c$ covariance matrices ($c$ for RGB and $c$ for depth images) are classified by the $2c$ SVMs of each training person. The identity which receives the maximum number of "votes" is the predicted identity.
-
+	If more than one identity has the maximum number of votes, the one with the maximum distance from the hyper-plane is chose; if no SVM classifies the query covariance matrix with positive label, it is classified as \verb|unknown|.
 
 \section{Algorithm implementation}\label{sec:algorithm_impl}
 Our goal was to reproduce the results obtained by \citep{Hayat2016}. We implemented the algorithm in \verb|C++| and used the source code for random forest head pose estimation by \citep{Fanelli2013} as done by the authors. \verb|OpenCV| 3 was used both for image processing and SVM training and prediction. Two different implementations are the result of this work, one for each of the datasets we were provided with; they are more or less the same software with major differences only in the preprocessing steps which were tuned for the specific dataset they were made for.
@@ -187,114 +198,34 @@ Our goal was to reproduce the results obtained by \citep{Hayat2016}. We implemen
 		The algorithm was based on a histogram computation of depth values and on the assumption that it was made of "hills", like a lots of gaussians juxtaposed. It looked for the most frequent value trying to estimate the range containing the highest "hill". If no face was detected in this range it was re-executed on the second most high "hill" and so on. Estimation of the range was made analyzing the logarithm of the second derivative, using fixed thresholds and gradually enlarging the range. Maybe the most frequent value could be replaced with the most large range, or the most wide area in a range.
 
 	\subsection{Face pose estimation and face cropping}	\label{sec:cropping}
-	In \citep{Hayat2016}, authors used the algorithm proposed in \citep{Fanelli2011} to compute a face detection and pose estimation. We used the same algorithm in the same way. However we chose to change some of the parameters proposed in \citep{Hayat2016} for face cropping. \\
+	In \citep{Hayat2016}, authors used the algorithm proposed in \citep{Fanelli2011} to compute a face detection and pose estimation. We used the same algorithm in the same way (see \ref{sec:ec:normalization} for a brief description of the algorithm and its parameters). However we chose to change some of the parameters proposed in \citep{Hayat2016} for face cropping: $\beta = \frac{15}{8}$, $y_{bottom} = y_{top} + \frac{120}{z}$. We used pose estimation to correct ROI position along the \verb|X| axis too. When the person is looking either to the left or to the right we crop the rear part of the head with the following algorithm:
+	\begin{algorithm}
+	\begin{algorithmic}[1]
+		\If {$\theta$ > 0}
+			\State $x_{base} = x_{base} - k \cdot |\theta|$
+		\Else
+			\State $x_{top} = x_{top} + k \cdot |\theta|$
+		\EndIf
+	\end{algorithmic}
+	\end{algorithm}
+	where $\theta$ is the head rotation around the vertical axis and $k = 1.5$ is a proportionality constant 
 	
-	We instead choosed to [FILL IN] ------------------------------------ ------------------------------------------------------------------- \\
 
-\subsection{Image sets representation}
-\label{sec:covariances}
-Next steps expected to clusterize pose estimation converted from Euler angles to
-rotation matrix and to represent each cluster of each person with the covariance
-matrix described below.
-\\
-We followed all of these steps, but we did not convert Euler angles to rotation
-matrix; instead, we clusterized just those Euler angles.
-\\
-\\
-After having divided poses informations through \textit{k-means} in $c$
-clusters (with $c=3$), we ended up with $2\times c$ sets of images: $c$ sets of RGB
-images and $c$ sets of depth images. Next, the algorithm execute these steps
-for each set:
-\begin{itemize}
-	\item divide each cropped image $j$ in $4\times 4$ non overlapping and equally
-		spaced distinct blocks
-	\item for each block, compute the LBP representation
-	\item compute the difference $y(k, j)$ of each $k$-th LBP vector from
-		its own mean
-	\item compute a $16\times16$ covariance matrix by summing up all products
-		between the standard deviations; in formula:
+	\subsection{Image sets representation} \label{sec:covariances}
+	Next steps expected to cluster pose estimation converted from Euler angles to rotation matrix and to represent each cluster of each person with the covariance matrix described below. \\
+	We followed all of these steps, but we did not convert Euler angles given by the head pose estimation to rotation matrices; the pose estimation on \verb|dataset A| had some small errors which amplified when the rotation matrix was computed giving the wrong clustering. On \verb|dataset B| the pose estimation had an higher precision probably because it was the same dataset used by \citep{Fanelli2011}, but we used Euler angles clustering anyway.\\
+	After \textit{k-means} clustering we obtained $c=3$ clusters and ended up with $2\times c$ sets of images per person: $c$ sets of RGB images and $c$ sets of depth images. The covariance matrices were computed as described in the paper.
 
-		$$
-		C_{p, q} = \frac{1}{n} \sum_{i=1}^n y(p, i)y(q, i)
-		$$
-
-		where $i$ is the index of the image, $p$ and $q$ are
-		respectively the row and the column index of the covariance
-		matrix.
-\end{itemize}
-Authors of the proposed paper say that this approach to image set representation
-is really effective and that, compared to previous usage of covariance based set
-representation \citep{Dai2012}, they overcame some issues dued to a $400\times 400$
-very huge matrix covariance.
-
-\subsection{SVM training and prediction}
-\label{sec:training}
-\cite{Hayat2016} is not very clear in the algorithm used to train
-the SVMs. We argued the following:
-\begin{itemize}
-	\item they created a matrix of SVMs with a row for each different person
-		and $2\times c$ colums for each person
-	\item every covariance matrix is associated to a SVM
-	\item every SVM is trained with only one item labeled $1$ and all other
-		items labeled $-1$
-	\item every SVM is queried with a covariance $16\times 16$ matrix representing
-		a query RGB-D image set
-\end{itemize}
-Authors merged the predictions of all the $2\times n \times c$ SVMs ($n$ is the number of
-identities) using the following strategy:
-\begin{itemize}
-	\item for each of the $2\times c$ SVMs of the person $i$ that classify the
-		query set as being the person $i$, person $i$ earn a vote
-	\item the identity choosed is the one with the maximum number of votes
-	\item if more than one identity has the maximum number of votes, the
-		one with the maximum distance from the hyper-plane is choosed
-	\item if no SVM classify the query covariance matrix with positive label,
-		it is classified as `unknown'
-\end{itemize}
-
-We followed the same strategy. To train the SVMs we used the default grid
-provided by OpenCV with logstep. We evaluated each combination of parameters of
-each SVM with F-measure, so that only one true positive item existed. We used
-the mean of the parameters that performed best. We have also verified that the
-mean performed good as well with reference to the F-measure.
-\\
-The proposed paper did not specify any particular training strategy. Because of
-this, we tried three different algorithms:
-\begin{itemize}
-	\item a simple training in which all covariance matrixes but one had
-		negative labels, as described above
-	\item a training in which all SVMs of the same correct identity had
-		positive label
-	\item a training (only on the first dataset) in which the covariance
-		matrix of the correct identity but of different poses were
-		removed from the trainig set
-	\item \textit{leave-one-out}: only on the first datase, without
-		success; authors say that \textit{k-fold} cross
-		validation gave low results
-\end{itemize}
-The strategy to merge results from all the $2 \times n \times c$ SVMs was kept
-the same too, but we introduced a rule to achieve a better recognition of
-"unknown" faces: if more than $t$ SVMs had the maximum number of votes, the
-face was forced to be "unknown". $t$ is a threshold that we setted to $2 \times
-c$, that is the maximum number of votes that each person should receive. We
-checked that this rule was effective: in our experiments it improved the final
-algorithm between the 10\% and the 40\% of \textit{rank-1}, while
-\textit{FP-unknown} was always 1.
-\\
-The type of SVMs tested was the only one proposed by \citep{Hayat2016}, that
-was based on the following Stein Kernel:
-$$
-k(X, Y) = e^{\sigma S(X,Y)}
-$$
-Where
-$$
-S(X, Y) = \log\det\left(\frac{X + Y}{2}\right)-\frac{1}{2} \log \det(X\times Y)
-$$
-This is similar to the RBF kernel function and it accepts the same $\gamma$
-parameter. Hence, SVMs were trained looking for the two optimal parameters
-$\gamma$ and $C$.
-
-
+	\subsection{SVM training and prediction} \label{sec:training}
+	To train the SVMs hyper-parameters\footnote{$C$, to regulate the soft margin, and $\sigma$, see \ref{sec:svm} for kernel function description.} we used the default parameter grid provided by OpenCV with logarithmic step. We evaluated each combination of parameters of each SVM with F-measure, so that only one true positive item existed. The final parameters chosen were the mean of the best performing parameters. \\
+	The paper was a bit ambiguous about the training strategy so we tried three different algorithms:
+	\begin{itemize}
+		\item a simple training in which all covariance matrices but one had negative labels;
+		\item a training in which all SVMs of the same correct identity had positive label;
+		\item a training (only on the first dataset) in which the covariance matrix of the correct identity but of different poses were removed from the training set;
+		\item \textit{leave-one-out}: only on the first dataset, without success; authors say that \textit{k-fold} cross validation gave low results.
+	\end{itemize}
+	The strategy to merge results from all the $2 \times N \times c$ SVMs was kept the same too, but we introduced a rule to achieve a better recognition of \verb|unknown| faces: if more than $t$ SVMs had the maximum number of votes, the face was forced to be \verb|unknown|. $t$ is a threshold that we set to $2c$, that is the maximum number of votes that each person should receive. This rule was quite effective: in our experiments it improved the final algorithm between the 10\% and the 40\% of \textit{rank-1}, while \textit{FP-unknown} was always 1. \\
 
 \section{Experiments}
 With the first small dataset we made many experiments without succeed. \\
