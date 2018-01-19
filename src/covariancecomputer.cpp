@@ -41,9 +41,7 @@ namespace covariance {
 
     vector<std::pair<Mat, Mat>> computeCovarianceRepresentation(const vector<Face>& faces, int subsets)
     {
-        cout << "Clustering poses..." << endl;
         auto centers = clusterizePoses(faces, subsets);
-        cout << "Assigning faces to clusters..." << endl;
         auto clusters = assignFacesToClusters(faces, centers);
 
         vector<std::pair<Mat, Mat>> covariances;
@@ -51,7 +49,6 @@ namespace covariance {
             Mat imgCovariance, depthCovariance;
 
             // compute covariance representation of the set
-            cout << "Set to covariance..." << endl;
             setToCovariance(cluster, imgCovariance, depthCovariance);
             covariances.emplace_back(imgCovariance, depthCovariance);
         }

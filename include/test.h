@@ -34,7 +34,7 @@ namespace test {
     {
         FaceRecognizer rec("/home/alberto/Desktop/svms");
     }
-
+/*
     void testSVM()
     {
         string dirPath = "/home/alberto/Downloads/hpdb/";

@@ -9,7 +9,11 @@ class SteinKernel;
 
 struct SteinKernelParams {
 
-    SteinKernelParams(float C = 1, float gamma = 1) : C(C), gamma(gamma) { }
+    SteinKernelParams(float C = 1, float gamma = 1)
+        : C(C)
+        , gamma(gamma)
+    {
+    }
 
     float C;
     float gamma;
@@ -21,14 +25,14 @@ struct SteinKernelParams {
 class SVMStein {
 public:
     SVMStein();
-    SVMStein(const std::string &filename);
+    SVMStein(const std::string& filename);
 
     /**
      * @brief predict gives the calss of an input sample
      * @param samples: row vector representing a sample
      * @return predicted class, 1 or -1
      */
-    float predict(const cv::Mat &samples) const;
+    float predict(const cv::Mat& samples) const;
 
     /**
      * @brief getDistanceFromHyperplane gives the distance of a sample point
@@ -36,10 +40,9 @@ public:
      * @param sample
      * @return euclidean point-plane distance
      */
-    float getDistanceFromHyperplane(const cv::Mat &sample) const;
+    float getDistanceFromHyperplane(const cv::Mat& sample) const;
 
-
-    bool train(const cv::Mat &data, const std::vector<int> &labelsVector);
+    bool train(const cv::Mat& data, const std::vector<int>& labelsVector);
 
     /**
      * @brief trainAuto automatically chooses the best values for C and sigma parameters
@@ -51,9 +54,9 @@ public:
      * @param CGrid
      * @return
      */
-    SteinKernelParams trainAuto(const cv::Mat &data, const std::vector<int> &labelsVector,
-                                const cv::ml::ParamGrid& gammaGrid = cv::ml::SVM::getDefaultGrid(cv::ml::SVM::GAMMA),
-                                const cv::ml::ParamGrid& CGrid = cv::ml::SVM::getDefaultGrid(cv::ml::SVM::C));
+    SteinKernelParams trainAuto(const cv::Mat& dataTr, const std::vector<int>& labelsVector, const cv::Mat& dataVal, const std::vector<int>& groundTruth,
+        const cv::ml::ParamGrid& gammaGrid = cv::ml::SVM::getDefaultGrid(cv::ml::SVM::GAMMA),
+        const cv::ml::ParamGrid& CGrid = cv::ml::SVM::getDefaultGrid(cv::ml::SVM::C));
 
     /**
      * @brief evaluates the trained svm accuracy
@@ -63,8 +66,7 @@ public:
      *        classification labels (1 or -1)
      * @return percentage of correct classifications (between 0 and 1)
      */
-    float evaluate(const cv::Mat &validationData, const cv::Mat& groundTruth);
-
+    float evaluate(const cv::Mat& validationData, const std::vector<int>& groundTruth);
 
     bool load(const std::string& filename);
     void save(const std::string& filename) const;
@@ -92,7 +94,7 @@ private:
      *        classification labels (1 or -1)
      * @return percentage of correct classifications (between 0 and 1)
      */
-    float evaluateFMeasure(const cv::Mat &data, const std::vector<int> &labels);
+    float evaluateFMeasure(const cv::Mat& dataVal, const std::vector<int>& groundTruth);
 };
 
 } // namespace face

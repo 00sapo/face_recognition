@@ -48,12 +48,13 @@ Mat    Image4D::getIntrinsicMatrix() const
 
 Mat Image4D::get3DImage() const
 {
-    /*
     auto fx = intrinsicMatrix.at<float>(0,0);
     auto fy = intrinsicMatrix.at<float>(1,1);
     auto cx = intrinsicMatrix.at<float>(0,2);
     auto cy = intrinsicMatrix.at<float>(1,2);
 
+    const auto HEIGHT = depthMap.rows;
+    const auto WIDTH  = depthMap.cols;
     Mat image3D(HEIGHT, WIDTH, CV_32FC3);
 
     for (uint i = 0; i < HEIGHT; ++i) {
@@ -67,8 +68,6 @@ Mat Image4D::get3DImage() const
     }
 
     return image3D;
-    */
-    return cvtDepthMapTo3D(depthMap, intrinsicMatrix);
 }
 
 
@@ -114,35 +113,13 @@ void Image4D::resizeImage()
 }
 
 
-Mat cvtDepthMapTo3D(const Mat& depthMap, const Mat& intrinsicMatrix) {
-    auto fx = intrinsicMatrix.at<float>(0,0);
-    auto fy = intrinsicMatrix.at<float>(1,1);
-    auto cx = intrinsicMatrix.at<float>(0,2);
-    auto cy = intrinsicMatrix.at<float>(1,2);
-
-    const auto HEIGHT = depthMap.rows;
-    const auto WIDTH  = depthMap.cols;
-    Mat image3D(HEIGHT, WIDTH, CV_32FC3);
-
-    for (uint i = 0; i < HEIGHT; ++i) {
-        for (uint j = 0; j < WIDTH; ++j) {
-            auto d = static_cast<float>(depthMap.at<uint16_t>(i,j));
-            auto& vec = image3D.at<cv::Vec3f>(i,j);
-            vec[0] = d * (float(j) - cx)/fx;
-            vec[1] = d * (float(i) - cy)/fy;
-            vec[2] = d;
-        }
-    }
-
-    return image3D;
-}
-
+/*
 cv::Mat cvt3DToDepthMap(const cv::Mat& image3D,  const cv::Mat& intrinsicMatrix) {
 
     auto fx = intrinsicMatrix.at<float>(0,0);
     auto fy = intrinsicMatrix.at<float>(1,1);
     auto cx = intrinsicMatrix.at<float>(0,2);
-    auto cy = intrinsicMatrix.at<float>(1,2);
+    auto cy = intrinsicMatrix.at<float>(1,2);            
 
     const auto HEIGHT = image3D.rows;
     const auto WIDTH  = image3D.cols;
@@ -161,5 +138,6 @@ cv::Mat cvt3DToDepthMap(const cv::Mat& image3D,  const cv::Mat& intrinsicMatrix)
 
     return depthMap;
 }
+*/
 
 }

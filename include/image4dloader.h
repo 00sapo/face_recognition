@@ -79,6 +79,7 @@ private:
 
     struct CalibParams {
         cv::Mat depthCameraMatrix;
+        cv::Mat rgbRotationMatrix;
         cv::Mat rgbCameraMatrix;
         cv::Vec3f rgbTranslationVector;
 
