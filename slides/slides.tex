@@ -1,14 +1,14 @@
-\documentclass{beamer}
+\documentclass[unknownkeysallowed]{beamer}
 \usetheme{metropolis}
 \usepackage{textpos}
 \usepackage{multirow}
-\usepackage[utf8x]{inputenc}
 \definecolor{dei}{RGB}{209, 0, 86}
+\usepackage[utf8]{inputenc}
 
 \title{Face recognition through RGB-D images and matrices of SVMs} % Article title
 \subtitle{Based on Hayat et al., 2016}
 \date{\today}
-\author{Federico Simonetta, matricola 1129912 \\[1ex] Albert Cenzato, matricola 0000000 }
+\author{Federico Simonetta, matricola 1129912 \\ Alberto Cenzato, matricola 0000000 }
 \setbeamercolor{title separator}{fg=dei}
 \setbeamercolor{progress bar}{fg=dei}
 
@@ -30,10 +30,10 @@
 \setbeamertemplate{subsection in toc}{\-\hspace{2em}\textbullet\ \scriptsize \inserttocsubsection \\ }
 \begin{frame}{Overview}
 	\vspace*{6mm}
-	\tableofcontents[sections, subsections]
+	\tableofcontents[section, subsections]
 \end{frame}
 
-\section{Hayat et al., 2016: \textit{An RGB–D based image set classification
+\section{Hayat et al., 2016: \textit{An RGB-D based image set classification
 for robust face recognition from Kinect data}}
 \begin{frame}{Purpose of the algorithm}
 	\begin{itemize}
@@ -88,7 +88,7 @@ for robust face recognition from Kinect data}}
 \subsection{SVMs training and prediction}
 \begin{frame}{Training}
 	\begin{itemize}
-		\item Atuhors are not very clear in the training description
+		\item Authors are not very clear in the training description
 		\item They used Stein function as kernel for a vector of SVMs
 		\item Each SVM is charged of recognizing one person in one of
 			the three poses
@@ -116,12 +116,12 @@ for robust face recognition from Kinect data}}
 			poses
 		\item On each subset the covariance matrix is computed and is
 			given in input to each SVM model
-		\item Each of the three covariance matrixes of the query will
+		\item Each of the three covariance matrices of the query will
 			receive $6 \times n$ votes, where $n$ is the umber of
 			SVMs training sets
 		\item The one that will receive the maximum number of votes
 			will be predicted as the recognized face
-		\item If no SVM will recognize it, it will be labeld as
+		\item If no SVM will recognize it, it will be labeled as
 			`unknown'
 	\end{itemize}
 \end{frame}
@@ -132,7 +132,7 @@ for robust face recognition from Kinect data}}
 		\item The project assignment was to test the proposed algorithm
 			on a new small dataset of 338 images coming from 26
 			people, with different lightings and background scenes
-		\item This was unsuccesful, hence, after many attempts, we
+		\item This was unsuccessful, hence, after many attempts, we
 			changed the dataset and we tested the algorithm on a
 			subset of the dataset used by the authors
 		\item This new dataset contains more than 15.000 RGB-D images
@@ -141,7 +141,7 @@ for robust face recognition from Kinect data}}
 \end{frame}
 
 \section{Our implementation}
-\subsection{Proprocessing tweaks}
+\subsection{Preprocessing tweaks}
 \begin{frame}{Preprocessing tweaks (1)}
 	The very poor results on the first small dataset
 	forwarded us to implement some changes to the
@@ -153,7 +153,7 @@ for robust face recognition from Kinect data}}
 			cropping; if no face was detected, we use a fixed
 			threshold segmentation.
 		\item \textit{outlier removal}: we first compute the maximum
-			areconnected component and crop it with its smallest
+			are connected component and crop it with its smallest
 			rectangle approximation; this is useful to a better
 			clustering
 	\end{itemize}
@@ -161,14 +161,16 @@ for robust face recognition from Kinect data}}
 
 \begin{frame}{Preprocessing tweaks (2)}
 	\begin{itemize}
-		\item \textit{histograms segmentation}: we also develped a new
+		\item \textit{histograms segmentation}: we also developed a new
 			algorithm based on the assumption that depth histograms
-			envelope is similar to several gaussians or `hills'
-			justaxposed; we tried to segment the most wide `hill'
-			and if face detection or pose estimation failed we went
-			through the second wider `hill'. Despite this algorithm
-			was very effective, we decided to abandon it because of
-			its huge computational cost.
+			envelope is similar to several Gaussians or `hills'
+			juxtaposed; we tried to segment the region containing
+			the highest peak and if face detection or pose
+			estimation failed we went retried with the region
+			containing the second higher peak. Despite this
+			algorithm was very effective, we decided to abandon it
+			because of its huge computational
+			cost.
 		\item \textit{adjusted face cropping}:
 			------------FILL-------------------FILL-------
 		\item \textit{pose clustering}:
@@ -177,18 +179,18 @@ for robust face recognition from Kinect data}}
 \end{frame}
 
 \subsection{Training strategies}
-\begin{frame}
+\begin{frame}{Training strategies}
 	The proposed paper did not specify any particular training strategy.
 	Because of this, we tried three different algorithms:
 	\begin{itemize}
-		\item a simple training in which all covariance matrixes but
+		\item a simple training in which all covariance matrices but
 			one had negative labels
 		\item a training in which all SVMs of the same correct identity
 			had positive label (very bad results)
 		\item a training (only on the first dataset) in which the
 			covariance matrix of the correct identity but of
-			different poses were removed from the trainig set
-		\item \textit{leave-one-out}: only on the first datase, without
+			different poses were removed from the training set
+		\item \textit{leave-one-out}: only on the first dataset, without
 			success; authors say that \textit{k-fold} cross
 			validation gave low results
 	\end{itemize}
@@ -232,7 +234,7 @@ for robust face recognition from Kinect data}}
 			2.5 GHz frequency, boosted to 3.5 GHz), preprocessing
 			and covariance computing of all the dataset take about
 			10 minutes
-		\item There are not particular issue on RAM usage, it is nedded
+		\item There are not particular issue on RAM usage, it is needed
 			about 1GB during preprocessing.
 	\end{itemize}
 \end{frame}
@@ -261,12 +263,12 @@ for robust face recognition from Kinect data}}
 	\begin{itemize}
 		\item 40 images per person were randomly removed and used as
 			testing set. Each query was made by a set of 40 images
-		\item 5 peoples choiced randomly were completely removed from
-			the training set to simulate the `unkown' behaviour
+		\item 5 peoples chosen randomly were completely removed from
+			the training set to simulate the `unknown' behaviour
 		\item People who had two recordings was never removed
 		\item $1/3$ of each sequence of the training set was used as
 			validation set to evaluate SVMs during parameters
-			otpimization
+			optimization
 	\end{itemize}
 \end{frame}
 
@@ -283,9 +285,9 @@ for robust face recognition from Kinect data}}
 			performances is not given by the total number of images,
 			but it is given by the number of identities
 		\item Our results with only RGB or D images are much lower than
-			those claimed by authors. We bielieve that in small
+			those claimed by authors. We believe that in small
 			datasets depth info is more representative than in
-			bigger datset.
+			bigger dataset.
 	\end{itemize}
 \end{frame}
 
@@ -296,7 +298,7 @@ for robust face recognition from Kinect data}}
 			the total number of sets in the query, where `unknown'
 			identities are considered correct if detected as
 			`unknown'
-		\item \textit{FP-unknown}: ratio between uncorrect recognition
+		\item \textit{FP-unknown}: ratio between incorrect recognition
 			of `unknown' persons and the total number of `unknown'
 			persons
 	\end{itemize}

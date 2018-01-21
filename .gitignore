@@ -93,3 +93,11 @@ Thumbs.db
 *.nav
 
 *.toc
+
+*.fdb_latexmk
+
+*.fls
+
+*.gz
+
+*.xdv
