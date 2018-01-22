@@ -226,16 +226,16 @@ for robust face recognition from Kinect data}}
 	\begin{itemize}
 		\item Preprocessing is really slow, especially the covariance
 			computation
-		\item We implemented multithread version but the main advantage
-			given by the multithread is in file loading, background
-			removal and face cropping because in covariance
-			computing --------FILL IN--------
+		\item We implemented multithread version but not GPU support
 		\item Using Intel i7-4510HQ CPU, (4 cores, 2 threads per core,
 			2.5 GHz frequency, boosted to 3.5 GHz), preprocessing
-			and covariance computing of all the dataset take about
+			and covariance computing of all the dataset takes less than
 			10 minutes
 		\item There are not particular issue on RAM usage, it is needed
-			about 1GB during preprocessing.
+			about 1GB during preprocessing. This is due to the
+			covariance computing which need all images of an
+			identity in RAM: fewer images per identity would need
+			less RAM
 	\end{itemize}
 \end{frame}
 
@@ -273,6 +273,19 @@ for robust face recognition from Kinect data}}
 \end{frame}
 
 \subsection{Discussion and results}
+\begin{frame}{Evaluation measures}
+	We computed results in terms of:
+	\begin{itemize}
+		\item \textit{rank-1}: ratio between correct recognitions and
+			the total number of sets in the query, where `unknown'
+			identities are considered correct if detected as
+			`unknown'
+		\item \textit{FP-unknown}: ratio between incorrect recognition
+			of `unknown' persons and the total number of `unknown'
+			persons
+	\end{itemize}
+\end{frame}
+
 \begin{frame}{Discussion}
 	\begin{itemize}
 		\item Our results are comparable to the ones of the authors,
@@ -292,19 +305,6 @@ for robust face recognition from Kinect data}}
 \end{frame}
 
 \begin{frame}{Results (1)}
-	We computed results in terms of:
-	\begin{itemize}
-		\item \textit{rank-1}: ratio between correct recognitions and
-			the total number of sets in the query, where `unknown'
-			identities are considered correct if detected as
-			`unknown'
-		\item \textit{FP-unknown}: ratio between incorrect recognition
-			of `unknown' persons and the total number of `unknown'
-			persons
-	\end{itemize}
-\end{frame}
-
-\begin{frame}{Results (2)}
 	\scriptsize
 	\begin{table}[]
 		\centering
@@ -330,7 +330,7 @@ for robust face recognition from Kinect data}}
 
 \end{frame}
 
-\begin{frame}{Results (3)}
+\begin{frame}{Results (2)}
 	\scriptsize
 	\begin{table}[]
 		\centering
@@ -357,8 +357,28 @@ for robust face recognition from Kinect data}}
 
 \end{frame}
 \section{Future Development}
-\begin{frame}
-	????
+\begin{frame}{Future Development}
+	\begin{itemize}
+		\item Computational optimization
+			\begin{itemize}
+				\item training and prediction not in multithreading
+				\item graphic card (CUDA?)
+			\end{itemize}
+		\item SVMs saving and loading to file
+		\item Studying in deep the gap in results relative to training
+			and prediction by using just RGB or just Depth
+		\item Studying in deep how results change when changing dataset:
+			\begin{itemize}
+				\item how much is useful the prediction rule when
+					using original author's dataset?
+				\item do results are still high by using few
+					images per identity but many different
+					identities (enterprise context)?
+			\end{itemize}
+		\item check true positives of ``unkown''
+			predictions
+
+	\end{itemize}
 \end{frame}
 
 \section*{Thank you for your kind attention}
