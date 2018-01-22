@@ -4,17 +4,18 @@ CONFIG -= app_bundle
 CONFIG -= qt
 
 SOURCES += $$files(src/*.cpp) \
-           extern_libs/head_pose_estimation/CRForestEstimator.cpp \
-           extern_libs/head_pose_estimation/CRTree.cpp
+		extern_libs/head_pose_estimation/CRForestEstimator.cpp \
+		extern_libs/head_pose_estimation/CRTree.cpp
 
-INCLUDEPATH += include $$(OPENCV_INCLUDE)
+INCLUDEPATH += include $$(OPENCV_INCLUDE) \
+		extern_libs/head_pose_estimation/
 
 HEADERS += $$files(include/*.h) \
-           extern_libs/head_pose_estimation/CRForestEstimator.h \
-           extern_libs/head_pose_estimation/CRTree.h
+		CRForestEstimator.h \
+		CRTree.h
 
 DISTFILES += \
-    camera_info.yaml
+camera_info.yaml
 
 
 unix: LIBS += -L$$(OPENCV_LIBS) -lopencv_core -lopencv_imgproc -lopencv_highgui -lopencv_imgcodecs -lopencv_objdetect -lopencv_ml -lopencv_calib3d
