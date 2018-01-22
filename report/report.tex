@@ -303,12 +303,19 @@ Table \ref{tab:results-alpha} shows results obtained with the first version of t
 
 \section{Technical considerations}
 	
-	\subsection{Code and performance}
+	\subsection{Code and performance} \label{sec:code}
 	Hayat's algorithm is computationally intensive, therefore in our implementation we took care of using the entire processor's capacity and tried to avoid expensive operations. Both loading and preprocessing take advantage of a multi-threaded environment: images of a person are subdivided into $n$ sets, where $n$ is the number of concurrently executable threads on the machine, then each one of the $n$ threads is given a set to process. Cheap \verb|std::move()| operations were used whenever possible instead of copying data or passing error-prone pointers. \\
 	For \verb|dataset A| we used both OpenCV for RGB images and Point Cloud Library for loading depth images. Depth images were then converted in OpenCV's \verb|cv::Mat| because Fanelli's face pose estimation algorithm needed depth images in this format. For \verb|dataset B| PCL was not needed to load depth images so we dropped it. \\
 	
 	\subsection{Issues}
 	During the development we found many issues due to a beta stage of development  and the lack of complete documentation in OpenCV. Major issues were found in the use of machine learning module of OpenCV, namely in \textit{k}-means algorithm and in loading and saving custom kernel SVMs\footnote{Apparently there is no way of saving a custom kernel SMV without changing OpenCV's source code, loosing portability.}.
+	
+\section{Future developments}
+The implementation could be improved both in terms of runtime performance and precision of the results. \\
+Concerning the former, as said in \ref{sec:code}, some parts of the code are parallelized, while others are not, but could be. Both training and prediction could be executed concurrently on multiple SVMs. Furthermore the parallelization could took advantage of long processing pipelines avoiding to move data in and out the CPU's caches. Anyway this would result in a highly coupled code with no big processing gains. To obtain the highest grade of parallelization the code should be moved into a GPU-based approach, using OpenCV's \verb|cuda| module and implementing some custom CUDA kenerls when an operation is not available in \verb|cuda| module. \\
+About the results instead we do not have a fair idea about why \textit{rank-1} results obtained by using RGB only images and Depth only images are so much poor with respect to the authors paper. This is the major issue we found in our results. \\
+Another important point that should be clarified is to what extent the rule we introduced in prediction is useful. It should be tested on larger datasets. Moreover, we argued that the average number of images per person could be small, provided that the number of identities is big. This statement should be submitted to a more expansive investigation, by testing the algorithm with more identities and fewer images per identity. \\
+Lastly, we kept track just of \textit{false positives} in the ``unknown'' prediction, but not of \textit{true positives}. We think that, according to the application, this could be a relevant measure of effectiveness.
 
 
 \printbibliography
