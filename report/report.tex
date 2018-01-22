@@ -43,6 +43,7 @@
 
 \usepackage{enumitem} % Customized lists
 \setlist[itemize]{noitemsep} % Make itemize lists more compact
+\usepackage{graphicx}
 
 \usepackage{abstract} % Allows abstract customization
 \renewcommand{\abstractnamefont}{\normalfont\huge} % Set the "Abstract" text to bold
@@ -234,6 +235,17 @@ We followed all of these steps, but we did not convert Euler angles given by the
 After \textit{k-means} clustering we obtained $c=3$ clusters and ended up with $2\times c$ sets of images per person: $c$ sets of RGB images and $c$ sets of Depth images. The covariance matrices were computed as described in the paper.
 
 \subsection{SVM training and prediction} \label{sec:training}
+\begin{figure}
+	\centering
+	\includegraphics[width=\linewidth]{svms.png}
+	\caption{
+		\textbf{The SVMs matrices}: the algorithm trains $c$ SVMs for
+		each identity on the RGB images (converted to grayscale) and
+		$c$ SVMs for each identity on the Depth images. Each identity
+		is associated in total to $2 \times c$ SVMs
+	}
+\end{figure}
+
 To train the SVMs hyper-parameters\footnote{$C$, to regulate the soft margin, and $\sigma$, see \ref{sec:svm} for kernel function description.} we used the default parameter grid provided by OpenCV with logarithmic step. We evaluated each combination of parameters of each SVM with F-measure, so that only one true positive item existed. The final parameters chosen were the mean of the best performing parameters. \\
 The paper was a bit ambiguous about the training strategy so we tried three different algorithms:
 \begin{itemize}
