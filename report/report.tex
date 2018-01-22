@@ -100,7 +100,7 @@
 \normalsize
 
 \section{Introduction}\label{sec:intro}
-\lettrine[nindent=0em,lines=2]{I}n \citet{Hayat2016} an algorithm for face recognition based on RGB-D image is given. RGB-D images are a state-of-the-art scene representation paradigm through which a 3D scene is described. Compared to classical RGB images, the RGB-D paradigm adds the depth information that gives the chance to study images in a three-dimensional space. In their paper, Hayat et al.\ show that the depth information can really raise precision of face recognition algorithms. \\
+\lettrine[nindent=0em,lines=2]{I}n \citet{Hayat2016} an algorithm for face recognition based on RGB-D image is given. RGB-D images are a state-of-the-art scene representation paradigm through which a 3D scene is described. Compared to classical RGB images, the RGB-D paradigm adds the Depth information that gives the chance to study images in a three-dimensional space. In their paper, Hayat et al.\ show that the Depth information can really raise precision of face recognition algorithms. \\
 We tried to reproduce their results using a small dataset consisting of 338 images of 26 different individuals. Because of the very poor results, we tried to train the model with a new dataset of 20 different peoples in 24 sequences for a total of 15.678 RGB-D images \citep{Fanelli2013}. In \citet{Hayat2016}, authors used the second of these datasets, merged with other two datasets for a total of more than 35.000 images. \\
 Our results let us think that this algorithm needs a very huge dataset for training.
 
@@ -114,8 +114,8 @@ The algorithm proposed by \citet{Hayat2016} is roughly divided in three steps:
 These steps are briefly described in the next paragraphs. For a complete description see \citet{Hayat2016}.
 
 \subsection{Normalization}\label{sec:normalization}
-The input RGB-D images are preprocessed with a three steps pipeline. First step in preprocessing is the background removal through a simple \textit{k}-means clustering procedure on depth images, the nearest cluster is the person. Then a face detection and pose estimation algorithm is used \citep{Fanelli2013}. Finally the pose information is used to precisely crop the face. \\
-The basic idea is to look for the first non empty row from top in the segmented depth image, where \textit{non empty} means with at least $m$ non-zero pixels; this is the top of the face ROI, lets call it $y_{top}$. $y_{top}$ is then adjusted adding a factor proportional to the estimated head pose $$y_{top}' = y_{top} + (\beta \phi +\gamma \psi)$$ where $\phi$ and $\psi$ are the \textit{roll} and \textit{yaw} angles returned by the pose estimation of which in \citet{Fanelli2011}, while $\beta$ and $\gamma$ are parameters set to $5/8$. The ROI height is proportionally inverse to the distance of the head from the camera $$y_{bottom} = y_{top} + 100/z$$
+The input RGB-D images are preprocessed with a three steps pipeline. First step in preprocessing is the background removal through a simple \textit{k}-means clustering procedure on Depth images, the nearest cluster is the person. Then a face detection and pose estimation algorithm is used \citep{Fanelli2013}. Finally the pose information is used to precisely crop the face. \\
+The basic idea is to look for the first non empty row from top in the segmented Depth image, where \textit{non empty} means with at least $m$ non-zero pixels; this is the top of the face ROI, lets call it $y_{top}$. $y_{top}$ is then adjusted adding a factor proportional to the estimated head pose $$y_{top}' = y_{top} + (\beta \phi +\gamma \psi)$$ where $\phi$ and $\psi$ are the \textit{roll} and \textit{yaw} angles returned by the pose estimation of which in \citet{Fanelli2011}, while $\beta$ and $\gamma$ are parameters set to $5/8$. The ROI height is proportionally inverse to the distance of the head from the camera $$y_{bottom} = y_{top} + 100/z$$
 The cropping window position along the \verb|X| axis is computed by looking for the first non empty column starting from right and the first non empty column from left. \\
 
 \subsection{Image subsets}
@@ -133,12 +133,12 @@ Given a cluster of images from the same person a suitable representation for SVM
 \end{itemize}
 
 \subsection{SVMs}\label{sec:svm}
-The covariance matrices are then used as a feature vector for the SVMs. $c \times N$ SVMs are trained (where $N$ is the number of people in the dataset) for the covariance matrices of the RGB images and just as many for the covariance matrices of the depth images. All SVMs are binary classification SVMs trained in a one-vs-all fashion. \\
+The covariance matrices are then used as a feature vector for the SVMs. $c \times N$ SVMs are trained (where $N$ is the number of people in the dataset) for the covariance matrices of the RGB images and just as many for the covariance matrices of the Depth images. All SVMs are binary classification SVMs trained in a one-vs-all fashion. \\
 The SVMs use the Stein kernel function to map the covariance matrices (symmetric positive definite matrices) from Riemannian manifold to a high dimensional Hilbert space where they are linearly separable. The Stein kernel function is defined as
 $$k(X,Y) = e^{-\sigma (\log{\det{\frac{X+Y}{2}}} - \frac{1}{2}\log{\det{XY}})}$$
 
 \subsection{Fusion of results}
-Once the SVMs are trained a query image set can be submitted to the algorithm. The image set must be of RGB and depth image all of the same person. These images are preprocessed as in the training. The resulting $2c$ covariance matrices ($c$ for RGB and $c$ for depth images) are classified by the $2c$ SVMs of each training person. The identity which receives the maximum number of ``votes'' is the predicted identity.
+Once the SVMs are trained a query image set can be submitted to the algorithm. The image set must be of RGB and Depth image all of the same person. These images are preprocessed as in the training. The resulting $2c$ covariance matrices ($c$ for RGB and $c$ for Depth images) are classified by the $2c$ SVMs of each training person. The identity which receives the maximum number of ``votes'' is the predicted identity.
 If more than one identity has the maximum number of votes, the one with the maximum distance from the hyper-plane is chose; if no SVM classifies the query covariance matrix with positive label, it is classified as \verb|unknown|.
 
 \section{Algorithm implementation}\label{sec:algorithm_impl}
@@ -155,12 +155,12 @@ The first attempt was to adapt the algorithm by \citet{Hayat2016} on a small dat
 	\item changing background scenes.
 \end{itemize}
 The very poor results obtained on this dataset forced us to implement all tweaks described in \ref{sec:background}, \ref{sec:cropping}, \ref{sec:training}. Anyway, our results did not agree with the results obtained in the paper. We can state with a reasonable certainty that the dataset was too small to train the model. \\
-Therefore, we tested the algorithm on a new dataset by \citet{Fanelli2013}, containing almost half of the images used in \citet{Hayat2016}, with more than 15.000 images of 20 different persons. On this new dataset, depth images were already segmented, therefore we removed the background segmentation step from the preprocessing pipeline. \\
+Therefore, we tested the algorithm on a new dataset by \citet{Fanelli2013}, containing almost half of the images used in \citet{Hayat2016}, with more than 15.000 images of 20 different persons. On this new dataset, Depth images were already segmented, therefore we removed the background segmentation step from the preprocessing pipeline. \\
 From now on we will refer to the first dataset as \verb|dataset A| and the second as \verb|dataset B|.
 
 \subsection{Background removal} \label{sec:background}
-The first step in the preprocessing pipeline is to remove the background: a clean depth image, with the person only, should be fed into the face cropping step (see \ref{sec:cropping}). Most of the effort in the implementation of the algorithm for \verb|dataset A| was put in this step. The task was not easy because of the non-uniform background in the images: the background was made of many objects and people at different depths; it was not feasible to simply use a \textit{k}-means clustering as in \cite{Hayat2016} because the image did not have two obvious clusters. \\
-In \verb|dataset B| this was already done on depth images, so we have been able to skip this step. \\
+The first step in the preprocessing pipeline is to remove the background: a clean Depth image, with the person only, should be fed into the face cropping step (see \ref{sec:cropping}). Most of the effort in the implementation of the algorithm for \verb|dataset A| was put in this step. The task was not easy because of the non-uniform background in the images: the background was made of many objects and people at different Depths; it was not feasible to simply use a \textit{k}-means clustering as in \cite{Hayat2016} because the image did not have two obvious clusters. \\
+In \verb|dataset B| this was already done on Depth images, so we have been able to skip this step. \\
 
 \subsubsection{Face detection first}
 A common error of \textit{k}-means clustering on \verb|dataset A| was to consider some objects and people slightly behind the individual of interest as part of his/her cluster. This produced a too loose cropping threshold resulting in an image with a partially removed background and making the pose estimation step \ref{sec:cropping} fail. We tried to overcome this introducing a face-detection step before clustering: only the face ROI was used for \textit{k}-means reducing the probability of clustering the wrong objects. If no face was detected, a fixed threshold segmentation was performed. \\
@@ -177,11 +177,11 @@ This method has three major disadvantages:
 After \textit{k}-means was applied all the background was removed, but many outliers to the right and the left of the person remained.
 We traversed the image as a graph to find the connected components using \verb|connectedComponentsWithStats()| function from OpenCV. Only the component with the second maximum area was considered (the first should be the background): it was approximated with a rectangle and everything out of the bounding box was discarded.
 
-\subsubsection{Dynamic segmentation with depth histograms}
-We also developed an algorithm able to dynamically segment depth images with very good precision traded off against very long computation times. \\
+\subsubsection{Dynamic segmentation with Depth histograms}
+We also developed an algorithm able to dynamically segment Depth images with very good precision traded off against very long computation times. \\
 To evaluate this new algorithm we gave a judgment of the segmentation quality on all the 338 images of the first dataset. Judgments were given with boolean values in reference to goodness of the segmentation of the main object represented in the pictures (in this case a person).	\\
 Results gave 92.3\% of precision. Anyway, the longer computational time was not worth of the precision improvement (only 2\% more than the face-detection-first algorithm). However, this could be an improvement if very different images are used. \\
-The algorithm was based on a histogram computation of depth values and on the
+The algorithm was based on a histogram computation of Depth values and on the
 assumption\footnote{We did not verified the assumption: studying in deep
 this approach need first of all to check this assumption} that it was made of
 ``hills'', like a lots of Gaussians juxtaposed.
@@ -193,7 +193,15 @@ gradually enlarging the range. Maybe the most frequent value could be replaced
 with the most large range, or the most wide area in a range.
 
 \subsection{Face pose estimation and face cropping}	\label{sec:cropping}
-In \citet{Hayat2016}, authors used the algorithm proposed in \citet{Fanelli2011} to compute a face detection and pose estimation. We used the same algorithm in the same way (see \ref{sec:normalization} for a brief description of the algorithm and its parameters). However we chose to change some of the parameters proposed in \citet{Hayat2016} for face cropping: $\beta = \frac{15}{8}$, $y_{bottom} = y_{top} + \frac{120}{z}$. We used pose estimation to correct ROI position along the \verb|X| axis too. When the person is looking either to the left or to the right we crop the rear part of the head with the following algorithm:
+In \citet{Hayat2016}, authors used the algorithm proposed in
+\citet{Fanelli2011} to compute a face detection and pose estimation. We used
+the same algorithm in the same way (see \ref{sec:normalization} for a brief
+description of the algorithm and its parameters). However we chose to change
+some of the parameters proposed in \citet{Hayat2016} for face cropping: $\beta
+= \frac{15}{8}$, $y_{bottom} = y_{top} + \frac{120}{z}$. We used pose
+estimation to correct ROI position along the \verb|X| axis too. When the person
+is looking either to the left or to the right we crop the rear part of the head
+with the following algorithm:
 \begin{algorithm}
 	\begin{algorithmic}[1]
 		\If {$\theta$ > 0}
@@ -209,7 +217,7 @@ where $\theta$ is the head rotation around the vertical axis and $k = 1.5$ is a 
 \subsection{Image sets representation} \label{sec:covariances}
 Next steps expected to cluster pose estimation converted from Euler angles to rotation matrix and to represent each cluster of each person with the covariance matrix described below. \\
 We followed all of these steps, but we did not convert Euler angles given by the head pose estimation to rotation matrices; the pose estimation on \verb|dataset A| had some small errors which amplified when the rotation matrix was computed giving the wrong clustering. On \verb|dataset B| the pose estimation had an higher precision probably because it was the same dataset used by \citet{Fanelli2011}, but we used Euler angles clustering anyway.\\
-After \textit{k-means} clustering we obtained $c=3$ clusters and ended up with $2\times c$ sets of images per person: $c$ sets of RGB images and $c$ sets of depth images. The covariance matrices were computed as described in the paper.
+After \textit{k-means} clustering we obtained $c=3$ clusters and ended up with $2\times c$ sets of images per person: $c$ sets of RGB images and $c$ sets of Depth images. The covariance matrices were computed as described in the paper.
 
 \subsection{SVM training and prediction} \label{sec:training}
 To train the SVMs hyper-parameters\footnote{$C$, to regulate the soft margin, and $\sigma$, see \ref{sec:svm} for kernel function description.} we used the default parameter grid provided by OpenCV with logarithmic step. We evaluated each combination of parameters of each SVM with F-measure, so that only one true positive item existed. The final parameters chosen were the mean of the best performing parameters. \\
@@ -224,15 +232,22 @@ The strategy to merge results from all the $2 \times N \times c$ SVMs was kept t
 
 \section{Experiments}
 We made many experiments on \verb|dataset A| with no success. \\
-From \verb|dataset B| we randomly extracted $40$ images from each person to be used as testing set and 5 persons were completely removed from the training set, to simulate the 'unknown' behaviour. We never removed the persons that have been recorded twice and for whom \verb|dataset B| contains two sets of images. \\
-We also used $\frac{1}/{3}$ of the remaining training set as validation set to evaluate SVMs performance and to find the best hyper-parameters. \\
-As training strategy we used only the simple training described in \ref{sec:training}. Note that a \textit{k-fold cross validation} may enhance the results.
+From \verb|dataset B| we randomly extracted $40$ images from each person to be
+used as testing set and 5 persons were completely removed from the training
+set, to simulate the ``unknown'' behaviour. We never removed the persons that
+have been recorded twice and for whom \verb|dataset B| contains two sets of
+images. \\
+We also used $\frac{1}{3}$ of the remaining training set as validation set to
+evaluate SVMs performance and to find the best hyper-parameters. \\
+As training strategy we used only the simple training described in
+\ref{sec:training}. Note that a \textit{k}-fold cross validation may enhance
+the results.
 
 \section{Conclusions and results}
 Our results differ a lot based on which identities were removed from the dataset. \\
 This let us argue that our results still suffer for dataset size. Probably, a bigger dataset is needed to obtain good results. It is not the bigger number of image itself that would made the algorithm perform better, but it is a larger number of different identities: the average number of images per identity in \verb|dataset B| (about 700 images per identity) is much larger than in the final dataset used by the authors (about 300 images per identity). Actually, a greater number of identities means a greater number of covariance matrices and a greater number of items we can use to train the SVMs. This is coherent with Hayat's statement according to which the covariance set representation is very effective, in that it describes each person in a pose using a small number of images compared to other methods. \\
 
-Also, we note that our results with RGB only or depth images only are much lower than those claimed by the authors. We believe that in small datasets, depth and RGB information merging is more useful because of the lack of items representative than in big datasets. \\
+Also, we note that our results with RGB only or Depth images only are much lower than those claimed by the authors. We believe that in small datasets, Depth and RGB information merging is more useful because of the lack of items representative than in big datasets. \\
 
 In the following tables we show our results achieved on multiple executions of the experiment with different combinations of `unknown'-`known' identities. Results are in terms of:
 \begin{itemize}
@@ -302,14 +317,14 @@ Table \ref{tab:results-alpha} shows results obtained with the first version of t
 
 
 \section{Technical considerations}
-	
-	\subsection{Code and performance} \label{sec:code}
-	Hayat's algorithm is computationally intensive, therefore in our implementation we took care of using the entire processor's capacity and tried to avoid expensive operations. Both loading and preprocessing take advantage of a multi-threaded environment: images of a person are subdivided into $n$ sets, where $n$ is the number of concurrently executable threads on the machine, then each one of the $n$ threads is given a set to process. Cheap \verb|std::move()| operations were used whenever possible instead of copying data or passing error-prone pointers. \\
-	For \verb|dataset A| we used both OpenCV for RGB images and Point Cloud Library for loading depth images. Depth images were then converted in OpenCV's \verb|cv::Mat| because Fanelli's face pose estimation algorithm needed depth images in this format. For \verb|dataset B| PCL was not needed to load depth images so we dropped it. \\
-	
-	\subsection{Issues}
-	During the development we found many issues due to a beta stage of development  and the lack of complete documentation in OpenCV. Major issues were found in the use of machine learning module of OpenCV, namely in \textit{k}-means algorithm and in loading and saving custom kernel SVMs\footnote{Apparently there is no way of saving a custom kernel SMV without changing OpenCV's source code, loosing portability.}.
-	
+
+\subsection{Code and performance} \label{sec:code}
+Hayat's algorithm is computationally intensive, therefore in our implementation we took care of using the entire processor's capacity and tried to avoid expensive operations. Both loading and preprocessing take advantage of a multi-threaded environment: images of a person are subdivided into $n$ sets, where $n$ is the number of concurrently executable threads on the machine, then each one of the $n$ threads is given a set to process. Cheap \verb|std::move()| operations were used whenever possible instead of copying data or passing error-prone pointers. \\
+For \verb|dataset A| we used both OpenCV for RGB images and Point Cloud Library for loading Depth images. Depth images were then converted in OpenCV's \verb|cv::Mat| because Fanelli's face pose estimation algorithm needed Depth images in this format. For \verb|dataset B| PCL was not needed to load Depth images so we dropped it. \\
+
+\subsection{Issues}
+During the development we found many issues due to a beta stage of development  and the lack of complete documentation in OpenCV. Major issues were found in the use of machine learning module of OpenCV, namely in \textit{k}-means algorithm and in loading and saving custom kernel SVMs\footnote{Apparently there is no way of saving a custom kernel SMV without changing OpenCV's source code, loosing portability.}.
+
 \section{Future developments}
 The implementation could be improved both in terms of runtime performance and precision of the results. \\
 Concerning the former, as said in \ref{sec:code}, some parts of the code are parallelized, while others are not, but could be. Both training and prediction could be executed concurrently on multiple SVMs. Furthermore the parallelization could took advantage of long processing pipelines avoiding to move data in and out the CPU's caches. Anyway this would result in a highly coupled code with no big processing gains. To obtain the highest grade of parallelization the code should be moved into a GPU-based approach, using OpenCV's \verb|cuda| module and implementing some custom CUDA kenerls when an operation is not available in \verb|cuda| module. \\
