@@ -223,56 +223,23 @@ The paper was a bit ambiguous about the training strategy so we tried three diff
 The strategy to merge results from all the $2 \times N \times c$ SVMs was kept the same too, but we introduced a rule to achieve a better recognition of \verb|unknown| faces: if more than $t$ SVMs had the maximum number of votes, the face was forced to be \verb|unknown|. $t$ is a threshold that we set to $2c$, that is the maximum number of votes that each person should receive. This rule was quite effective: in our experiments it improved the final algorithm between the 10\% and the 40\% of \textit{rank-1}, while \textit{FP-unknown} was always 1. \\
 
 \section{Experiments}
-With the first small dataset we made many experiments without succeed.
-\\
-From the second dataset we randomly extracted 40 images from each person to be
-used as testing set and 5 persons were completely removed from the training
-set, to simulate the `unknown' behaviour. In no one case we removed the persons
-that have been recorded twice and for whom there are two sets of images.
-\\
-Also, we used $1/3$ of the remaining training set as validation set to evaluate
-SVMs performance and to find the best hyper-parameters.
-\\
-As training strategy we used only the simple training described at the first
-point of \ref{sec:training}. Note that maybe a \textit{k-fold cross validation}
-could enhance the results.
+We made many experiments on \verb|dataset A| with no success. \\
+From \verb|dataset B| we randomly extracted $40$ images from each person to be used as testing set and 5 persons were completely removed from the training set, to simulate the 'unknown' behaviour. We never removed the persons that have been recorded twice and for whom \verb|dataset B| contains two sets of images. \\
+We also used $\frac{1}/{3}$ of the remaining training set as validation set to evaluate SVMs performance and to find the best hyper-parameters. \\
+As training strategy we used only the simple training described in \ref{sec:training}. Note that a \textit{k-fold cross validation} may enhance the results.
 
 \section{Conclusions and results}
-Our results differ a lot based on which identities were removed from the
-dataset.
-\\
-This let us argue that our results still suffer from a too much little dataset.
-Probably, a bigger dataset is needed to perform this algorithm. We also argue
-that it is not the bigger number of image itself that would made the algorithm
-perform better on another dataset, but it is a larger number of different
-identities, because the average number of images per identity in the dataset
-from \citet{Fanelli2013} (about 700 images per identity) is much larger than in
-the final dataset used by the authors (about 300 images per identity).
-\\
-Actually, a bigger number of identities means a bigger number of covariance
-matrices and a bigger number of items that we can use to train the SVMs. Also,
-this is coherent with Hayat's statement according to which the covariance set
-representation is very effective, in that it describes each person in a pose
-without needing a larger number of images.
-\\
-Also, we note that our results with only RGB or only D images are much lower
-than those claimed by the authors. We believe that in small datasets, Depth and
-RGB informations merging is more useful because of the lack of items
-representative than in big datasets.
-\\
-In the following tables we show our results achieved on multiple executions of
-the experiment with different combinations of `unknown'-`known' identities.
-Results are in terms of:
+Our results differ a lot based on which identities were removed from the dataset. \\
+This let us argue that our results still suffer for dataset size. Probably, a bigger dataset is needed to obtain good results. It is not the bigger number of image itself that would made the algorithm perform better, but it is a larger number of different identities: the average number of images per identity in \verb|dataset B| (about 700 images per identity) is much larger than in the final dataset used by the authors (about 300 images per identity). Actually, a greater number of identities means a greater number of covariance matrices and a greater number of items we can use to train the SVMs. This is coherent with Hayat's statement according to which the covariance set representation is very effective, in that it describes each person in a pose using a small number of images compared to other methods. \\
+
+Also, we note that our results with RGB only or depth images only are much lower than those claimed by the authors. We believe that in small datasets, depth and RGB information merging is more useful because of the lack of items representative than in big datasets. \\
+
+In the following tables we show our results achieved on multiple executions of the experiment with different combinations of `unknown'-`known' identities. Results are in terms of:
 \begin{itemize}
-	\item \textit{rank-1}: ratio between correct recognitions and the total
-		number of sets in the query, where `unknown' identities are
-		considered correct if detected as `unknown';
-	\item \textit{FP-unknown}: ratio between incorrect recognition of
-		`unknown' persons and the total number of `unknown' persons.
+	\item \textit{rank-1}: ratio between correct recognitions and the total number of queries, where `unknown' identities are considered correct if detected as `unknown';
+	\item \textit{FP-unknown}: ratio between incorrect recognition of `unknown' persons and the total number of `unknown' persons.
 \end{itemize}
-Table \ref{tab:results-alpha} show results obtained with the first version of
-the rule described in \ref{sec:training}, table \ref{tab:results-beta} show
-results obtained using the second version (RGB images only).
+Table \ref{tab:results-alpha} shows results obtained with the first version of the rule described in \ref{sec:training}, table \ref{tab:results-beta} shows results obtained using the second version (RGB images only).
 
 \begin{table}[]
 	\begin{adjustwidth}{-.75in}{-.75in}
@@ -332,9 +299,17 @@ results obtained using the second version (RGB images only).
 		\end{tabular}
 	\end{adjustwidth}
 \end{table}
-\section{Technical issues}
-During the development we found many issues due to a beta stage of development in OpenCV. Also, we began using both OpenCV for RGB images and Point Cloud Library for depth images. Since algorithm \citet{Fanelli2011} needed depth images represented in OpenCV \textit{Mat} objects, we needed to switch completely to OpenCV and to leave PCL. \\
-Major issues were found in the use of machine learning module of OpenCV, namely in kmeans algorithm and in loading and saving from file of custom kernel SVMs.
+
+
+\section{Technical considerations}
+	
+	\subsection{Code and performance}
+	Hayat's algorithm is computationally intensive, therefore in our implementation we took care of using the entire processor's capacity and tried to avoid expensive operations. Both loading and preprocessing take advantage of a multi-threaded environment: images of a person are subdivided into $n$ sets, where $n$ is the number of concurrently executable threads on the machine, then each one of the $n$ threads is given a set to process. Cheap \verb|std::move()| operations were used whenever possible instead of copying data or passing error-prone pointers. \\
+	For \verb|dataset A| we used both OpenCV for RGB images and Point Cloud Library for loading depth images. Depth images were then converted in OpenCV's \verb|cv::Mat| because Fanelli's face pose estimation algorithm needed depth images in this format. For \verb|dataset B| PCL was not needed to load depth images so we dropped it. \\
+	
+	\subsection{Issues}
+	During the development we found many issues due to a beta stage of development  and the lack of complete documentation in OpenCV. Major issues were found in the use of machine learning module of OpenCV, namely in \textit{k}-means algorithm and in loading and saving custom kernel SVMs\footnote{Apparently there is no way of saving a custom kernel SMV without changing OpenCV's source code, loosing portability.}.
+
 
 \printbibliography
 
