@@ -34,7 +34,7 @@ namespace test {
     {
         FaceRecognizer rec("/home/alberto/Desktop/svms");
     }
-/*
+
     void testSVM()
     {
         string dirPath = "/home/alberto/Downloads/hpdb/";
@@ -283,7 +283,7 @@ namespace test {
         cout << "\n\nTests finished!" << endl;
     }
 
-    /*
+
 void testPoseClustering()
 {
     srand(time(NULL));
@@ -299,7 +299,7 @@ void testPoseClustering()
     cout << "Nearest Center: " << endl;
     cout << pm.getNearestCenterId(pose) << endl;
 }
-*/
+
 
     void covarianceTest()
     {

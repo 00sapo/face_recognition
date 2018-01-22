@@ -1,20 +1,22 @@
 #include <iostream>
 #include <random>
 #include <vector>
+#include <experimental/filesystem>
+#include <fstream>
 
 #include <opencv2/highgui/highgui.hpp>
 
-#include "boost/regex.hpp"
+//#include "boost/regex.hpp"
+#include "face.h"
 #include "datasetcov.h"
 #include "facerecognizer.h"
 #include "image4dloader.h"
 #include "preprocessor.h"
-#include "test.h"
-#include <experimental/filesystem>
-#include <fstream>
+#include "covariancecomputer.h"
 
-using namespace std::experimental::filesystem;
-using namespace boost;
+
+namespace fs = std::experimental::filesystem;
+//using namespace boost;
 using cv::Mat;
 using std::string;
 using std::vector;
@@ -77,7 +79,7 @@ int main(int argc, char* argv[])
     cv::CommandLineParser parser(argc, argv, KEYS); // opencv parser for command line arguments
 
     // if wrong arguments, print usage
-    cout << "Loading dataset..." << endl;
+    std::cout << "Loading dataset..." << std::endl;
     DatasetCov trainingSet, validationSet;
     if (!datasetLoader(parser, trainingSet, validationSet)) {
         std::cout << "Wrong input args!" << std::endl;
@@ -85,7 +87,7 @@ int main(int argc, char* argv[])
         return 0;
     }
 
-    cout << "Training SVMs..." << endl;
+    std::cout << "Training SVMs..." << std::endl;
     FaceRecognizer faceRec(SUBSETS);
     if (parser.has(OPTION_LOAD)) {
         faceRec.load(parser.get<string>(OPTION_LOAD));
@@ -99,34 +101,34 @@ int main(int argc, char* argv[])
         faceRec.save(parser.get<string>(OPTION_SAVE));
     }
 
-    cout << "Loading MAP" << endl;
+    std::cout << "Loading MAP" << std::endl;
     vector<string> idmap;
     int total_unknown_ids = 0;
     if (!loadMap(parser, idmap, total_unknown_ids))
         return 1;
 
-    cout << "Querying model..." << endl;
+    std::cout << "Querying model..." << std::endl;
     if (parser.has(OPTION_QUERY)) {
         auto queryPath = parser.get<string>(OPTION_QUERY);
-        if (!is_directory(queryPath)) {
+        if (!fs::is_directory(queryPath)) {
             std::cout << queryPath << " is not a directory!" << std::endl;
             return 0;
         }
 
         Image4DLoader loader(queryPath, "frame_[0-9]*_(rgb|depth).*");
         Preprocessor preproc;
-        regex expr{ ".*/[0-9][0-9]" };
+        std::regex expr{ ".*/[0-9][0-9]" };
         int correct = 0;
         int uncorrect_unknown = 0;
         int total_number_of_query = 0;
-        for (auto& x : directory_iterator(queryPath)) {
+        for (auto& x : fs::directory_iterator(queryPath)) {
             string path = x.path().string();
-            if (is_directory(path) && regex_match(path, expr)) {
+            if (fs::is_directory(path) && std::regex_match(path, expr)) {
                 loader.setCurrentPath(path);
                 auto faces = preproc.preprocess(loader.get());
 
                 vector<Mat> grayscale, depthmap;
-                covariance::getNormalizedCovariances(faces, SUBSETS, grayscale, depthmap);
+                face::covariance::getNormalizedCovariances(faces, SUBSETS, grayscale, depthmap);
 
                 bool useRGB = parser.has(OPTION_USE_RGB);
                 bool useDepth = parser.has(OPTION_USE_DEPTH);
@@ -245,7 +247,7 @@ bool datasetLoader(const cv::CommandLineParser& parser, DatasetCov& trainingSet,
 
 void loadAndPreprocess(const string& datasetPath, std::size_t covarianceSubsets, DatasetCov& trainingSet, DatasetCov& validationSet)
 {
-    if (!is_directory(datasetPath)) {
+    if (!fs::is_directory(datasetPath)) {
         std::cerr << "ERROR! " << datasetPath << " is not a directory!" << std::endl;
         trainingSet.clear();
         validationSet.clear();
@@ -258,11 +260,11 @@ void loadAndPreprocess(const string& datasetPath, std::size_t covarianceSubsets,
     vector<vector<Mat>> grayscaleTr, depthmapTr;
     vector<vector<Mat>> grayscaleVal, depthmapVal;
     vector<string> dirMap;
-    regex expr{ ".*/[0-9][0-9]" };
+    std::regex expr{ ".*/[0-9][0-9]" };
 
-    for (auto& x : directory_iterator(datasetPath)) {
+    for (auto& x : fs::directory_iterator(datasetPath)) {
         auto path = x.path();
-        if (is_directory(path) && regex_match(path.string(), expr)) {
+        if (fs::is_directory(path) && std::regex_match(path.string(), expr)) {
             loader.setCurrentPath(path);
 
             std::cout << "Loading and preprocessing images from " << path << std::endl;
@@ -275,8 +277,8 @@ void loadAndPreprocess(const string& datasetPath, std::size_t covarianceSubsets,
             vector<Mat> grayscaleCovarTr, depthmapCovarTr;
             vector<Mat> grayscaleCovarVal, depthmapCovarVal;
 
-            covariance::getNormalizedCovariances(train, covarianceSubsets, grayscaleCovarTr, depthmapCovarTr);
-            covariance::getNormalizedCovariances(validation, covarianceSubsets, grayscaleCovarVal, depthmapCovarVal);
+            face::covariance::getNormalizedCovariances(train, covarianceSubsets, grayscaleCovarTr, depthmapCovarTr);
+            face::covariance::getNormalizedCovariances(validation, covarianceSubsets, grayscaleCovarVal, depthmapCovarVal);
 
             grayscaleTr.push_back(std::move(grayscaleCovarTr));
             depthmapTr.push_back(std::move(depthmapCovarTr));
@@ -317,39 +319,4 @@ void splitTrainValidation(const vector<Face>& dataset, vector<Face>& trainingSet
     for (auto i : index) {
         trainingSet.push_back(dataset[i]);
     }
-}
-
-void testFunctions()
-{
-    //test::testSingletonSettings();
-    //
-    //face::test::testImage4DLoader();
-    //
-    //test::testFindThreshold();
-    //
-    //test::testGetDepthMap();
-    //
-    //test::testKmeans();
-    //
-    face::test::testPreprocessing();
-    //
-    //test::testLoadSpeed();
-    //
-    //test::testEulerAnglesToRotationMatrix();
-    //
-    //test::testPoseClustering();
-    //
-    //test::testKmeans2();
-    //
-    //face::test::covarianceTest();
-    //
-    //face::test::testSVM();
-    //
-    //face::test::testSVMLoad();
-    //
-    //face::test::covarianceTest();
-    //
-    //face::test::testBackgroundRemoval();
-
-    std::cout << "\n\nTests finished!" << std::endl;
 }
