@@ -55,13 +55,14 @@ for robust face recognition from Kinect data}}
 		\item Next, a precise cropping can be made, using precise pose
 			informations computed on depth images
 		\item Pose info are used to adjust cropping window sizes
+		\item Lastly, RGB images are converted to grayscale
 	\end{itemize}
 \end{frame}
 
 \subsection{Image sets representation}
 \begin{frame}{Image sets representation}
 	\begin{itemize}
-		\item Authors use faces poses to discover 3 different clusters
+		\item Authors use face poses to discover 3 different clusters
 			for each original image set
 		\item They represent each of these clusters with a $16 \times
 			16$ covariance matrix computed through LBP features
@@ -117,7 +118,7 @@ for robust face recognition from Kinect data}}
 		\item On each subset the covariance matrix is computed and is
 			given in input to each SVM model
 		\item Each of the three covariance matrices of the query will
-			receive $6 \times n$ votes, where $n$ is the umber of
+			receive $6 \times n$ votes, where $n$ is the number of
 			SVMs training sets
 		\item The one that will receive the maximum number of votes
 			will be predicted as the recognized face
@@ -130,7 +131,7 @@ for robust face recognition from Kinect data}}
 \begin{frame}{Datasets}
 	\begin{itemize}
 		\item The project assignment was to test the proposed algorithm
-			on a new small dataset of 338 images coming from 26
+			on a new small dataset containing 338 images of 26
 			people, with different lightings and background scenes
 		\item This was unsuccessful, hence, after many attempts, we
 			changed the dataset and we tested the algorithm on a
@@ -144,7 +145,7 @@ for robust face recognition from Kinect data}}
 \subsection{Preprocessing tweaks}
 \begin{frame}{Preprocessing tweaks (1)}
 	The very poor results on the first small dataset
-	forwarded us to implement some changes to the
+	forced us to implement some changes to the
 	preprocessing algorithm
 	\begin{itemize}
 		\item \textit{Face-detection-first}: we used Haar cascade
@@ -200,6 +201,10 @@ for robust face recognition from Kinect data}}
 	\end{enumerate}
 \end{frame}
 
+\begin{frame}{Training strategies}
+	\includegraphics[width=\linewidth]{svms}
+\end{frame}
+
 \subsection{Prediction}
 \begin{frame}{Prediction}
 	\begin{itemize}
@@ -235,7 +240,7 @@ for robust face recognition from Kinect data}}
 			2.5 GHz frequency, boosted to 3.5 GHz), preprocessing
 			and covariance computing of all the dataset takes less than
 			10 minutes
-		\item There are not particular issue on RAM usage, it is needed
+		\item There is no particular issue on RAM usage, it is needed
 			about 1GB during preprocessing. This is due to the
 			covariance computing which need all images of an
 			identity in RAM: fewer images per identity would need
@@ -293,7 +298,8 @@ for robust face recognition from Kinect data}}
 \begin{frame}{Discussion}
 	\begin{itemize}
 		\item Our results are comparable to the ones of the authors,
-			taking in account the minor size of our dataset
+			taking into account the smaller size of our
+			dataset
 		\item Despite the smaller sizes, the second dataset that we
 			used had a very larger mean number of images per
 			persons (about 700 images) with respect to the dataset
@@ -302,9 +308,7 @@ for robust face recognition from Kinect data}}
 			performances is not given by the total number of images,
 			but it is given by the number of identities
 		\item Our results with only RGB or D images are much lower than
-			those claimed by authors. We believe that in small
-			datasets depth info is more representative than in
-			bigger dataset
+			those claimed by authors
 	\end{itemize}
 \end{frame}
 
@@ -382,7 +386,7 @@ for robust face recognition from Kinect data}}
 					images per identity but many different
 					identities (enterprise context)?
 			\end{itemize}
-		\item Checking true positives of ``unknown''
+		\item Checking true positives of `unknown'
 			predictions
 
 	\end{itemize}

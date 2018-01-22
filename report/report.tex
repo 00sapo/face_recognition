@@ -114,9 +114,23 @@ The algorithm proposed by \citet{Hayat2016} is roughly divided in three steps:
 These steps are briefly described in the next paragraphs. For a complete description see \citet{Hayat2016}.
 
 \subsection{Normalization}\label{sec:normalization}
-The input RGB-D images are preprocessed with a three steps pipeline. First step in preprocessing is the background removal through a simple \textit{k}-means clustering procedure on Depth images, the nearest cluster is the person. Then a face detection and pose estimation algorithm is used \citep{Fanelli2013}. Finally the pose information is used to precisely crop the face. \\
-The basic idea is to look for the first non empty row from top in the segmented Depth image, where \textit{non empty} means with at least $m$ non-zero pixels; this is the top of the face ROI, lets call it $y_{top}$. $y_{top}$ is then adjusted adding a factor proportional to the estimated head pose $$y_{top}' = y_{top} + (\beta \phi +\gamma \psi)$$ where $\phi$ and $\psi$ are the \textit{roll} and \textit{yaw} angles returned by the pose estimation of which in \citet{Fanelli2011}, while $\beta$ and $\gamma$ are parameters set to $5/8$. The ROI height is proportionally inverse to the distance of the head from the camera $$y_{bottom} = y_{top} + 100/z$$
-The cropping window position along the \verb|X| axis is computed by looking for the first non empty column starting from right and the first non empty column from left. \\
+The input RGB-D images are preprocessed with a three steps pipeline. First step
+in preprocessing is the background removal through a simple \textit{k}-means
+clustering procedure on Depth images, the nearest cluster is the person. Then a
+face detection and pose estimation algorithm is used \citep{Fanelli2013}.
+Finally the pose information is used to precisely crop the face and RGB images
+are converted to grayscale. \\
+The basic idea is to look for the first non empty row from top in the segmented
+Depth image, where \textit{non empty} means with at least $m$ non-zero pixels;
+this is the top of the face ROI, lets call it $y_{top}$. $y_{top}$ is then
+adjusted adding a factor proportional to the estimated head pose $$y_{top}' =
+y_{top} + (\beta \phi +\gamma \psi)$$ where $\phi$ and $\psi$ are the
+\textit{roll} and \textit{yaw} angles returned by the pose estimation of which
+in \citet{Fanelli2011}, while $\beta$ and $\gamma$ are parameters set to $5/8$.
+The ROI height is proportionally inverse to the distance of the head from the
+camera $$y_{bottom} = y_{top} + 100/z$$ The cropping window position along the
+\verb|X| axis is computed by looking for the first non empty column starting
+from right and the first non empty column from left. \\
 
 \subsection{Image subsets}
 Once the cropped faces are available they are clustered based on their pose. For each person $c$ pose cluster centers are computed by \textit{k}-means; using these cluster centers, images of the person are assigned to one of the $c$ clusters based on the shortest euclidean distance between the cluster centers and the pose vector of each image.
