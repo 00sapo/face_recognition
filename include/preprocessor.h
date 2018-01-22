@@ -5,7 +5,7 @@
 #include <mutex>
 #include <opencv2/objdetect.hpp>
 
-#include "extern_libs/head_pose_estimation/CRForestEstimator.h"
+#include "CRForestEstimator.h"
 
 namespace face {
 
