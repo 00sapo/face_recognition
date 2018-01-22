@@ -178,11 +178,13 @@ After \textit{k}-means was applied all the background was removed, but many outl
 We traversed the image as a graph to find the connected components using \verb|connectedComponentsWithStats()| function from OpenCV. Only the component with the second maximum area was considered (the first should be the background): it was approximated with a rectangle and everything out of the bounding box was discarded.
 
 \subsubsection{Dynamic segmentation with depth histograms}
-We also developed an algorithm that was able to dynamically segment depth images with very good precision traded off against very long computation times. \\
+We also developed an algorithm able to dynamically segment depth images with very good precision traded off against very long computation times. \\
 To evaluate this new algorithm we gave a judgment of the segmentation quality on all the 338 images of the first dataset. Judgments were given with boolean values in reference to goodness of the segmentation of the main object represented in the pictures (in this case a person).	\\
 Results gave 92.3\% of precision. Anyway, the longer computational time was not worth of the precision improvement (only 2\% more than the face-detection-first algorithm). However, this could be an improvement if very different images are used. \\
 The algorithm was based on a histogram computation of depth values and on the
-assumption that it was made of ``hills'', like a lots of Gaussians juxtaposed.
+assumption\footnote{We did not verified the assumption: studying in deep
+this approach need first of all to check this assumption} that it was made of
+``hills'', like a lots of Gaussians juxtaposed.
 It looked for the most frequent value trying to estimate the range containing
 the highest peak. If no face was detected in this range it was re-executed on
 the second most high peak and so on. Estimation of the range was made
