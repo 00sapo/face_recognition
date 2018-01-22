@@ -8,7 +8,7 @@
 \title{Face recognition through RGB-D images and matrices of SVMs} % Article title
 \subtitle{Based on Hayat et al., 2016}
 \date{\today}
-\author{Federico Simonetta, matricola 1129912 \\ Alberto Cenzato, matricola 0000000 }
+\author{Federico Simonetta, matricola 1129912 \\ Alberto Cenzato, matricola 1134707 }
 \setbeamercolor{title separator}{fg=dei}
 \setbeamercolor{progress bar}{fg=dei}
 
@@ -38,11 +38,11 @@ for robust face recognition from Kinect data}}
 \begin{frame}{Purpose of the algorithm}
 	\begin{itemize}
 		\item Purpose of the proposed algorithm is to recognize persons
-			given an image set of that person in different poses.
+			given an image set of that person in different poses
 		\item This is useful especially for face recognition in video
-			recording.
+			recording
 		\item The algorithm take advantage of depth info captured
-			through Kinect cameras.
+			through Kinect cameras
 	\end{itemize}
 
 \end{frame}
@@ -147,53 +147,57 @@ for robust face recognition from Kinect data}}
 	forwarded us to implement some changes to the
 	preprocessing algorithm
 	\begin{itemize}
-		\item \textit{face-detection-first}: we used Haar cascade
+		\item \textit{Face-detection-first}: we used Haar cascade
 			classifiers made available by OpenCV to detect a face,
 			crop it and then segment background and refine
 			cropping; if no face was detected, we use a fixed
-			threshold segmentation.
-		\item \textit{outlier removal}: we first compute the maximum
+			threshold segmentation
+		\item \textit{Outlier removal}: we first compute the maximum
 			are connected component and crop it with its smallest
 			rectangle approximation; this is useful to a better
 			clustering
+		\item \textit{Histograms segmentation}: we tried to segment the
+			histogram region containing the highest peak and if face
+			detection or pose estimation failed we retried
+			with the region containing the second higher peak. We
+			abandoned it because too much slow (but nice
+			precision)
 	\end{itemize}
 \end{frame}
 
 \begin{frame}{Preprocessing tweaks (2)}
 	\begin{itemize}
-		\item \textit{histograms segmentation}: we also developed a new
-			algorithm based on the assumption that depth histograms
-			envelope is similar to several Gaussians or `hills'
-			juxtaposed; we tried to segment the region containing
-			the highest peak and if face detection or pose
-			estimation failed we went retried with the region
-			containing the second higher peak. Despite this
-			algorithm was very effective, we decided to abandon it
-			because of its huge computational
-			cost.
-		\item \textit{adjusted face cropping}:
-			------------FILL-------------------FILL-------
-		\item \textit{pose clustering}:
-			------------FILL-------------------FILL-------
+		\item \textit{Adjusted face cropping}:
+			\begin{itemize}
+				\item G. Fanelli et al. (2011) algorithm to
+					compute face detection and pose
+					estimation
+				\item We changed parameters for face cropping
+				\item Corrected ROI position along the X
+					axis
+			\end{itemize}
+		\item \textit{Removed rotation matrix}: pose clustering
+			directly on Euler angles: rotation matrix computing
+			enlarged eventual pose detection errors
 	\end{itemize}
 \end{frame}
 
 \subsection{Training strategies}
 \begin{frame}{Training strategies}
 	The proposed paper did not specify any particular training strategy.
-	Because of this, we tried three different algorithms:
-	\begin{itemize}
-		\item a simple training in which all covariance matrices but
+	Because of this, we tried four different training algorithms:
+	\begin{enumerate}
+		\item All covariance matrices but
 			one had negative labels
-		\item a training in which all SVMs of the same correct identity
+		\item All SVMs of the same correct identity
 			had positive label (very bad results)
-		\item a training (only on the first dataset) in which the
-			covariance matrix of the correct identity but of
-			different poses were removed from the training set
-		\item \textit{leave-one-out}: only on the first dataset, without
+		\item Covariance matrices of the correct identity but of
+			different poses were removed from the training set of
+			each SVM (only on the first dataset)
+		\item \textit{Leave-one-out}: without
 			success; authors say that \textit{k-fold} cross
-			validation gave low results
-	\end{itemize}
+			validation gave low results (only on the first dataset)
+	\end{enumerate}
 \end{frame}
 
 \subsection{Prediction}
@@ -215,7 +219,7 @@ for robust face recognition from Kinect data}}
 		\item From experiments we found that using RGB images only,
 			\textit{FP-unknown} was always 0. We changed the rule
 			so that it took in account only RGB images;
-			consequently, $t = c$.
+			consequently, $t = c$
 
 	\end{itemize}
 \end{frame}
@@ -226,16 +230,16 @@ for robust face recognition from Kinect data}}
 	\begin{itemize}
 		\item Preprocessing is really slow, especially the covariance
 			computation
-		\item We implemented multithread version but the main advantage
-			given by the multithread is in file loading, background
-			removal and face cropping because in covariance
-			computing --------FILL IN--------
+		\item We implemented multithread version but not GPU support
 		\item Using Intel i7-4510HQ CPU, (4 cores, 2 threads per core,
 			2.5 GHz frequency, boosted to 3.5 GHz), preprocessing
-			and covariance computing of all the dataset take about
+			and covariance computing of all the dataset takes less than
 			10 minutes
 		\item There are not particular issue on RAM usage, it is needed
-			about 1GB during preprocessing.
+			about 1GB during preprocessing. This is due to the
+			covariance computing which need all images of an
+			identity in RAM: fewer images per identity would need
+			less RAM
 	\end{itemize}
 \end{frame}
 
@@ -244,7 +248,7 @@ for robust face recognition from Kinect data}}
 	\begin{itemize}
 		\item Code for pose estimation needed depth images represented
 			in OpenCV \textit{Mat} objects
-		\item We needed to switch completely to OpenCV
+		\item We had to switch completely to OpenCV
 		\item Other issues were found in the use of machine learning
 			module of OpenCV, namely
 			\begin{itemize}
@@ -273,6 +277,19 @@ for robust face recognition from Kinect data}}
 \end{frame}
 
 \subsection{Discussion and results}
+\begin{frame}{Evaluation measures}
+	We computed results in terms of:
+	\begin{itemize}
+		\item \textit{rank-1}: ratio between correct recognitions and
+			the total number of sets in the query, where `unknown'
+			identities are considered correct if detected as
+			`unknown'
+		\item \textit{FP-unknown}: ratio between incorrect recognition
+			of `unknown' persons and the total number of `unknown'
+			persons
+	\end{itemize}
+\end{frame}
+
 \begin{frame}{Discussion}
 	\begin{itemize}
 		\item Our results are comparable to the ones of the authors,
@@ -287,24 +304,11 @@ for robust face recognition from Kinect data}}
 		\item Our results with only RGB or D images are much lower than
 			those claimed by authors. We believe that in small
 			datasets depth info is more representative than in
-			bigger dataset.
+			bigger dataset
 	\end{itemize}
 \end{frame}
 
 \begin{frame}{Results (1)}
-	We computed results in terms of:
-	\begin{itemize}
-		\item \textit{rank-1}: ratio between correct recognitions and
-			the total number of sets in the query, where `unknown'
-			identities are considered correct if detected as
-			`unknown'
-		\item \textit{FP-unknown}: ratio between incorrect recognition
-			of `unknown' persons and the total number of `unknown'
-			persons
-	\end{itemize}
-\end{frame}
-
-\begin{frame}{Results (2)}
 	\scriptsize
 	\begin{table}[]
 		\centering
@@ -330,7 +334,7 @@ for robust face recognition from Kinect data}}
 
 \end{frame}
 
-\begin{frame}{Results (3)}
+\begin{frame}{Results (2)}
 	\scriptsize
 	\begin{table}[]
 		\centering
@@ -357,8 +361,28 @@ for robust face recognition from Kinect data}}
 
 \end{frame}
 \section{Future Development}
-\begin{frame}
-	????
+\begin{frame}{Future Development}
+	\begin{itemize}
+		\item Computational optimization
+			\begin{itemize}
+				\item training and prediction not in multithreading
+				\item graphic card (CUDA?)
+			\end{itemize}
+		\item SVMs saving and loading to file
+		\item Studying in deep the gap in results relative to training
+			and prediction by using just RGB or just Depth
+		\item Studying in deep how results change when changing dataset:
+			\begin{itemize}
+				\item how much is useful the prediction rule when
+					using original author's dataset?
+				\item do results are still high by using few
+					images per identity but many different
+					identities (enterprise context)?
+			\end{itemize}
+		\item Check true positives of ``unknown''
+			predictions
+
+	\end{itemize}
 \end{frame}
 
 \section*{Thank you for your kind attention}
